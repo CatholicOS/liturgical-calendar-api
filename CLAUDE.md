@@ -1,0 +1,323 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+The Liturgical Calendar API is a PSR-7/15/17 compliant REST API written in PHP 8.4+ that generates the Roman Catholic liturgical calendar for any given year.
+It calculates mobile festivities and determines the precedence of solemnities, feasts, and memorials.
+The API serves calendar data for nations, dioceses, or groups of dioceses in various formats: JSON, YAML, XML, or ICS.
+
+**Key characteristics:**
+- Data is based on official sources (Roman Missal editions, Magisterial documents, Dicastery Decrees)
+- Historically accurate: calendars for past years reflect rules as they existed at that time
+- Supports multiple languages via gettext
+- PSR-7 compliant HTTP message handling with PSR-15 middleware architecture
+
+## Development Commands
+
+### Starting the API Server
+
+The API requires at least 6 PHP workers since some routes make internal requests to other routes:
+
+```bash
+# Using composer (recommended)
+composer start
+
+# Using the script directly
+./start-server.sh
+
+# Manual approach with environment
+PHP_CLI_SERVER_WORKERS=6 php -S localhost:8000 -t public
+```
+
+**Stop the server:**
+
+```bash
+composer stop
+# or
+./stop-server.sh
+```
+
+**Environment configuration:** Copy `.env.example` to `.env.local` and configure:
+
+- `API_PROTOCOL` (http|https)
+- `API_HOST` (localhost in dev)
+- `API_PORT` (8000 in dev)
+- `API_BASE_PATH` (/ in dev)
+- `APP_ENV` (development|production)
+
+### Testing
+
+```bash
+# Install dependencies first
+composer install
+
+# Run all PHPUnit tests
+composer test
+
+# Run quick tests (excludes slow tests)
+composer test:quick
+
+# Static analysis (PHPStan level 10)
+composer analyse
+
+# Code style checking
+composer lint
+
+# Auto-fix code style issues
+composer lint:fix
+
+# Parallel syntax checking
+composer parallel-lint
+```
+
+### WebSocket Test Server
+
+For the UnitTestInterface web-based integrity checker:
+
+```bash
+# Start WebSocket server
+composer ws:start
+
+# Stop WebSocket server
+composer ws:stop
+```
+
+In VSCode, use `Ctrl+Shift+B` and select `litcal-tests-websockets`.
+
+## Architecture
+
+### Request Flow
+
+1. **Entry Point:** `public/index.php`
+   - Locates project root via `composer.json`
+   - Loads environment with Dotenv
+   - Configures error handling and logging
+   - Instantiates `Router` and calls `route()`
+
+2. **Router:** `src/Router.php`
+   - Implements PSR-7 request/response handling
+   - Determines endpoint from URL path
+   - Delegates to appropriate Handler
+   - Runs PSR-15 middleware pipeline (ErrorHandling, Logging)
+
+3. **Handlers:** `src/Handlers/`
+   - All extend `AbstractHandler` (implements PSR `RequestHandlerInterface`)
+   - Each handler manages one primary route
+   - Key handlers:
+     - `CalendarHandler`: **Calculated** liturgical calendar for a specific year (`/calendar`)
+       - Returns liturgical events with dates, resolved precedence, suppressions/transfers
+       - Performs full calendar calculation based on the year and calendar parameters
+     - `EventsHandler`: **All possible** liturgical events for a calendar (`/events`)
+       - Returns event definitions with `event_key` IDs (no dates or calculations)
+       - Provides a catalog of events available for a given calendar
+       - Useful for frontends to populate selection lists (e.g., datalists)
+     - `MetadataHandler`: Calendar metadata (`/metadata`)
+     - `RegionalDataHandler`: Regional calendar data (`/calendars`)
+     - `MissalsHandler`: Missal metadata (`/missals`)
+     - `DecreesHandler`: Dicastery decrees (`/decrees`)
+     - `TestsHandler`: Test data (`/tests`)
+     - `EasterHandler`: Easter calculations (`/easter`)
+     - `SchemasHandler`: JSON schemas (`/schemas`)
+
+4. **Response:** Handlers use `Negotiator` to determine content type (JSON/YAML/XML/ICS) based on Accept header or `return_type` parameter
+
+### Core Architecture Components
+
+**Models:** `src/Models/`
+
+- `Calendar/`: Calendar generation logic and liturgical event models
+  - Used by `CalendarHandler` to perform calendar calculations for a specific year
+- `RegionalData/`: National/diocesan/wider region calendar data structures
+- `MissalsPath/`: Roman Missal metadata
+- `EventsPath/`: Event catalog models (all possible events with `event_key` IDs)
+  - Used **only** by `EventsHandler` to serve event lists to frontend applications
+  - NOT used by `CalendarHandler` for calendar calculation
+- `Decrees/`: Decree metadata
+- `Lectionary/`: Lectionary readings
+- `LitCalItem.php`: Individual liturgical event representation (calculated, with dates)
+- `PropriumDeSanctisEvent.php`: Saints/feasts event model
+- `PropriumDeTemporeEvent.php`: Temporal cycle event model
+
+**Enums:** `src/Enum/`
+
+- Type-safe enumerations for liturgical concepts
+- `LitColor`: Liturgical colors
+- `RomanMissal`: Missal editions
+- `LitLocale`: Supported locales
+- `Route`, `PathCategory`: API routing
+- `Ascension`, `Epiphany`, `CorpusChristi`: Movable feast configurations
+- Use `EnumToArrayTrait` for common array conversions
+
+**HTTP Layer:** `src/Http/`
+
+- `Enum/`: HTTP-specific enums (`AcceptHeader`, `RequestMethod`, `StatusCode`, etc.)
+- `Exception/`: Custom HTTP exceptions
+- `Middleware/`: PSR-15 middleware (ErrorHandling, Logging)
+- `Server/`: Middleware pipeline implementation
+- `Negotiator.php`: Content negotiation logic
+
+**Params:** `src/Params/`
+
+- Request parameter validation and processing
+
+**Utilities:**
+
+- `src/Utilities.php`: General utility functions
+- `src/DateTime.php`: Liturgical date calculations
+- `src/LatinUtils.php`: Latin text processing
+- `src/Health.php`: System health checks and integrity validation
+
+### Data Sources
+
+**JSON Data:** `jsondata/sourcedata/`
+
+- `missals/`: Propriums from different Roman Missal editions
+  - `propriumdetempore/`: Temporal cycle events
+  - `propriumdesanctis_*/`: Saints and feasts by edition (1970, 2002, 2008, US 2011, IT 1983)
+- `calendars/`: Regional calendar definitions
+  - `nations/`: National calendars
+  - `dioceses/`: Diocesan calendars
+  - `wider_regions/`: Multi-diocese regions
+- `lectionary/`: Lectionary readings by cycle
+- `decrees/`: Dicastery decree metadata
+
+**Translations:** `i18n/`
+
+- gettext `.po`/`.pot` files for UI strings
+- Managed via Weblate integration
+
+**Schemas:** `jsondata/schemas/`
+
+- JSON Schema definitions for API responses and source data validation
+- OpenAPI specification (`openapi.json`)
+- **Source data schemas:**
+  - `DiocesanCalendar.json`: Schema for diocesan calendar source files
+  - `NationalCalendar.json`: Schema for national calendar source files
+  - `WiderRegionCalendar.json`: Schema for wider region source files
+    - Wider regions are transversal layers applied to national calendars (not standalone calendars)
+  - `PropriumDeSanctis.json`: Schema for Sanctorale (Proper of Saints) events in Roman Missal
+  - `PropriumDeTempore.json`: Schema for Temporale events in Roman Missal
+  - `LitCalDecreesSource.json`: Schema for Dicastery for Divine Worship decrees
+  - `LitCalTest.json`: Schema for test source files
+  - `LitCalTranslation.json`: Schema for i18n data
+
+## Key Development Patterns
+
+### Adding a New Handler
+
+1. Create handler class extending `AbstractHandler` in `src/Handlers/`
+2. Implement `handle(ServerRequestInterface $request): ResponseInterface`
+3. Set allowed methods, accept headers, content types in constructor
+4. Add route case in `Router::route()` switch statement
+5. Use `Negotiator` for content-type negotiation
+6. Return PSR-7 `ResponseInterface`
+
+### Working with Liturgical Events
+
+Events use `LitCalItem` model with properties:
+
+- `name`: Event name
+- `date`: DateTime object
+- `color`: Array of `LitColor` enums
+- `type`: `LitGrade` enum (solemnity, feast, memorial, etc.)
+- `common`: `LitCommon` enum array
+- `grade`: Numeric precedence value
+
+Calendar calculation in `CalendarHandler` determines:
+
+- Movable feast dates (Easter-based)
+- Event precedence and coincidence handling
+- Suppression/transfer rules
+
+### Content Negotiation
+
+Use `Negotiator::negotiateResponseContentType()` to respect:
+
+1. `return_type` query parameter (json|yaml|xml|ics)
+2. `Accept` header
+3. Default fallback (JSON)
+
+Return appropriate PSR-7 Response with correct `Content-Type` header.
+
+### Logging
+
+Use `LoggerFactory::create()` to instantiate PSR-3 compliant Monolog loggers:
+
+- Logs to `logs/` directory
+- Different log files for different subsystems
+- Rotation and retention configurable
+
+## Testing Strategy
+
+**PHPUnit Tests:** `phpunit_tests/`
+
+- `ApiTestCase.php`: Base test class with common functionality
+- `Routes/`: Tests for each route handler
+- `Methods/`: HTTP method validation tests
+- `Enum/`: Enum behavior tests
+
+**Test Groups:**
+
+- Regular tests: Fast validation tests
+- `@group slow`: Integration tests requiring API calls
+
+**Integrity Checks:**
+External web interface at [Liturgical-Calendar/UnitTestInterface](https://github.com/Liturgical-Calendar/UnitTestInterface) provides comprehensive calendar
+data validation via WebSocket backend.
+
+## Git Workflow
+
+- Main branch: `master` (stable releases)
+- Development branch: `development` (testing)
+- Feature branches: Created for complex features
+- PRs should target `development` first, then merge to `master` after community testing
+- Test locally before submitting PR
+
+## System Requirements
+
+- PHP >= 8.4 (uses modern syntax like `array_find`)
+- Extensions: intl, zip, calendar, yaml, gettext, curl, json, xml, etc.
+- System `gettext` package with language packs
+- Optional: `apcu` for caching (experimental)
+- Docker: Use provided `Dockerfile` for containerized deployment
+
+## Documentation Standards
+
+### Markdown Formatting
+
+All markdown files must conform to rules in `.markdownlint.yml`:
+
+- **Line length:** Maximum 180 characters (code blocks and tables excluded)
+- **Lists:** Must be surrounded by blank lines (MD032)
+- **Code blocks:** Must be surrounded by blank lines (MD031)
+- **Code blocks in lists:** Must be indented to match the list item's content indentation
+  - For numbered lists: Indent 3 spaces after the number and period
+  - Example: If list item is `1. Item`, code block starts at column 4 (3 spaces indent)
+- **Fenced code blocks:** Use ``` style, not indented code blocks (MD046)
+- **Ordered lists:** Use sequential numbering (1, 2, 3...) not all 1's (MD029)
+
+Example of properly indented code block in a list:
+
+```markdown
+1. **Step one**
+
+   ```bash
+   composer install
+   ```
+
+2. **Step two**
+
+   ```php
+   $router = new Router();
+   ```
+```
+
+## Important Notes
+
+- **Timezone:** Always `Europe/Vatican`
+- **Year Range:** 1970-9999 (MIN_YEAR=1969 exclusive, MAX_YEAR=10000 exclusive)
+- **Autoloading:** PSR-4 autoload configured in `composer.json` for `LiturgicalCalendar\Api` namespace
+- **Code Quality:** PHPStan level 10, PSR-12 coding standards via PHP_CodeSniffer
+- **Hooks:** CaptainHook for git hooks (see `captainhook.json`)
