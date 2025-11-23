@@ -315,4 +315,29 @@ class NegotiatorTest extends TestCase
         $this->assertNotNull($result, 'Wildcard should provide fallback match');
         $this->assertContains($result, ['en', 'it', 'la'], 'Result should be one of supported locales');
     }
+
+    /**
+     * Regression test for issue #396: Latin locale negotiation with empty $supported list.
+     *
+     * This tests the specific code path used by CalendarHandler::handle() where $supported = []
+     * and Negotiator builds the global locale list including Latin (la, la_VA) from LitLocale::$values.
+     *
+     * Before the fix, Accept-Language headers with Latin locales would fail to negotiate properly
+     * because PHP's \Locale::acceptFromHttp() doesn't recognize Latin (not in ICU/CLDR).
+     * After the fix, Negotiator::pickLanguage() properly includes Latin in the global locale list.
+     */
+    public function testGlobalLocalesIncludeLatinWhenSupportedListEmpty(): void
+    {
+        // Simulate CalendarHandler behavior: empty $supported list, no explicit fallback
+        // Request with Latin locale in RFC 5646 format (la-VA) and fallback to Latin primary (la)
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'la-VA, la;q=0.9'
+        ]);
+
+        $result = Negotiator::pickLanguage($request, [], null);
+
+        // Expect 'la_VA' to be selected (original casing preserved from LitLocale::LATIN)
+        // la-VA from header (normalized to la_va) should match la_VA (normalized to la_va)
+        $this->assertSame('la_VA', $result, 'Expected Latin locale la-VA to match la_VA from global locale list');
+    }
 }
