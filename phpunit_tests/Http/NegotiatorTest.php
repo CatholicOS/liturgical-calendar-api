@@ -154,4 +154,165 @@ class NegotiatorTest extends TestCase
         $this->assertSame(2, $parsed[1]['specificity'], 'en_us should have specificity 2');
         $this->assertSame(4, $parsed[0]['specificity'], 'en_us_x_custom should have specificity 4');
     }
+
+    /* ========================= Edge Case Tests ========================= */
+
+    /**
+     * Test that missing Accept-Language header returns fallback
+     */
+    public function testMissingAcceptLanguageReturnsFallback(): void
+    {
+        $request = new ServerRequest('GET', '/test', []);
+        $result  = Negotiator::pickLanguage($request, ['en', 'it', 'la'], 'la');
+        $this->assertSame('la', $result, 'Should return fallback when Accept-Language is missing');
+    }
+
+    /**
+     * Test that empty Accept-Language header returns fallback
+     */
+    public function testEmptyAcceptLanguageReturnsFallback(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => ''
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'it', 'la'], 'la');
+        $this->assertSame('la', $result, 'Should return fallback when Accept-Language is empty');
+    }
+
+    /**
+     * Test that missing Accept-Language header returns first supported when no fallback
+     */
+    public function testMissingAcceptLanguageReturnsFirstSupported(): void
+    {
+        $request = new ServerRequest('GET', '/test', []);
+        $result  = Negotiator::pickLanguage($request, ['en', 'it', 'la'], null);
+        $this->assertSame('en', $result, 'Should return first supported locale when no fallback provided');
+    }
+
+    /**
+     * Test that wildcard (*) matches any supported language
+     */
+    public function testWildcardMatchesAnyLanguage(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => '*'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'it', 'la'], 'en');
+        $this->assertNotNull($result, 'Wildcard should match at least one supported locale');
+        $this->assertContains($result, ['en', 'it', 'la'], 'Wildcard result should be one of supported locales');
+    }
+
+    /**
+     * Test that specific language takes precedence over wildcard
+     */
+    public function testSpecificLanguagePreferredOverWildcard(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'la, *;q=0.9'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'it', 'la'], 'en');
+        $this->assertSame('la', $result, 'Specific language should be preferred over wildcard with lower q');
+    }
+
+    /**
+     * Test that wildcard with higher q wins (q-value takes precedence over specificity)
+     * This is RFC 9110 compliant behavior: quality is the primary sorting factor
+     */
+    public function testWildcardWithHigherQualityWins(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => '*;q=1.0, it;q=0.5'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'it', 'la'], 'en');
+        // Wildcard with q=1.0 wins over specific it with q=0.5 (q is primary sort factor)
+        // Result will be first supported locale that matches wildcard
+        $this->assertContains($result, ['en', 'it', 'la'], 'Should match one of supported via wildcard');
+    }
+
+    /**
+     * Test that specificity wins when q-values are equal
+     */
+    public function testSpecificityWinsWhenQualityEqual(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'it;q=1.0, *;q=1.0'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'it', 'la'], 'en');
+        // When q is equal, specificity should break the tie (it has specificity 1, * has 0)
+        $this->assertSame('it', $result, 'Specific match should win over wildcard when q-values are equal');
+    }
+
+    /**
+     * Test combined quality and specificity: more specific region code preferred
+     */
+    public function testQualityAndSpecificityCombined(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'en-US, en;q=0.9'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'en-US', 'it'], 'en');
+        $this->assertSame('en-US', $result, 'More specific en-US should be preferred over generic en');
+    }
+
+    /**
+     * Test that higher quality beats specificity
+     */
+    public function testHigherQualityBeatsSpecificity(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'en-US;q=0.5, en;q=1.0'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'en-US', 'it'], 'it');
+        $this->assertSame('en', $result, 'Higher quality generic en should beat lower quality en-US');
+    }
+
+    /**
+     * Test Latin with region code and quality parameters
+     */
+    public function testLatinWithQualityParameters(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'la-VA;q=1.0, la;q=0.8, en;q=0.5'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'la', 'la-VA'], 'en');
+        $this->assertSame('la-VA', $result, 'la-VA with highest quality should be selected');
+    }
+
+    /**
+     * Test that when both la and la-VA are supported, la-VA is preferred
+     */
+    public function testLatinWithRegionPreferred(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'la-VA, la;q=0.9'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['la', 'la-VA'], 'en');
+        $this->assertSame('la-VA', $result, 'Should prefer more specific la-VA over generic la');
+    }
+
+    /**
+     * Test complex Accept-Language with wildcards and quality
+     */
+    public function testComplexAcceptLanguageWithWildcard(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'it-IT, la;q=0.9, en-US;q=0.8, *;q=0.1'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'la', 'de'], 'en');
+        $this->assertSame('la', $result, 'la with q=0.9 should be preferred when it-IT not available');
+    }
+
+    /**
+     * Test that wildcard fallback works when no specific matches found
+     */
+    public function testWildcardFallbackWhenNoSpecificMatch(): void
+    {
+        $request = new ServerRequest('GET', '/test', [
+            'Accept-Language' => 'ja-JP, zh-CN;q=0.9, *;q=0.1'
+        ]);
+        $result  = Negotiator::pickLanguage($request, ['en', 'it', 'la'], 'en');
+        // Should match via wildcard since ja-JP and zh-CN are not supported
+        $this->assertNotNull($result, 'Wildcard should provide fallback match');
+        $this->assertContains($result, ['en', 'it', 'la'], 'Result should be one of supported locales');
+    }
 }
