@@ -1,11 +1,17 @@
 # Code Of Conduct
+
 ## 1. Overview
 
-The developers elected to govern their interactions with each other, with their clients, and with the larger user community in accordance with the "instruments of good works" from chapter 4 of The Rule of St. Benedict (hereafter: "The Rule"). This Rule has proven its mettle in thousands of diverse communities for over 1,500 years, and has served as a baseline for many civil law codes since the time of Charlemagne.
+The developers elected to govern their interactions with each other, with their clients, and with the larger user community
+in accordance with the "instruments of good works" from chapter 4 of The Rule of St. Benedict (hereafter: "The Rule").
+This Rule has proven its mettle in thousands of diverse communities for over 1,500 years, and has served as a baseline for many civil law codes since the time of Charlemagne.
 
-The Rule is strict, and none are able to comply perfectly. Grace is readily granted for minor transgressions. All are encourage to follow this rule closely, as in so doing they may expect to live happier, healthier, and more productive lives. The entire Rule is good and wholesome, and yet we make no enforcement of the more introspective aspects.
+The Rule is strict, and none are able to comply perfectly. Grace is readily granted for minor transgressions.
+All are encouraged to follow this rule closely, as in so doing they may expect to live happier, healthier, and more productive lives.
+The entire Rule is good and wholesome, and yet we make no enforcement of the more introspective aspects.
 
-We view The Rule as our promise to all users of this project of how the developers are expected to behave. This is a one-way promise, or covenant. In other words, the developers are saying: "We will treat you this way regardless of how you treat us."
+We view The Rule as our promise to all users of this project of how the developers are expected to behave. This is a one-way promise, or covenant.
+In other words, the developers are saying: "We will treat you this way regardless of how you treat us."
 
 ## 2. The Rule
 
@@ -68,7 +74,8 @@ We view The Rule as our promise to all users of this project of how the develope
 1. Devote yourself frequently to prayer.
 1. Daily in your prayers, with tears and sighs, confess your past sins to God, and amend them for the future.
 1. Fulfill not the desires of the flesh; hate your own will.
-1. Obey in all things the commands of those whom God has placed in authority over you even though they (which God forbid) should act otherwise, mindful of the Lord's precept, "Do what they say, but not what they do."
+1. Obey in all things the commands of those whom God has placed in authority over you even though they (which God forbid) should act otherwise,
+   mindful of the Lord's precept, "Do what they say, but not what they do."
 1. Do not wish to be called holy before one is holy; but first to be holy, that you may be truly so called.
 1. Fulfill God's commandments daily in your deeds.
 1. Love chastity.
@@ -80,8 +87,10 @@ We view The Rule as our promise to all users of this project of how the develope
 1. Love your juniors.
 1. Pray for your enemies in the love of Christ.
 1. Make peace with your adversary before the sun sets.
-1. Never despair of God's mercy. 
+1. Never despair of God's mercy.
 
 ## 3. Attribution
 
-This code of conduct was taken from [The rule of St. Benedict, as your Code of Conduct](https://github.com/saint-benedict/code-of-conduct) which in turn was adapted from [SQLite's Code of conduct](https://web.archive.org/web/20181024103452/https://sqlite.org/codeofconduct.html) and now [Code of Ethics](https://sqlite.org/codeofethics.html).
+This code of conduct was taken from [The rule of St. Benedict, as your Code of Conduct](https://github.com/saint-benedict/code-of-conduct)
+which in turn was adapted from [SQLite's Code of conduct](https://web.archive.org/web/20181024103452/https://sqlite.org/codeofconduct.html)
+and now [Code of Ethics](https://sqlite.org/codeofethics.html).

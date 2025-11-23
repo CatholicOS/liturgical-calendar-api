@@ -12,25 +12,28 @@
 
 declare(strict_types=1);
 
+// Locate autoloader by walking up the directory tree
 // We start from the folder the current script is running in
-$projectFolder = __DIR__;
+$projectFolder  = __DIR__;
+$autoloaderPath = null;
 
-// And if composer.json is not there, we start to look for it in the parent directories
+// Walk up directories looking for vendor/autoload.php
 $level = 0;
 while (true) {
-    if (file_exists($projectFolder . DIRECTORY_SEPARATOR . 'composer.json')) {
+    $candidatePath = $projectFolder . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+
+    if (file_exists($candidatePath)) {
+        $autoloaderPath = $candidatePath;
         break;
     }
 
     // Don't look more than 4 levels up
     if ($level > 4) {
-        $projectFolder = null;
         break;
     }
 
     $parentDir = dirname($projectFolder);
-    if ($parentDir === $projectFolder) { // reached the system root folder
-        $projectFolder = null;
+    if ($parentDir === $projectFolder) { // Reached the filesystem root
         break;
     }
 
@@ -38,11 +41,11 @@ while (true) {
     $projectFolder = $parentDir;
 }
 
-if (null === $projectFolder) {
-    throw new Exception('Unable to find project root folder, cannot load scripts or environment variables.');
+if (null === $autoloaderPath) {
+    die('Error: Unable to locate vendor/autoload.php. Please run `composer install` in the project root.');
 }
 
-require_once $projectFolder . '/vendor/autoload.php';
+require_once $autoloaderPath;
 
 use LiturgicalCalendar\Api\Router;
 use Dotenv\Dotenv;
