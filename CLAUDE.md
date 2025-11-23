@@ -9,6 +9,7 @@ It calculates mobile festivities and determines the precedence of solemnities, f
 The API serves calendar data for nations, dioceses, or groups of dioceses in various formats: JSON, YAML, XML, or ICS.
 
 **Key characteristics:**
+
 - Data is based on official sources (Roman Missal editions, Magisterial documents, Dicastery Decrees)
 - Historically accurate: calendars for past years reflect rules as they existed at that time
 - Supports multiple languages via gettext
@@ -252,12 +253,14 @@ $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
 ```
 
 **Why this matters:**
+
 - PHP's `\Locale::acceptFromHttp()` relies on ICU (International Components for Unicode) data, which does not include Latin (`la`, `la-VA`, `la_VA`)
 - Latin is not part of the Unicode CLDR because it's not a living language with modern locale conventions
 - The API manually supports Latin in `LitLocale::$values = ['la', 'la_VA']`
 - `Negotiator::pickLanguage()` merges these manual locales with ICU-based locales for complete coverage
 
 **All handlers must follow this pattern:**
+
 ```php
 // CORRECT - handles Latin and all other locales properly
 $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
@@ -328,7 +331,7 @@ All markdown files must conform to rules in `.markdownlint.yml`:
 
 Example of properly indented code block in a list:
 
-```markdown
+`````markdown
 1. **Step one**
 
    ```bash
@@ -340,7 +343,57 @@ Example of properly indented code block in a list:
    ```php
    $router = new Router();
    ```
+
+`````
+
+### Markdown Linting
+
+**IMPORTANT:** Always lint markdown files after editing them.
+
+**Automatic Pre-Commit Hook:**
+
+This project uses CaptainHook to automatically lint markdown files before commit. When you stage markdown files (`.md`),
+the pre-commit hook will run `composer lint:md` to check for linting issues.
+
+To reinstall hooks after configuration changes:
+
+```bash
+vendor/bin/captainhook install --force
 ```
+
+**Manual Linting Commands:**
+
+```bash
+# Lint all markdown files (via composer)
+composer lint:md
+
+# Auto-fix markdown issues (via composer)
+composer lint:md:fix
+
+# Lint a specific markdown file
+markdownlint CLAUDE.md
+
+# Lint all markdown files
+markdownlint "**/*.md"
+
+# Auto-fix issues where possible
+markdownlint --fix CLAUDE.md
+
+# Using npx (no installation required)
+npx --yes markdownlint-cli CLAUDE.md
+```
+
+**Common Issues and Solutions:**
+
+- **Nested code blocks:** When demonstrating markdown code blocks that contain other code blocks, use different fence lengths:
+  - Outer block: 5 backticks (`````)
+  - Inner blocks: 3 backticks (```)
+  - This prevents the parser from interpreting inner blocks as actual markdown
+- **Ordered lists (MD029):** Use sequential numbering (1, 2, 3...) not all 1's
+- **Missing language specifiers (MD040):** Always specify language after opening code fence (e.g., `` ```bash ``, `` ```php ``, `` ```json ``)
+- **Line length (MD013):** Keep lines under 180 characters (excludes code blocks and tables)
+- **Blank lines around lists (MD032):** Surround lists with blank lines
+- **Blank lines around code blocks (MD031):** Surround code blocks with blank lines
 
 ## Important Notes
 
