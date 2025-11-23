@@ -365,7 +365,7 @@ final class Negotiator
             // Ensure we initialize LitLocale to load all available locales
             LitLocale::init();
             // Combine manually defined locales (like Latin) with ICU-based locales
-            $supported        = array_values(array_unique(array_merge(LitLocale::$values, LitLocale::$AllAvailableLocales)));
+            $supported = array_values(array_unique(array_merge(LitLocale::$values, LitLocale::$AllAvailableLocales)));
             // Normalize for comparison: lowercase + hyphens to underscores
             $supportedLocales = array_map(
                 function (string $v): string {
