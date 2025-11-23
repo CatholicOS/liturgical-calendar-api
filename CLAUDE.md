@@ -259,6 +259,20 @@ $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
 - The API manually supports Latin in `LitLocale::$values = ['la', 'la_VA']`
 - `Negotiator::pickLanguage()` merges these manual locales with ICU-based locales for complete coverage
 
+**Language Tag Normalization:**
+
+The `Negotiator` class normalizes language tags from Accept-Language headers to ensure consistent matching:
+
+- **Hyphens → Underscores:** `en-US` becomes `en_us`
+- **Lowercase conversion:** `en-US` becomes `en_us` (not `en_US`)
+- **Specificity calculation:** `substr_count(tag, '_') + 1`
+  - `en` (0 underscores) → specificity 1
+  - `en_us` (1 underscore) → specificity 2
+  - `en_us_x_custom` (3 underscores) → specificity 4
+- **Sorting priority:** Tags are sorted by quality (q parameter) first, then by specificity (more specific tags first)
+
+This normalization ensures that `la`, `la-VA`, and `la_VA` all match consistently against `LitLocale::LATIN`.
+
 **All handlers must follow this pattern:**
 
 ```php
