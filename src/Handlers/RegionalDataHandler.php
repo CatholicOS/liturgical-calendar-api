@@ -20,6 +20,7 @@ use LiturgicalCalendar\Api\Http\Exception\ResourceConflictException;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Exception\UnprocessableContentException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
+use LiturgicalCalendar\Api\Http\Negotiator;
 use LiturgicalCalendar\Api\Models\CatholicDiocesesLatinRite\CatholicDiocesesMap;
 use LiturgicalCalendar\Api\Models\Metadata\MetadataCalendars;
 use LiturgicalCalendar\Api\Models\Metadata\MetadataDiocesanCalendarItem;
@@ -1423,10 +1424,7 @@ final class RegionalDataHandler extends AbstractHandler
         }
 
         // Second of all, we check if an Accept-Language header was set in the request
-        $acceptLanguageHeader = $request->getHeaderLine('Accept-Language');
-        $locale               = '' !== $acceptLanguageHeader
-            ? \Locale::acceptFromHttp($acceptLanguageHeader)
-            : LitLocale::LATIN;
+        $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
         if ($locale && LitLocale::isValid($locale)) {
             $params['locale'] = $locale;
         } else {

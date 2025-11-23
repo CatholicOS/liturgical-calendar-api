@@ -49,6 +49,17 @@
                         ]
                     }
                 ]
+            },
+            {
+                "action": "composer lint:md",
+                "conditions": [
+                    {
+                        "exec": "\\CaptainHook\\App\\Hook\\Condition\\FileStaged\\OfType",
+                        "args": [
+                            "md"
+                        ]
+                    }
+                ]
             }
         ]
     },

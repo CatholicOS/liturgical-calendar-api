@@ -9,6 +9,7 @@ It calculates mobile festivities and determines the precedence of solemnities, f
 The API serves calendar data for nations, dioceses, or groups of dioceses in various formats: JSON, YAML, XML, or ICS.
 
 **Key characteristics:**
+
 - Data is based on official sources (Roman Missal editions, Magisterial documents, Dicastery Decrees)
 - Historically accurate: calendars for past years reflect rules as they existed at that time
 - Supports multiple languages via gettext
@@ -145,7 +146,7 @@ In VSCode, use `Ctrl+Shift+B` and select `litcal-tests-websockets`.
 - Type-safe enumerations for liturgical concepts
 - `LitColor`: Liturgical colors
 - `RomanMissal`: Missal editions
-- `LitLocale`: Supported locales
+- `LitLocale`: Supported locales (includes manually defined locales like Latin `la`/`la_VA` plus ICU-based locales)
 - `Route`, `PathCategory`: API routing
 - `Ascension`, `Epiphany`, `CorpusChristi`: Movable feast configurations
 - Use `EnumToArrayTrait` for common array conversions
@@ -233,6 +234,8 @@ Calendar calculation in `CalendarHandler` determines:
 
 ### Content Negotiation
 
+**Response Format Negotiation:**
+
 Use `Negotiator::negotiateResponseContentType()` to respect:
 
 1. `return_type` query parameter (json|yaml|xml|ics)
@@ -240,6 +243,48 @@ Use `Negotiator::negotiateResponseContentType()` to respect:
 3. Default fallback (JSON)
 
 Return appropriate PSR-7 Response with correct `Content-Type` header.
+
+**Language Negotiation:**
+
+**IMPORTANT:** Always use `Negotiator::pickLanguage()` for Accept-Language header processing, **never** use PHP's `\Locale::acceptFromHttp()`.
+
+```php
+$locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
+```
+
+**Why this matters:**
+
+- PHP's `\Locale::acceptFromHttp()` relies on ICU (International Components for Unicode) data, which does not include Latin (`la`, `la-VA`, `la_VA`)
+- Latin is not part of the Unicode CLDR because it's not a living language with modern locale conventions
+- The API manually supports Latin in `LitLocale::$values = ['la', 'la_VA']`
+- `Negotiator::pickLanguage()` merges these manual locales with ICU-based locales for complete coverage
+
+**Language Tag Normalization:**
+
+The `Negotiator` class normalizes language tags from Accept-Language headers to ensure consistent matching:
+
+- **Hyphens → Underscores:** `en-US` becomes `en_us`
+- **Lowercase conversion:** `en-US` becomes `en_us` (not `en_US`)
+- **Specificity calculation:** `substr_count(tag, '_') + 1`
+  - `en` (0 underscores) → specificity 1
+  - `en_us` (1 underscore) → specificity 2
+  - `en_us_x_custom` (3 underscores) → specificity 4
+- **Sorting priority:** Tags are sorted by quality (q parameter) first, then by specificity (more specific tags first)
+
+This normalization ensures that `la`, `la-VA`, and `la_VA` all match consistently against `LitLocale::LATIN`.
+
+**All handlers must follow this pattern:**
+
+```php
+// CORRECT - handles Latin and all other locales properly
+$locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
+if ($locale && LitLocale::isValid($locale)) {
+    $params['locale'] = $locale;
+}
+
+// WRONG - will fail for Latin locales
+$locale = \Locale::acceptFromHttp($request->getHeaderLine('Accept-Language'));
+```
 
 ### Logging
 
@@ -300,7 +345,7 @@ All markdown files must conform to rules in `.markdownlint.yml`:
 
 Example of properly indented code block in a list:
 
-```markdown
+`````markdown
 1. **Step one**
 
    ```bash
@@ -312,7 +357,57 @@ Example of properly indented code block in a list:
    ```php
    $router = new Router();
    ```
+
+`````
+
+### Markdown Linting
+
+**IMPORTANT:** Always lint markdown files after editing them.
+
+**Automatic Pre-Commit Hook:**
+
+This project uses CaptainHook to automatically lint markdown files before commit. When you stage markdown files (`.md`),
+the pre-commit hook will run `composer lint:md` to check for linting issues.
+
+To reinstall hooks after configuration changes:
+
+```bash
+vendor/bin/captainhook install --force
 ```
+
+**Manual Linting Commands:**
+
+```bash
+# Lint all markdown files (via composer)
+composer lint:md
+
+# Auto-fix markdown issues (via composer)
+composer lint:md:fix
+
+# Lint a specific markdown file
+markdownlint CLAUDE.md
+
+# Lint all markdown files
+markdownlint "**/*.md"
+
+# Auto-fix issues where possible
+markdownlint --fix CLAUDE.md
+
+# Using npx (no installation required)
+npx --yes markdownlint-cli CLAUDE.md
+```
+
+**Common Issues and Solutions:**
+
+- **Nested code blocks:** When demonstrating markdown code blocks that contain other code blocks, use different fence lengths:
+  - Outer block: 5 backticks (`````)
+  - Inner blocks: 3 backticks (```)
+  - This prevents the parser from interpreting inner blocks as actual markdown
+- **Ordered lists (MD029):** Use sequential numbering (1, 2, 3...) not all 1's
+- **Missing language specifiers (MD040):** Always specify language after opening code fence (e.g., `` ```bash ``, `` ```php ``, `` ```json ``)
+- **Line length (MD013):** Keep lines under 180 characters (excludes code blocks and tables)
+- **Blank lines around lists (MD032):** Surround lists with blank lines
+- **Blank lines around code blocks (MD031):** Surround code blocks with blank lines
 
 ## Important Notes
 

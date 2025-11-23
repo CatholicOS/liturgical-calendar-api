@@ -74,6 +74,8 @@
         ],
         "lint": "phpcs",
         "lint:fix": "phpcbf",
+        "lint:md": "npx --yes markdownlint-cli \"**/*.md\" --ignore node_modules --ignore vendor",
+        "lint:md:fix": "npx --yes markdownlint-cli \"**/*.md\" --ignore node_modules --ignore vendor --fix",
         "analyse": "phpstan analyse",
         "parallel-lint": "parallel-lint --exclude .git --exclude vendor .",
         "test": "phpunit --testdox --display-warnings",
