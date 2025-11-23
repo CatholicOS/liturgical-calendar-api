@@ -5,7 +5,7 @@
 **Status:** Proposed
 **Priority:** Low
 **Component:** CalendarHandler
-**Related Code:** `src/Handlers/CalendarHandler.php:5043-5045`
+**Related Code:** `CalendarHandler::handle()` locale negotiation block
 
 ## Background
 
@@ -36,7 +36,7 @@ English instead of potentially returning French (which the calendar doesn't supp
 ## Current Behavior
 
 ```php
-// Line 5043-5045 in CalendarHandler.php
+// In CalendarHandler::handle() locale negotiation block
 // TODO: Future enhancement - pass calendar-specific supported locales once calendar
 // metadata is available (requires reordering to parse calendar param first)
 $locale = Negotiator::pickLanguage($request, [], null);
@@ -135,8 +135,8 @@ fallback logic if no matching locale is found.
 ## References
 
 - CodeRabbit suggestion: [PR review comment](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/pull/XXX) *(update with actual PR link)*
-- Related code: `src/Handlers/CalendarHandler.php:5043-5045`
-- Negotiator implementation: `src/Http/Negotiator.php`
+- Related code: `CalendarHandler::handle()` locale negotiation block in `src/Handlers/CalendarHandler.php`
+- Negotiator implementation: `Negotiator::pickLanguage()` in `src/Http/Negotiator.php`
 
 ## Notes
 
