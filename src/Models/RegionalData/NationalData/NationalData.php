@@ -189,8 +189,8 @@ final class NationalData extends AbstractJsonSrcData
     {
         $keys        = array_keys(get_object_vars($data));
         $missingKeys = array_diff(self::REQUIRED_PROPS, $keys);
-        if (!empty($missingKeys) || count($keys) !== count(self::REQUIRED_PROPS)) {
-            throw new \ValueError('The keys passed in the parameter must match ' . implode(', ', self::REQUIRED_PROPS) . ': we seem to be missing ' . implode(', ', $missingKeys));
+        if (!empty($missingKeys)) {
+            throw new \ValueError('The following required properties are missing: ' . implode(', ', $missingKeys));
         }
 
         return new static(

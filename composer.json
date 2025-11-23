@@ -37,7 +37,8 @@
         "guzzlehttp/guzzle": "^7.10",
         "react/filesystem": "0.2.x-dev",
         "psr/log": "^3.0",
-        "monolog/monolog": "^3.9"
+        "monolog/monolog": "^3.9",
+        "firebase/php-jwt": "^6.11"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^4.0",

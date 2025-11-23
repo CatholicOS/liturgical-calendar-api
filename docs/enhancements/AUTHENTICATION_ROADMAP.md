@@ -2,6 +2,115 @@
 
 This document outlines the implementation plan for adding authentication, authorization, and API key management to the Liturgical Calendar API and Frontend.
 
+## Current Implementation Status (2025-11-23)
+
+**Status:** ✅ Phase 0 Complete - JWT authentication implemented and tested
+
+**Related Issue:** [#262 - Implement JWT authentication for PUT/PATCH/DELETE requests](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/262)
+
+**Related Documentation:**
+
+- [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/AUTHENTICATION_ROADMAP.md)
+
+### Why Self-Hosted JWT First?
+
+After reviewing the options below (Supabase, WorkOS, self-hosted OAuth), we've decided to start with a **simplified self-hosted JWT implementation** for the following reasons:
+
+1. **Right-sized for current needs** - We're protecting a handful of admin endpoints (PUT/PATCH/DELETE for calendar management), not building a multi-tenant SaaS
+2. **Matches issue scope** - Issue #262 specifically requests JWT implementation as a focused, achievable goal
+3. **No vendor lock-in** - Maintains the project's self-hosting philosophy (Docker support, self-contained API)
+4. **Full control** - Complete ownership of authentication flow and data
+5. **Incremental path** - Can migrate to Supabase/WorkOS later if the project's needs evolve (RBAC, OAuth, MFA, etc.)
+
+### What We're Building (Phase 0)
+
+**Backend (LiturgicalCalendarAPI):**
+
+- Install `firebase/php-jwt` library
+- Create JWT generation endpoint (`/auth/login`)
+- Create JWT validation middleware
+- Protect `RegionalDataHandler` PUT/PATCH/DELETE routes
+- Environment-based secret key management
+- Basic user validation (hardcoded or simple file-based initially)
+
+**Frontend (LiturgicalCalendarFrontend):**
+
+- Simple login UI (modal or page)
+- Token storage (sessionStorage/localStorage)
+- Add `Authorization: Bearer <token>` header to write operations
+- Basic error handling for 401/403 responses
+- User session indicators
+
+See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/AUTHENTICATION_ROADMAP.md) for detailed frontend implementation plan.
+
+### ✅ Phase 0 Implementation Complete
+
+**Completed Components:**
+
+1. **Dependencies**
+   - ✅ Installed `firebase/php-jwt` v6.11.1
+
+2. **Core Services**
+   - ✅ `JwtService` (`src/Services/JwtService.php`) - Token generation, verification, and refresh
+   - ✅ `User` model (`src/Models/Auth/User.php`) - Environment-based authentication
+
+3. **Middleware**
+   - ✅ `JwtAuthMiddleware` (`src/Http/Middleware/JwtAuthMiddleware.php`) - JWT validation for protected routes
+
+4. **HTTP Handlers**
+   - ✅ `LoginHandler` (`src/Handlers/Auth/LoginHandler.php`) - POST `/auth/login`
+   - ✅ `RefreshHandler` (`src/Handlers/Auth/RefreshHandler.php`) - POST `/auth/refresh`
+
+5. **HTTP Exceptions**
+   - ✅ `UnauthorizedException` (401) - Missing/invalid authentication
+   - ✅ `ForbiddenException` (403) - Insufficient permissions
+   - ✅ Updated `StatusCode` enum with UNAUTHORIZED and FORBIDDEN cases
+
+6. **Router Updates**
+   - ✅ Added `/auth/login` and `/auth/refresh` routes
+   - ✅ Applied JWT middleware to `/data` endpoint for PUT/PATCH/DELETE operations
+
+7. **Configuration**
+   - ✅ Added JWT environment variables to `.env.example`
+   - ✅ Configured development environment in `.env.local`
+
+**Testing Results:**
+
+- ✅ Login with valid credentials returns access and refresh tokens
+- ✅ Login with invalid credentials returns 401 Unauthorized
+- ✅ Token refresh successfully generates new access token
+- ✅ DELETE/PATCH/PUT without authentication returns 401 Unauthorized
+- ✅ DELETE/PATCH/PUT with valid JWT token passes authentication
+- ✅ Invalid/malformed tokens rejected with 401 Unauthorized
+
+**API Endpoints:**
+
+- `POST /auth/login` - Authenticate and receive tokens
+- `POST /auth/refresh` - Refresh access token using refresh token
+- `PUT /data/{category}/{calendar}` - Protected (requires JWT)
+- `PATCH /data/{category}/{calendar}` - Protected (requires JWT)
+- `DELETE /data/{category}/{calendar}` - Protected (requires JWT)
+
+**Development Credentials:**
+
+- Username: `admin`
+- Password: `password` (change in production via `ADMIN_PASSWORD_HASH` env var)
+
+### Future Evolution
+
+The comprehensive roadmap below (Phases 1-6) outlines the **long-term vision** for authentication, including:
+
+- Developer API keys and usage tracking
+- Full RBAC with calendar-specific permissions
+- Admin dashboards
+- Audit logging
+- Rate limiting
+- Multi-user management
+
+These features are not part of the initial JWT implementation but provide a blueprint for future enhancements as the project grows.
+
+---
+
 ## Overview
 
 ### Goals
@@ -137,6 +246,194 @@ This provides the best balance of:
 - PostgreSQL integration for relational data
 
 ## Implementation Roadmap
+
+### Phase 0: Basic JWT Authentication (CURRENT - Issue #262)
+
+**Timeline:** 1-2 weeks
+
+**Goal:** Protect PUT/PATCH/DELETE operations on the `/data` endpoint (RegionalDataHandler) with JWT authentication.
+
+#### Backend Implementation
+
+1. **Install Dependencies**
+
+   ```bash
+   composer require firebase/php-jwt
+   ```
+
+2. **Environment Configuration**
+
+   Add to `.env.example` and `.env.local`:
+
+   ```env
+   # JWT Authentication
+   JWT_SECRET=your-secret-key-here-change-in-production
+   JWT_ALGORITHM=HS256
+   JWT_EXPIRY=3600  # 1 hour in seconds
+   JWT_REFRESH_EXPIRY=604800  # 7 days in seconds
+   ```
+
+3. **Create User Model (Simple)**
+
+   ```php
+   // src/Models/Auth/User.php
+   // Simple in-memory or file-based user for MVP
+   // Later: migrate to database
+   class User {
+      public function __construct(
+         public readonly string $username,
+         public readonly string $passwordHash,
+         public readonly array $roles = ['admin']
+      ) {}
+
+      public static function authenticate(string $username, string $password): ?self
+      {
+         // For now: check against hardcoded admin user from .env
+         // Future: check against database
+      }
+   }
+   ```
+
+4. **Create JWT Service**
+
+   ```php
+   // src/Services/JwtService.php
+   use Firebase\JWT\JWT;
+   use Firebase\JWT\Key;
+
+   class JwtService {
+      public function __construct(
+         private readonly string $secret,
+         private readonly string $algorithm = 'HS256',
+         private readonly int $expiry = 3600
+      ) {}
+
+      public function generate(string $username, array $claims = []): string
+      public function verify(string $token): ?object
+      public function refresh(string $token): ?string
+   }
+   ```
+
+5. **Create Authentication Middleware**
+
+   ```php
+   // src/Http/Middleware/JwtAuthMiddleware.php
+   class JwtAuthMiddleware implements MiddlewareInterface {
+      public function process(
+         ServerRequestInterface $request,
+         RequestHandlerInterface $handler
+      ): ResponseInterface {
+         // Extract token from Authorization: Bearer header
+         // Verify token with JwtService
+         // Attach user info to request attribute
+         // Return 401 if invalid/missing
+      }
+   }
+   ```
+
+6. **Create Login Handler**
+
+   ```php
+   // src/Handlers/Auth/LoginHandler.php
+   class LoginHandler extends AbstractHandler {
+      // POST /auth/login
+      // Accept: username, password
+      // Return: { token, refresh_token, expires_in }
+   }
+   ```
+
+7. **Create Refresh Handler**
+
+   ```php
+   // src/Handlers/Auth/RefreshHandler.php
+   class RefreshHandler extends AbstractHandler {
+      // POST /auth/refresh
+      // Accept: { refresh_token }
+      // Return: { token, expires_in }
+   }
+   ```
+
+8. **Update Router**
+
+   ```php
+   // src/Router.php
+   // Add new routes:
+   case '/auth/login':
+      return $this->handleRequest(new LoginHandler(), $request);
+   case '/auth/refresh':
+      return $this->handleRequest(new RefreshHandler(), $request);
+
+   // Apply JWT middleware to RegionalDataHandler for PUT/PATCH/DELETE
+   case '/data':
+      if (in_array($method, [RequestMethod::PUT, RequestMethod::PATCH, RequestMethod::DELETE])) {
+         $request = $this->applyMiddleware($request, new JwtAuthMiddleware());
+      }
+      return $this->handleRequest(new RegionalDataHandler(), $request);
+   ```
+
+9. **Update RegionalDataHandler**
+
+   ```php
+   // src/Handlers/RegionalDataHandler.php
+   // Extract authenticated user from request attribute
+   // Log who performed the operation
+   // Future: check calendar-specific permissions
+   ```
+
+#### Testing
+
+```bash
+# Test login
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"secret"}'
+
+# Expected response:
+# {"token":"eyJ0eXAiOiJKV1...", "refresh_token":"...", "expires_in":3600}
+
+# Test authenticated DELETE
+TOKEN="your-token-here"
+curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST \
+  -H "Authorization: Bearer $TOKEN"
+
+# Expected: 200 OK (if authorized)
+
+# Test unauthenticated DELETE
+curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
+
+# Expected: 401 Unauthorized
+```
+
+#### PHPUnit Tests
+
+```php
+// phpunit_tests/Auth/JwtServiceTest.php
+// phpunit_tests/Auth/JwtAuthMiddlewareTest.php
+// phpunit_tests/Auth/LoginHandlerTest.php
+// phpunit_tests/Routes/AuthenticatedDataTest.php
+```
+
+#### Security Considerations for Phase 0
+
+- **HTTPS only in production** - Enforce via environment check
+- **Strong JWT secret** - Minimum 32 characters, random
+- **Short-lived access tokens** - Default 1 hour
+- **Longer-lived refresh tokens** - Default 7 days
+- **Password hashing** - Use `password_hash()` with `PASSWORD_ARGON2ID`
+- **Brute force protection** - Basic rate limiting on `/auth/login`
+
+#### Known Limitations (To Be Addressed in Future Phases)
+
+- **No user management UI** - Admin credentials hardcoded in `.env`
+- **No password reset** - Requires manual `.env` update
+- **No RBAC** - All authenticated users have same permissions
+- **No calendar-specific permissions** - Any authenticated user can modify any calendar
+- **No audit logging** - Who modified what is not tracked
+- **No refresh token rotation** - Refresh tokens don't expire on use
+
+These limitations are acceptable for the initial implementation to protect against unauthorized modifications. Future phases will address them.
+
+---
 
 ### Phase 1: Infrastructure Setup (Weeks 1-2)
 

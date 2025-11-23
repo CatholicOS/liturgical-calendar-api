@@ -75,15 +75,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -171,15 +171,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -279,15 +279,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -386,15 +386,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -505,15 +505,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -607,15 +607,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -725,15 +725,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -838,15 +838,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -966,15 +966,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -1060,15 +1060,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -1170,15 +1170,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -1275,15 +1275,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -1375,6 +1375,88 @@
         }
       }
     },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {}
+        ],
+        "summary": "Authenticate user and obtain JWT tokens",
+        "operationId": "authLogin",
+        "description": "Authenticate with username and password to obtain access and refresh tokens. The access token should be included in the Authorization header for protected endpoints.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK: Authentication successful, tokens returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {}
+        ],
+        "summary": "Refresh access token using refresh token",
+        "operationId": "authRefresh",
+        "description": "Use a valid refresh token to obtain a new access token without re-authenticating with username/password.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK: Token refresh successful, new access token returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          }
+        }
+      }
+    },
     "/calendars": {
       "get": {
         "tags": [
@@ -1459,15 +1541,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -1565,15 +1647,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -1675,15 +1757,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -1798,15 +1880,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -1923,15 +2005,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -2039,15 +2121,15 @@
             },
             "examples": {
               "latin": {
-                "value": "la-VA",
+                "value": "la_VA",
                 "summary": "Latin (Vatican)"
               },
               "italian": {
-                "value": "it-IT",
+                "value": "it_IT",
                 "summary": "Italian (Italy)"
               },
               "english": {
-                "value": "en-US",
+                "value": "en_US",
                 "summary": "English (United States)"
               }
             }
@@ -2143,7 +2225,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Create a national calendar data resource",
         "operationId": "nationalCalendarDataPUT",
@@ -2183,6 +2267,12 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2195,7 +2285,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Create a wider region data resource",
         "operationId": "widerregionDataPUT",
@@ -2235,6 +2327,12 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2247,7 +2345,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Create a diocesan calendar data resource",
         "operationId": "diocesanDataPUT",
@@ -2286,6 +2386,12 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
@@ -2375,7 +2481,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Update a national calendar data resource",
         "operationId": "nationalDataPATCH",
@@ -2428,6 +2536,12 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2438,7 +2552,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Delete a national calendar data resource",
         "operationId": "nationalDataDELETE",
@@ -2476,6 +2592,12 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -2617,6 +2739,12 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2627,7 +2755,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Delete a wider region calendar data resource",
         "operationId": "diocesanDataDELETE",
@@ -2664,6 +2794,12 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -2805,6 +2941,12 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2815,7 +2957,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Delete a wider region calendar data resource",
         "operationId": "widerregionDataDELETE",
@@ -2852,6 +2996,12 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -2972,6 +3122,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest400"
           }
         }
       }
@@ -3655,32 +3808,32 @@
                     "type": "boolean",
                     "description": "present for applicable events such as Solemnities or Sundays. Will have a boolean value of `true` if the expected Vigil Mass is confirmed, and of `false` if the expected Vigil Mass is superseded by another liturgical event. Sometimes this will be established from year to year for specific coincidences by the Dicastery for Divine Worship and the Discipline of the Sacraments.",
                     "examples": [
-                      0,
-                      1
+                      false,
+                      true
                     ]
                   },
                   "HasVesperI": {
                     "type": "boolean",
                     "description": "present for applicable events such as Solemnities or Sundays. Will have a boolean value of `true` if the expected First Vespers are confirmed, and of `false` if the expected First Vespers are superseded by another liturgical event. Sometimes this will be established from year to year for specific coincidences by the Dicastery for Divine Worship and the Discipline of the Sacraments.",
                     "examples": [
-                      0,
-                      1
+                      false,
+                      true
                     ]
                   },
                   "HasVesperII": {
                     "type": "boolean",
                     "description": "present for applicable events such as Solemnities or Sundays. Will have a boolean value of `true` if the expected Second Vespers are confirmed, and of `false` if the expected Second Vespers are superseded by another liturgical event. Sometimes this will be established from year to year for specific coincidences by the Dicastery for Divine Worship and the Discipline of the Sacraments.",
                     "examples": [
-                      0,
-                      1
+                      false,
+                      true
                     ]
                   },
                   "IsVigilMass": {
                     "type": "boolean",
                     "description": "present for applicable events such as Solemnities or Sundays. Will have a boolean value of 'true' if the event is a Vigil Mass for a Solemnity or Sunday",
                     "examples": [
-                      0,
-                      1
+                      false,
+                      true
                     ]
                   },
                   "IsVigilFor": {
@@ -3780,8 +3933,8 @@
                 "type": "boolean",
                 "description": "whether the celebration of Jesus Christ Eternal High Priest is applicable to the current requested calendar",
                 "examples": [
-                  0,
-                  1
+                  false,
+                  true
                 ]
               }
             }
@@ -4675,6 +4828,91 @@
           "assert",
           "assertion"
         ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Username for authentication"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Password for authentication"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT access token valid for 1 hour (configurable via JWT_EXPIRY)"
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "JWT refresh token valid for 7 days (configurable via JWT_REFRESH_EXPIRY)"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ],
+            "description": "Token type, always 'Bearer'"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Access token expiry time in seconds"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "token_type",
+          "expires_in"
+        ]
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "description": "Valid refresh token obtained from /auth/login"
+          }
+        },
+        "required": [
+          "refresh_token"
+        ]
+      },
+      "RefreshResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "New JWT access token"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ],
+            "description": "Token type, always 'Bearer'"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Access token expiry time in seconds"
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in"
+        ]
       }
     },
     "examples": {
@@ -4724,8 +4962,8 @@
           }
         }
       },
-      "NotFound404": {
-        "description": "404 Not Found. The resource requested or one of its dependencies was not found",
+      "Unauthorized401": {
+        "description": "401 Unauthorized. Authentication is required and has failed or has not been provided. This response is returned when the JWT token is missing, invalid, or expired.",
         "content": {
           "application/problem+json": {
             "schema": {
@@ -4734,8 +4972,18 @@
           }
         }
       },
-      "MethodNotAllowed405": {
-        "description": "405 Method Not Allowed",
+      "Forbidden403": {
+        "description": "403 Forbidden. The request was valid but the server is refusing action. The user might not have the necessary permissions for the resource.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "./Problem.json"
+            }
+          }
+        }
+      },
+      "NotFound404": {
+        "description": "404 Not Found. The resource requested or one of its dependencies was not found",
         "content": {
           "application/problem+json": {
             "schema": {
@@ -4843,6 +5091,14 @@
             }
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT access token obtained from /auth/login or /auth/refresh endpoint. Include in Authorization header as: `Authorization: Bearer <token>`"
       }
     }
   }

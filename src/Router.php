@@ -18,10 +18,13 @@ use LiturgicalCalendar\Api\Handlers\RegionalDataHandler;
 use LiturgicalCalendar\Api\Handlers\MissalsHandler;
 use LiturgicalCalendar\Api\Handlers\DecreesHandler;
 use LiturgicalCalendar\Api\Handlers\SchemasHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\LoginHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\RefreshHandler;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Middleware\ErrorHandlingMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\LoggingMiddleware;
+use LiturgicalCalendar\Api\Http\Middleware\JwtAuthMiddleware;
 use LiturgicalCalendar\Api\Http\Server\MiddlewarePipeline;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
@@ -292,6 +295,25 @@ class Router
                 ]);
                 $this->handler = $schemasHandler;
                 break;
+            case 'auth':
+                // Handle authentication routes
+                if (count($requestPathParts) === 1) {
+                    $authRoute = $requestPathParts[0];
+                    if ($authRoute === 'login') {
+                        $loginHandler  = new LoginHandler();
+                        $this->handler = $loginHandler;
+                    } elseif ($authRoute === 'refresh') {
+                        $refreshHandler = new RefreshHandler();
+                        $this->handler  = $refreshHandler;
+                    } else {
+                        $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
+                        $this->emitResponse();
+                    }
+                } else {
+                    $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
+                    $this->emitResponse();
+                }
+                break;
             case 'data':
                 $regionalDataHandler = new RegionalDataHandler($requestPathParts);
                 $pathCount           = count($requestPathParts);
@@ -358,7 +380,15 @@ class Router
 
         $pipeline = new MiddlewarePipeline($this->handler);
         $pipeline->pipe(new ErrorHandlingMiddleware($this->psr17Factory, self::$debug)); // outermost middleware
-        $pipeline->pipe(new LoggingMiddleware(self::$debug));                            // innermost middleware
+        $pipeline->pipe(new LoggingMiddleware(self::$debug));
+
+        // Apply JWT authentication middleware for protected routes
+        if (
+            $route === 'data'
+            && in_array($this->request->getMethod(), [RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value], true)
+        ) {
+            $pipeline->pipe(new JwtAuthMiddleware());
+        }
 
         $this->response = $pipeline->handle($this->request)
             ->withHeader('X-Request-Id', $this->requestId);
