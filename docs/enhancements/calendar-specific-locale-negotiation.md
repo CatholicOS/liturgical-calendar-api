@@ -13,10 +13,10 @@ Currently, when negotiating the locale from the `Accept-Language` header in `Cal
 `Negotiator::pickLanguage()`:
 
 ```php
-$locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
+$locale = Negotiator::pickLanguage($request, [], null);
 ```
 
-This means the negotiation uses the global list of all `LitLocale` values (all supported locales across all calendars).
+This means the negotiation uses the global list of all `LitLocale` values (all supported locales across all calendars), with `null` as the fallback locale.
 
 ## Proposed Enhancement
 
@@ -39,8 +39,11 @@ English instead of potentially returning French (which the calendar doesn't supp
 // Line 5043-5045 in CalendarHandler.php
 // TODO: Future enhancement - pass calendar-specific supported locales once calendar
 // metadata is available (requires reordering to parse calendar param first)
-$locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
+$locale = Negotiator::pickLanguage($request, [], null);
 ```
+
+**Note:** The current implementation passes `null` as the third parameter (default fallback locale), which means `Negotiator::pickLanguage()` will use its internal
+fallback logic if no matching locale is found.
 
 ## Implementation Roadmap
 
@@ -84,7 +87,9 @@ $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
    $supportedLocales = MetadataHandler::getSupportedLocales($calendar);
 
    // Step 3: Negotiate locale with calendar-specific list
-   $locale = Negotiator::pickLanguage($request, $supportedLocales, LitLocale::LATIN);
+   // Changed from: $locale = Negotiator::pickLanguage($request, [], null);
+   // Changed to:   $locale = Negotiator::pickLanguage($request, $supportedLocales, null);
+   $locale = Negotiator::pickLanguage($request, $supportedLocales, null);
    ```
 
 2. **Add tests**
