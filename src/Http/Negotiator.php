@@ -359,7 +359,11 @@ final class Negotiator
     {
         $acceptLangHeader = $request->getHeaderLine('Accept-Language');
         if (empty($supported)) {
-            $supportedLocales = LitLocale::$AllAvailableLocales;
+            // Ensure we initialize LitLocale to load all available locales
+            LitLocale::init();
+            // Combine manually defined locales (like Latin) with ICU-based locales
+            $supportedLocales = array_values(array_unique(array_merge(LitLocale::$values, LitLocale::$AllAvailableLocales)));
+            $supported        = $supportedLocales; // Use the generated list for preserving casing
         } else {
             $lowercaseSupported = array_map(
                 function (string $v): string {

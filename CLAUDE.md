@@ -145,7 +145,7 @@ In VSCode, use `Ctrl+Shift+B` and select `litcal-tests-websockets`.
 - Type-safe enumerations for liturgical concepts
 - `LitColor`: Liturgical colors
 - `RomanMissal`: Missal editions
-- `LitLocale`: Supported locales
+- `LitLocale`: Supported locales (includes manually defined locales like Latin `la`/`la_VA` plus ICU-based locales)
 - `Route`, `PathCategory`: API routing
 - `Ascension`, `Epiphany`, `CorpusChristi`: Movable feast configurations
 - Use `EnumToArrayTrait` for common array conversions
@@ -233,6 +233,8 @@ Calendar calculation in `CalendarHandler` determines:
 
 ### Content Negotiation
 
+**Response Format Negotiation:**
+
 Use `Negotiator::negotiateResponseContentType()` to respect:
 
 1. `return_type` query parameter (json|yaml|xml|ics)
@@ -240,6 +242,32 @@ Use `Negotiator::negotiateResponseContentType()` to respect:
 3. Default fallback (JSON)
 
 Return appropriate PSR-7 Response with correct `Content-Type` header.
+
+**Language Negotiation:**
+
+**IMPORTANT:** Always use `Negotiator::pickLanguage()` for Accept-Language header processing, **never** use PHP's `\Locale::acceptFromHttp()`.
+
+```php
+$locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
+```
+
+**Why this matters:**
+- PHP's `\Locale::acceptFromHttp()` relies on ICU (International Components for Unicode) data, which does not include Latin (`la`, `la-VA`, `la_VA`)
+- Latin is not part of the Unicode CLDR because it's not a living language with modern locale conventions
+- The API manually supports Latin in `LitLocale::$values = ['la', 'la_VA']`
+- `Negotiator::pickLanguage()` merges these manual locales with ICU-based locales for complete coverage
+
+**All handlers must follow this pattern:**
+```php
+// CORRECT - handles Latin and all other locales properly
+$locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
+if ($locale && LitLocale::isValid($locale)) {
+    $params['locale'] = $locale;
+}
+
+// WRONG - will fail for Latin locales
+$locale = \Locale::acceptFromHttp($request->getHeaderLine('Accept-Language'));
+```
 
 ### Logging
 

@@ -29,6 +29,7 @@ use LiturgicalCalendar\Api\Http\Exception\ImplementationException;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Exception\YamlException;
+use LiturgicalCalendar\Api\Http\Negotiator;
 use LiturgicalCalendar\Api\Models\LitCalItem;
 use LiturgicalCalendar\Api\Models\LitCalItemCollection;
 use LiturgicalCalendar\Api\Models\MissalsMap;
@@ -5039,8 +5040,7 @@ final class CalendarHandler extends AbstractHandler
         $params['return_type'] = AcceptHeader::from($mimeWithoutCharset)->toReturnTypeParam()->value;
 
         // Second of all, we check if an Accept-Language header was set in the request
-        $acceptLanguageHeader = $request->getHeaderLine('Accept-Language');
-        $locale               = \Locale::acceptFromHttp($acceptLanguageHeader);
+        $locale = Negotiator::pickLanguage($request, [], null);
         if ($locale && LitLocale::isValid($locale)) {
             $params['locale'] = $locale;
         }
