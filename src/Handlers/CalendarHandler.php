@@ -5040,6 +5040,8 @@ final class CalendarHandler extends AbstractHandler
         $params['return_type'] = AcceptHeader::from($mimeWithoutCharset)->toReturnTypeParam()->value;
 
         // Second of all, we check if an Accept-Language header was set in the request
+        // TODO: Future enhancement - pass calendar-specific supported locales once calendar
+        // metadata is available (requires reordering to parse calendar param first)
         $locale = Negotiator::pickLanguage($request, [], null);
         if ($locale && LitLocale::isValid($locale)) {
             $params['locale'] = $locale;
