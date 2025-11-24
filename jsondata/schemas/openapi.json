@@ -25,6 +25,10 @@
       "description": "Retrieve a liturgical calendar"
     },
     {
+      "name": "Authentication",
+      "description": "JWT-based authentication (login and token refresh)"
+    },
+    {
       "name": "Calendars Index",
       "description": "Retrieve information about available calendars"
     },
