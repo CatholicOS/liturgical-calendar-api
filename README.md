@@ -184,6 +184,17 @@ The API now supports JWT authentication for protected write operations. To enabl
 * `JWT_REFRESH_EXPIRY`: Refresh token expiry in seconds (default: `604800` = 7 days)
 * `ADMIN_USERNAME`: Admin username for authentication (default: `admin`)
 * `ADMIN_PASSWORD_HASH`: Argon2id password hash. Generate with: `php -r "echo password_hash('yourpassword', PASSWORD_ARGON2ID);"`
+* `APP_ENV`: Application environment (required). Must be one of: `development`, `test`, `staging`, `production`
+
+**Environment-Specific Security Behavior:**
+
+The API implements fail-closed authentication that requires `APP_ENV` to be explicitly set to a known value:
+
+* **`development`** and **`test`**: Allow default password if `ADMIN_PASSWORD_HASH` is not set (for convenience in testing)
+* **`staging`** and **`production`**: Require `ADMIN_PASSWORD_HASH` to be configured (throws `RuntimeException` if missing)
+* **Invalid or unset `APP_ENV`**: Throws `RuntimeException` and denies authentication
+
+This ensures that production environments cannot accidentally use weak default credentials.
 
 **Protected Routes** (require JWT authentication via `Authorization: Bearer <token>` header):
 

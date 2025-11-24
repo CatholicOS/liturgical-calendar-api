@@ -50,9 +50,15 @@ class User
     /**
      * Authenticate a user with username and password
      *
+     * This method implements a fail-closed security approach:
+     * - Requires APP_ENV to be explicitly set to a known value
+     * - Only allows default password in development/test environments
+     * - Requires ADMIN_PASSWORD_HASH in all other environments
+     *
      * @param string $username Username
      * @param string $password Plain-text password
      * @return self|null       User instance if authentication succeeds, null otherwise
+     * @throws \RuntimeException If environment is misconfigured
      */
     public static function authenticate(string $username, string $password): ?self
     {
@@ -65,21 +71,43 @@ class User
             return null;
         }
 
-        // Validate that password hash is a string
+        // Fail-closed approach: Validate APP_ENV is set and is a known value
+        $appEnv            = $_ENV['APP_ENV'] ?? null;
+        $knownEnvironments = ['development', 'test', 'staging', 'production'];
+
+        if ($appEnv === null || !in_array($appEnv, $knownEnvironments, true)) {
+            $appEnvDescription = $appEnv === null ? 'not set' : var_export($appEnv, true);
+            error_log(sprintf(
+                'Authentication failed: APP_ENV is %s (must be one of: %s)',
+                $appEnvDescription,
+                implode(', ', $knownEnvironments)
+            ));
+            throw new \RuntimeException(
+                'APP_ENV must be set to a valid environment: ' . implode(', ', $knownEnvironments)
+            );
+        }
+
+        // Validate that password hash is configured
         if ($adminPasswordHash === null || !is_string($adminPasswordHash)) {
-            // Default password for development: 'password'
-            // This is intentionally weak for development convenience
-            // In production, ADMIN_PASSWORD_HASH MUST be set in .env
-            if ($_ENV['APP_ENV'] === 'production') {
-                throw new \RuntimeException('ADMIN_PASSWORD_HASH must be set in production environment');
+            // Only allow default password in development and test environments
+            if ($appEnv === 'development' || $appEnv === 'test') {
+                // Cache the development password hash to avoid re-hashing on every authentication
+                // Argon2id is intentionally slow, so caching significantly improves performance
+                if (self::$devPasswordHash === null) {
+                    // password_hash with PASSWORD_ARGON2ID always returns a non-empty string
+                    self::$devPasswordHash = password_hash('password', PASSWORD_ARGON2ID);
+                }
+                $adminPasswordHash = self::$devPasswordHash;
+            } else {
+                // Production and staging MUST have ADMIN_PASSWORD_HASH configured
+                error_log(sprintf(
+                    'Authentication failed: ADMIN_PASSWORD_HASH not set in %s environment',
+                    $appEnv
+                ));
+                throw new \RuntimeException(
+                    "ADMIN_PASSWORD_HASH environment variable is required in {$appEnv} environment"
+                );
             }
-            // Cache the development password hash to avoid re-hashing on every authentication
-            // Argon2id is intentionally slow, so caching significantly improves performance
-            if (self::$devPasswordHash === null) {
-                // password_hash with PASSWORD_ARGON2ID always returns a non-empty string
-                self::$devPasswordHash = password_hash('password', PASSWORD_ARGON2ID);
-            }
-            $adminPasswordHash = self::$devPasswordHash;
         }
 
         // Verify password
