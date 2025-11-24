@@ -2765,7 +2765,7 @@
             "BearerAuth": []
           }
         ],
-        "summary": "Delete a wider region calendar data resource",
+        "summary": "Delete a diocesan calendar data resource",
         "operationId": "diocesanDataDELETE",
         "parameters": [
           {
