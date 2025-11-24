@@ -46,16 +46,21 @@ composer stop
 - `API_HOST` (localhost in dev)
 - `API_PORT` (8000 in dev)
 - `API_BASE_PATH` (/ in dev)
-- `APP_ENV` (development|production)
+- `APP_ENV` (development|test|staging|production) - **Required in non-localhost environments**
+  - `development` / `test`: Allow default password if `ADMIN_PASSWORD_HASH` is unset (for testing convenience)
+  - `staging` / `production`: Require `ADMIN_PASSWORD_HASH` to be configured (throws exception if missing)
+  - Invalid/unset values throw exception (fail-closed security)
 
 **JWT Authentication configuration (required for protected endpoints):**
 
 - `JWT_SECRET` - Secret key for signing tokens (minimum 32 characters, generate with `php -r "echo bin2hex(random_bytes(32));"`)
 - `JWT_ALGORITHM` - Algorithm for signing (default: HS256)
-- `JWT_EXPIRY` - Access token expiry in seconds (default: 3600 = 1 hour)
-- `JWT_REFRESH_EXPIRY` - Refresh token expiry in seconds (default: 604800 = 7 days)
+- `JWT_EXPIRY` - Access token expiry in seconds (default: 3600 = 1 hour), must be positive
+- `JWT_REFRESH_EXPIRY` - Refresh token expiry in seconds (default: 604800 = 7 days), must be positive
 - `ADMIN_USERNAME` - Admin username for authentication (default: admin)
 - `ADMIN_PASSWORD_HASH` - Argon2id password hash (generate with `password_hash('password', PASSWORD_ARGON2ID)`)
+  - Required in `staging` and `production` environments
+  - Optional in `development` and `test` environments (defaults to password "password")
 
 **Protected Routes:** The following routes require JWT authentication (via `Authorization: Bearer <token>` header):
 
