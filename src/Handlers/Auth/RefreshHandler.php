@@ -97,9 +97,9 @@ final class RefreshHandler extends AbstractHandler
 
         // Prepare response data
         $responseData = [
-            'token'      => $newToken,
-            'expires_in' => $this->jwtService->getExpiry(),
-            'token_type' => 'Bearer'
+            'access_token' => $newToken,
+            'expires_in'   => $this->jwtService->getExpiry(),
+            'token_type'   => 'Bearer'
         ];
 
         // Encode response (encodeResponseBody sets status to 200 OK by default)

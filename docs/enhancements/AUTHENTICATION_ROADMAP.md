@@ -338,7 +338,7 @@ This provides the best balance of:
    class LoginHandler extends AbstractHandler {
       // POST /auth/login
       // Accept: username, password
-      // Return: { token, refresh_token, expires_in }
+      // Return: { access_token, refresh_token, expires_in, token_type }
    }
    ```
 
@@ -349,7 +349,7 @@ This provides the best balance of:
    class RefreshHandler extends AbstractHandler {
       // POST /auth/refresh
       // Accept: { refresh_token }
-      // Return: { token, expires_in }
+      // Return: { access_token, expires_in, token_type }
    }
    ```
 
@@ -389,7 +389,7 @@ curl -X POST http://localhost:8000/auth/login \
   -d '{"username":"admin","password":"secret"}'
 
 # Expected response:
-# {"token":"eyJ0eXAiOiJKV1...", "refresh_token":"...", "expires_in":3600}
+# {"access_token":"eyJ0eXAiOiJKV1...", "refresh_token":"...", "expires_in":3600, "token_type":"Bearer"}
 
 # Test authenticated DELETE
 TOKEN="your-token-here"

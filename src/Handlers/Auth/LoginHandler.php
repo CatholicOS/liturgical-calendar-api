@@ -106,7 +106,7 @@ final class LoginHandler extends AbstractHandler
 
         // Prepare response data
         $responseData = [
-            'token'         => $token,
+            'access_token'  => $token,
             'refresh_token' => $refreshToken,
             'expires_in'    => $this->jwtService->getExpiry(),
             'token_type'    => 'Bearer'
