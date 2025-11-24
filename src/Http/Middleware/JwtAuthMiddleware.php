@@ -5,6 +5,7 @@ namespace LiturgicalCalendar\Api\Http\Middleware;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Models\Auth\User;
 use LiturgicalCalendar\Api\Services\JwtService;
+use LiturgicalCalendar\Api\Services\JwtServiceFactory;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -32,28 +33,7 @@ class JwtAuthMiddleware implements MiddlewareInterface
      */
     public function __construct(?JwtService $jwtService = null)
     {
-        if ($jwtService === null) {
-            // Create JwtService from environment variables
-            $secret = $_ENV['JWT_SECRET'] ?? null;
-            if ($secret === null || !is_string($secret)) {
-                throw new \RuntimeException('JWT_SECRET environment variable is not set or is not a string');
-            }
-
-            $algorithm = $_ENV['JWT_ALGORITHM'] ?? 'HS256';
-            if (!is_string($algorithm)) {
-                throw new \RuntimeException('JWT_ALGORITHM environment variable must be a string');
-            }
-
-            $expiryEnv = $_ENV['JWT_EXPIRY'] ?? '3600';
-            $expiry    = is_numeric($expiryEnv) ? (int) $expiryEnv : 3600;
-
-            $refreshExpiryEnv = $_ENV['JWT_REFRESH_EXPIRY'] ?? '604800';
-            $refreshExpiry    = is_numeric($refreshExpiryEnv) ? (int) $refreshExpiryEnv : 604800;
-
-            $jwtService = new JwtService($secret, $algorithm, $expiry, $refreshExpiry);
-        }
-
-        $this->jwtService = $jwtService;
+        $this->jwtService = $jwtService ?? JwtServiceFactory::fromEnv();
     }
 
     /**

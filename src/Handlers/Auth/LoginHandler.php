@@ -12,6 +12,7 @@ use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Models\Auth\User;
 use LiturgicalCalendar\Api\Services\JwtService;
+use LiturgicalCalendar\Api\Services\JwtServiceFactory;
 use Nyholm\Psr7\Stream;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -48,24 +49,8 @@ final class LoginHandler extends AbstractHandler
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
 
-        // Initialize JWT service
-        $secret = $_ENV['JWT_SECRET'] ?? null;
-        if ($secret === null || !is_string($secret)) {
-            throw new \RuntimeException('JWT_SECRET environment variable is not set or is not a string');
-        }
-
-        $algorithm = $_ENV['JWT_ALGORITHM'] ?? 'HS256';
-        if (!is_string($algorithm)) {
-            throw new \RuntimeException('JWT_ALGORITHM environment variable must be a string');
-        }
-
-        $expiryEnv = $_ENV['JWT_EXPIRY'] ?? '3600';
-        $expiry    = is_numeric($expiryEnv) ? (int) $expiryEnv : 3600;
-
-        $refreshExpiryEnv = $_ENV['JWT_REFRESH_EXPIRY'] ?? '604800';
-        $refreshExpiry    = is_numeric($refreshExpiryEnv) ? (int) $refreshExpiryEnv : 604800;
-
-        $this->jwtService = new JwtService($secret, $algorithm, $expiry, $refreshExpiry);
+        // Initialize JWT service from environment
+        $this->jwtService = JwtServiceFactory::fromEnv();
     }
 
     /**
