@@ -413,14 +413,21 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 // phpunit_tests/Routes/AuthenticatedDataTest.php
 ```
 
-#### Security Considerations for Phase 0
+#### Security Measures - Phase 0
 
-- **HTTPS only in production** - Enforce via environment check
-- **Strong JWT secret** - Minimum 32 characters, random
-- **Short-lived access tokens** - Default 1 hour
-- **Longer-lived refresh tokens** - Default 7 days
-- **Password hashing** - Use `password_hash()` with `PASSWORD_ARGON2ID`
-- **Brute force protection** - Basic rate limiting on `/auth/login`
+**Currently Implemented:**
+
+- ✅ **Short-lived access tokens** - Default 1 hour (configurable via `JWT_EXPIRY`)
+- ✅ **Longer-lived refresh tokens** - Default 7 days (configurable via `JWT_REFRESH_EXPIRY`)
+- ✅ **Password hashing** - Uses `password_hash()` with `PASSWORD_ARGON2ID`
+- ✅ **JWT signature verification** - All tokens validated with HS256 algorithm
+
+**Recommended for Production (Not Yet Implemented):**
+
+- ⚠️ **HTTPS enforcement** - Configure reverse proxy to require HTTPS
+- ⚠️ **Strong JWT secret** - Use minimum 32 characters, generate with `php -r "echo bin2hex(random_bytes(32));"`
+- ⚠️ **Rate limiting** - Implement brute-force protection on `/auth/login` endpoint
+- ⚠️ **Token expiry monitoring** - Consider implementing token refresh alerts
 
 #### Known Limitations (To Be Addressed in Future Phases)
 
