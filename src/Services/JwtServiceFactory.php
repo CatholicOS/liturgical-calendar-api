@@ -11,17 +11,16 @@ namespace LiturgicalCalendar\Api\Services;
 class JwtServiceFactory
 {
     /**
-     * Create a JwtService instance from environment variables.
+     * Create a JwtService configured from environment variables.
      *
-     * Reads JWT configuration from environment variables with sensible defaults:
-     * - JWT_SECRET: Required, no default (throws exception if missing)
-     * - JWT_ALGORITHM: Defaults to 'HS256'
-     * - JWT_EXPIRY: Access token expiry in seconds, defaults to 3600 (1 hour), must be positive
-     * - JWT_REFRESH_EXPIRY: Refresh token expiry in seconds, defaults to 604800 (7 days), must be positive
+     * Reads these environment variables:
+     * - JWT_SECRET (required): signing secret, must be a non-empty string.
+     * - JWT_ALGORITHM: algorithm name, defaults to 'HS256'.
+     * - JWT_EXPIRY: access token lifetime in seconds, defaults to 3600; must be greater than 0.
+     * - JWT_REFRESH_EXPIRY: refresh token lifetime in seconds, defaults to 604800; must be greater than 0.
      *
-     * @return JwtService Configured JWT service instance
-     * @throws \RuntimeException If JWT_SECRET is not set/empty/invalid, or if expiry values are not positive integers
-     * @throws \DomainException  If JWT_SECRET is shorter than 32 characters
+     * @return JwtService The configured JWT service instance.
+     * @throws \RuntimeException If JWT_SECRET is missing/empty or if expiry values are not positive integers.
      */
     public static function fromEnv(): JwtService
     {

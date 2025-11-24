@@ -38,6 +38,12 @@ final class LoginHandler extends AbstractHandler
 {
     private JwtService $jwtService;
 
+    /**
+     * Initialize the login handler with allowed methods, accepted content types, and JWT service.
+     *
+     * Sets the handler to accept only POST requests with JSON accept and content-type headers,
+     * and initializes the JWT service from the environment.
+     */
     public function __construct()
     {
         parent::__construct();
@@ -54,12 +60,16 @@ final class LoginHandler extends AbstractHandler
     }
 
     /**
-     * Handle the login request
+     * Process a login request and return an authentication response.
      *
-     * @param ServerRequestInterface $request
-     * @return ResponseInterface
-     * @throws UnauthorizedException
-     * @throws ValidationException
+     * Authenticates username and password from the JSON request body and returns
+     * a JSON response containing an access token, a refresh token, the token
+     * expiry (seconds), and the token type.
+     *
+     * @param ServerRequestInterface $request The incoming HTTP request.
+     * @return ResponseInterface Response with a JSON body containing `access_token`, `refresh_token`, `expires_in`, and `token_type`.
+     * @throws UnauthorizedException If authentication fails for the provided credentials.
+     * @throws ValidationException If the request body is missing or username/password are invalid.
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {

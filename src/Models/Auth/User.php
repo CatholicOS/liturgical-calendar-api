@@ -31,11 +31,11 @@ class User
     private static ?string $devPasswordHash = null;
 
     /**
-     * Constructor
+     * Create a User model instance.
      *
-     * @param string   $username     Username
-     * @param string   $passwordHash Password hash (from password_hash())
-     * @param string[] $roles        User roles (default: ['admin'])
+     * @param string   $username     The user's username.
+     * @param string   $passwordHash The stored password hash (as produced by `password_hash()`).
+     * @param string[] $roles        List of user roles (defaults to `['admin']`).
      */
     public function __construct(
         string $username,
@@ -48,17 +48,16 @@ class User
     }
 
     /**
-     * Authenticate a user with username and password
+     * Authenticate the configured admin user using credentials sourced from environment variables.
      *
-     * This method implements a fail-closed security approach:
-     * - Requires APP_ENV to be explicitly set to a known value
-     * - Only allows default password in development/test environments
-     * - Requires ADMIN_PASSWORD_HASH in all other environments
+     * Validates that APP_ENV is one of: development, test, staging, production. Uses ADMIN_PASSWORD_HASH when provided;
+     * in development/test, a cached default hash for the literal password "password" is permitted. Returns null for
+     * non-matching username or password.
      *
-     * @param string $username Username
-     * @param string $password Plain-text password
-     * @return self|null       User instance if authentication succeeds, null otherwise
-     * @throws \RuntimeException If environment is misconfigured
+     * @param string $username The username to authenticate; compared against the `ADMIN_USERNAME` environment variable (default: "admin").
+     * @param string $password The plain-text password to verify against the configured or generated admin password hash.
+     * @return self|null A User instance representing the authenticated admin, or `null` if authentication fails.
+     * @throws \RuntimeException If APP_ENV is missing/invalid, if ADMIN_PASSWORD_HASH is required but missing, or if a development password hash cannot be generated.
      */
     public static function authenticate(string $username, string $password): ?self
     {
@@ -126,10 +125,10 @@ class User
     }
 
     /**
-     * Check if user has a specific role
+     * Determine whether the user has a given role.
      *
-     * @param string $role Role to check
-     * @return bool        True if user has the role, false otherwise
+     * @param string $role Role name to check.
+     * @return bool `true` if the user has the role, `false` otherwise.
      */
     public function hasRole(string $role): bool
     {
@@ -137,9 +136,9 @@ class User
     }
 
     /**
-     * Get user information as an array (for JWT claims)
+     * User data formatted for inclusion in JWT claims.
      *
-     * @return array{username: string, roles: string[]} User information
+     * @return array{username: string, roles: string[]} Associative array with keys `username` and `roles`.
      */
     public function toArray(): array
     {
@@ -150,11 +149,15 @@ class User
     }
 
     /**
-     * Create a user instance from JWT payload
-     *
-     * @param object $payload JWT payload
-     * @return self|null      User instance, or null if payload is invalid
-     */
+         * Instantiate a User from a JWT payload after validating required claims.
+         *
+         * Expects the payload to contain a string `sub` claim used as the username.
+         * Optionally accepts a `roles` claim which must be an array of strings; if absent the default `['admin']` is used.
+         * Returns a User with an empty password hash on successful validation.
+         *
+         * @param object $payload JWT payload; must contain `sub` as string and, if present, `roles` as string[]
+         * @return self|null A User instance with an empty password hash if payload is valid, `null` otherwise
+         */
     public static function fromJwtPayload(object $payload): ?self
     {
         if (!isset($payload->sub) || !is_string($payload->sub)) {

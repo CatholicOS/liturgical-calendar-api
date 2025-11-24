@@ -73,11 +73,11 @@ class Router
     }
 
     /**
-     * This is the main entry point of the API. It takes care of determining which
-     * endpoint is being requested and delegates the request to the appropriate
-     * class.
+     * Route the incoming HTTP request to the appropriate API endpoint, execute the configured middleware pipeline, and emit the HTTP response.
      *
-     * @return never
+     * The method selects and configures a per-endpoint request handler based on the request path, applies middlewares (including error handling, logging, and conditional JWT authentication for protected data modification routes), runs the pipeline, appends the X-Request-Id header to the final response, and terminates execution by emitting the response.
+     *
+     * @return never Terminates execution after emitting the HTTP response.
      */
     public function route(): never
     {
