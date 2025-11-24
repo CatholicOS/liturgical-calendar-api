@@ -93,8 +93,8 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
 
 **Development Credentials:**
 
-- Username: `admin`
-- Password: `password` (change in production via `ADMIN_PASSWORD_HASH` env var)
+- Username: `admin` (configurable via `ADMIN_USERNAME` env var)
+- Password: `password` (change in production via `ADMIN_PASSWORD_HASH` env var - Argon2id hash, e.g., `password_hash('your-password', PASSWORD_ARGON2ID)`)
 
 ### Future Evolution
 
@@ -426,7 +426,7 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 **Recommended for Production (Not Yet Implemented):**
 
 - ⚠️ **HTTPS enforcement** - Configure reverse proxy to require HTTPS
-- ⚠️ **Strong JWT secret** - Use minimum 32 characters, generate with `php -r "echo bin2hex(random_bytes(32));"`
+- ⚠️ **Strong JWT secret** - Use minimum 32 characters, generate locally before deployment with `php -r "echo bin2hex(random_bytes(32));"`
 - ⚠️ **Rate limiting** - Implement brute-force protection on `/auth/login` endpoint
 - ⚠️ **Token expiry monitoring** - Consider implementing token refresh alerts
 
