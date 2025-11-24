@@ -173,8 +173,20 @@ class JwtService
             return null;
         }
 
-        // Generate new access token with the same subject
-        return $this->generate($payload->sub);
+        $username = $payload->sub;
+
+        // Extract custom claims from the refresh token payload
+        // Exclude standard JWT claims that will be regenerated
+        $standardClaims = ['iss', 'aud', 'iat', 'exp', 'nbf', 'jti', 'type', 'sub'];
+        $customClaims   = [];
+        foreach (get_object_vars($payload) as $key => $value) {
+            if (!in_array($key, $standardClaims, true)) {
+                $customClaims[$key] = $value;
+            }
+        }
+
+        // Generate new access token with the same subject and custom claims
+        return $this->generate($username, $customClaims);
     }
 
     /**
@@ -192,7 +204,16 @@ class JwtService
                 return null;
             }
 
-            $payload = json_decode(base64_decode($parts[1]));
+            // Convert base64url to standard base64
+            // JWT uses base64url encoding: replace '-' with '+', '_' with '/'
+            $base64 = strtr($parts[1], '-_', '+/');
+            // Add padding to make length a multiple of 4
+            $remainder = strlen($base64) % 4;
+            if ($remainder > 0) {
+                $base64 .= str_repeat('=', 4 - $remainder);
+            }
+
+            $payload = json_decode(base64_decode($base64));
             if (!is_object($payload) || !isset($payload->sub) || !is_string($payload->sub)) {
                 return null;
             }
