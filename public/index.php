@@ -60,7 +60,7 @@ if (Router::isLocalhost()) {
     // In production environment we want to throw an error if no .env file is present
     $dotenv->load();
     // In production environment these variables are required, in development they will be inferred if not set
-    $dotenv->required(['API_BASE_PATH']);
+    $dotenv->required(['API_BASE_PATH', 'APP_ENV']);
 }
 
 $dotenv->ifPresent(['API_PROTOCOL', 'API_HOST', 'API_BASE_PATH'])->notEmpty();
