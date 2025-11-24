@@ -383,10 +383,10 @@ This provides the best balance of:
 #### Testing
 
 ```bash
-# Test login
+# Test login (using development defaults; override password in production via ADMIN_PASSWORD_HASH env var)
 curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"secret"}'
+  -d '{"username":"admin","password":"password"}'
 
 # Expected response:
 # {"access_token":"eyJ0eXAiOiJKV1...", "refresh_token":"...", "expires_in":3600, "token_type":"Bearer"}
