@@ -58,8 +58,8 @@ class JwtAuthMiddleware implements MiddlewareInterface
             throw new UnauthorizedException('Invalid Authorization header format. Expected: Bearer <token>');
         }
 
-        // Extract token
-        $token = substr($authHeader, 7); // Remove "Bearer " prefix
+        // Extract token and trim whitespace
+        $token = trim(substr($authHeader, 7)); // Remove "Bearer " prefix and trim
 
         if (empty($token)) {
             throw new UnauthorizedException('Missing JWT token');
@@ -79,7 +79,9 @@ class JwtAuthMiddleware implements MiddlewareInterface
             throw new UnauthorizedException('Invalid user in JWT token');
         }
 
-        // Attach user to request attributes
+        // Attach both user and payload to request attributes
+        // - 'user': Type-safe User object for authentication/authorization checks
+        // - 'jwt_payload': Raw JWT payload for accessing custom claims beyond User properties
         $request = $request->withAttribute('user', $user);
         $request = $request->withAttribute('jwt_payload', $payload);
 
