@@ -20,7 +20,8 @@ class JwtServiceFactory
      * - JWT_REFRESH_EXPIRY: Refresh token expiry in seconds, defaults to 604800 (7 days), must be positive
      *
      * @return JwtService Configured JWT service instance
-     * @throws \RuntimeException If JWT_SECRET is not set, or if expiry values are not positive integers
+     * @throws \RuntimeException If JWT_SECRET is not set/empty/invalid, or if expiry values are not positive integers
+     * @throws \DomainException  If JWT_SECRET is shorter than 32 characters
      */
     public static function fromEnv(): JwtService
     {
