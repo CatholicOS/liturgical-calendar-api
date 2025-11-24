@@ -26,6 +26,11 @@ class User
     public readonly array $roles;
 
     /**
+     * Cached development password hash to avoid re-hashing on every authentication
+     */
+    private static ?string $devPasswordHash = null;
+
+    /**
      * Constructor
      *
      * @param string   $username     Username
@@ -68,8 +73,13 @@ class User
             if ($_ENV['APP_ENV'] === 'production') {
                 throw new \RuntimeException('ADMIN_PASSWORD_HASH must be set in production environment');
             }
-            $adminPasswordHash = password_hash('password', PASSWORD_ARGON2ID);
-            // password_hash with PASSWORD_ARGON2ID always succeeds
+            // Cache the development password hash to avoid re-hashing on every authentication
+            // Argon2id is intentionally slow, so caching significantly improves performance
+            if (self::$devPasswordHash === null) {
+                // password_hash with PASSWORD_ARGON2ID always returns a non-empty string
+                self::$devPasswordHash = password_hash('password', PASSWORD_ARGON2ID);
+            }
+            $adminPasswordHash = self::$devPasswordHash;
         }
 
         // Verify password
