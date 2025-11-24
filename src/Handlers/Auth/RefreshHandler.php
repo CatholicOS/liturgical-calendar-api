@@ -34,6 +34,12 @@ final class RefreshHandler extends AbstractHandler
 {
     private JwtService $jwtService;
 
+    /**
+     * Configure handler defaults and initialize services for the refresh endpoint.
+     *
+     * Sets the allowed HTTP method to POST, restricts Accept and Content-Type to JSON,
+     * and initializes the JwtService from environment configuration.
+     */
     public function __construct()
     {
         parent::__construct();
@@ -50,12 +56,15 @@ final class RefreshHandler extends AbstractHandler
     }
 
     /**
-     * Handle the token refresh request
+     * Process a refresh-token request and return a JSON response containing a new access token.
      *
-     * @param ServerRequestInterface $request
-     * @return ResponseInterface
-     * @throws UnauthorizedException
-     * @throws ValidationException
+     * Validates the request (method, headers, body), extracts the `refresh_token`, exchanges it for
+     * a new access token, and returns a response with `access_token`, `expires_in`, and `token_type`.
+     *
+     * @param ServerRequestInterface $request The incoming HTTP request for the refresh operation.
+     * @return ResponseInterface The HTTP response containing the JSON payload with `access_token`, `expires_in`, and `token_type`.
+     * @throws ValidationException If the `refresh_token` is missing or not a non-empty string.
+     * @throws UnauthorizedException If the provided refresh token is invalid or expired.
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {

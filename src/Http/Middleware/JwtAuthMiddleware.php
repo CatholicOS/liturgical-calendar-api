@@ -27,9 +27,11 @@ class JwtAuthMiddleware implements MiddlewareInterface
     private JwtService $jwtService;
 
     /**
-     * Constructor
+     * Create the middleware and set its JwtService.
      *
-     * @param JwtService|null $jwtService Optional JWT service (for dependency injection)
+     * If a JwtService is provided it will be used; otherwise a service is created from environment via JwtServiceFactory::fromEnv().
+     *
+     * @param JwtService|null $jwtService Optional JwtService instance to use for token verification; when null a JwtService is created from environment.
      */
     public function __construct(?JwtService $jwtService = null)
     {
@@ -37,12 +39,18 @@ class JwtAuthMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Process the request and authenticate using JWT
+     * Authenticate the incoming request using a Bearer JWT and forward it to the next handler.
      *
-     * @param ServerRequestInterface  $request Request
-     * @param RequestHandlerInterface $handler Next handler
-     * @return ResponseInterface       Response
-     * @throws UnauthorizedException   If authentication fails
+     * If authentication succeeds, the request is augmented with two attributes:
+     * - `user`: a User instance created from the JWT payload.
+     * - `jwt_payload`: the raw JWT payload.
+     *
+     * @param ServerRequestInterface  $request The incoming server request.
+     * @param RequestHandlerInterface $handler The next request handler to invoke on success.
+     * @return ResponseInterface The response returned by the next handler.
+     * @throws UnauthorizedException If the Authorization header is missing, has an invalid format,
+     *                               the token is missing, the token is invalid or expired, or the
+     *                               payload does not correspond to a valid user.
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {

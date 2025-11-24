@@ -27,9 +27,9 @@ enum StatusCode: int
     case SERVICE_UNAVAILABLE    = 503;
 
     /**
-     * Converts an HTTP status code to its corresponding string representation.
+     * Get the reason phrase for the HTTP status code.
      *
-     * @return string The 'reason' that accompanies the HTTP Status code.
+     * @return string The reason phrase corresponding to the status code.
      */
     public function toString(): string
     {

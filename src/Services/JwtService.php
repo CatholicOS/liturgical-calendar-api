@@ -29,12 +29,14 @@ class JwtService
     private int $refreshExpiry;
 
     /**
-     * Constructor
+     * Create a JwtService configured with a signing secret, algorithm, and token lifetimes.
      *
-     * @param string $secret        Secret key for signing tokens (minimum 32 characters recommended)
-     * @param string $algorithm     Algorithm to use (default: HS256)
-     * @param int    $expiry        Access token expiry in seconds (default: 3600 = 1 hour)
-     * @param int    $refreshExpiry Refresh token expiry in seconds (default: 604800 = 7 days)
+     * @param string $secret        Signing secret (must be at least 32 characters).
+     * @param string $algorithm     Signing algorithm to use (e.g., 'HS256').
+     * @param int    $expiry        Access token lifetime in seconds.
+     * @param int    $refreshExpiry Refresh token lifetime in seconds.
+     *
+     * @throws DomainException If the provided secret is shorter than 32 characters.
      */
     public function __construct(
         string $secret,
@@ -53,11 +55,11 @@ class JwtService
     }
 
     /**
-     * Generate an access token
+     * Create an access JSON Web Token for the given user.
      *
-     * @param string                $username  Username/identifier for the token subject
-     * @param array<string, mixed>  $claims    Additional claims to include in the token
-     * @return string                          JWT token
+     * @param string $username Username to set as the token subject (`sub` claim).
+     * @param array<string,mixed> $claims Additional claims to merge into the token payload.
+     * @return string The encoded JWT access token.
      */
     public function generate(string $username, array $claims = []): string
     {
@@ -100,10 +102,13 @@ class JwtService
     }
 
     /**
-     * Verify a JWT token and return its payload
+     * Verify an access JWT and return its decoded payload.
      *
-     * @param string $token JWT token to verify
-     * @return object|null  Decoded token payload, or null if invalid
+     * Returns the decoded payload when the token is a valid access token; returns null for expired,
+     * malformed, signature-invalid, not-yet-valid, or non-access tokens.
+     *
+     * @param string $token JWT to verify.
+     * @return object|null Decoded token payload if the token is a valid access token, null otherwise.
      */
     public function verify(string $token): ?object
     {
@@ -132,11 +137,11 @@ class JwtService
     }
 
     /**
-     * Verify a refresh token and return its payload
-     *
-     * @param string $token Refresh token to verify
-     * @return object|null  Decoded token payload, or null if invalid
-     */
+         * Validate a JWT refresh token and return its decoded payload.
+         *
+         * @param string $token The JWT refresh token string to validate.
+         * @return object|null Decoded token payload when the token is valid and has type `refresh`, `null` otherwise.
+         */
     public function verifyRefreshToken(string $token): ?object
     {
         try {
@@ -160,10 +165,15 @@ class JwtService
     }
 
     /**
-     * Refresh an access token using a refresh token
+     * Issue a new access token from a valid refresh token.
      *
-     * @param string $refreshToken Refresh token
-     * @return string|null         New access token, or null if refresh token is invalid
+     * Validates the provided refresh token; if valid and containing a subject (`sub`),
+     * generates a new access token for that subject and preserves any non-standard
+     * claims from the refresh token. Returns `null` if the refresh token is invalid,
+     * expired, or missing a subject.
+     *
+     * @param string $refreshToken JWT refresh token.
+     * @return string|null New access token on success, `null` otherwise.
      */
     public function refresh(string $refreshToken): ?string
     {
@@ -190,11 +200,12 @@ class JwtService
     }
 
     /**
-     * Extract username from token without verification
-     * (Use only for debugging, always verify tokens in production)
+     * Extracts the JWT subject (`sub` claim) from a token without verifying its signature.
      *
-     * @param string $token JWT token
-     * @return string|null  Username/subject, or null if token is malformed
+     * Note: this parses the token payload only and does not validate the token; use a verification method before trusting the result.
+     *
+     * @param string $token The JWT string.
+     * @return string|null The `sub` claim (username) if present and a string, or `null` if the token is malformed or `sub` is missing/invalid.
      */
     public function extractUsername(string $token): ?string
     {
@@ -224,9 +235,9 @@ class JwtService
     }
 
     /**
-     * Get the token expiry time in seconds
+     * Access token lifetime in seconds.
      *
-     * @return int Token expiry in seconds
+     * @return int Access token lifetime in seconds.
      */
     public function getExpiry(): int
     {
@@ -234,9 +245,9 @@ class JwtService
     }
 
     /**
-     * Get the refresh token expiry time in seconds
+     * Get the refresh token lifetime in seconds.
      *
-     * @return int Refresh token expiry in seconds
+     * @return int The refresh token lifetime in seconds.
      */
     public function getRefreshExpiry(): int
     {
