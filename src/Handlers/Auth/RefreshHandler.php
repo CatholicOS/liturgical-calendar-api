@@ -78,12 +78,8 @@ final class RefreshHandler extends AbstractHandler
         $mime     = $this->validateAcceptHeader($request, AcceptabilityLevel::LAX);
         $response = $response->withHeader('Content-Type', $mime);
 
-        // Parse request body
-        $parsedBodyParams = $this->parseBodyParams($request, false);
-
-        if ($parsedBodyParams === null) {
-            throw new ValidationException('Request body is required');
-        }
+        // Parse request body (required=true handles Content-Type and empty body validation)
+        $parsedBodyParams = $this->parseBodyParams($request, true);
 
         // Extract refresh token
         $refreshToken = $parsedBodyParams['refresh_token'] ?? null;
@@ -106,9 +102,7 @@ final class RefreshHandler extends AbstractHandler
             'token_type' => 'Bearer'
         ];
 
-        // Encode response
-        $response = $this->encodeResponseBody($response, $responseData);
-
-        return $response->withStatus(StatusCode::OK->value, StatusCode::OK->reason());
+        // Encode response (encodeResponseBody sets status to 200 OK by default)
+        return $this->encodeResponseBody($response, $responseData);
     }
 }
