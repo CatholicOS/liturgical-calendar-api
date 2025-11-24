@@ -421,6 +421,7 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 - ✅ **Longer-lived refresh tokens** - Default 7 days (configurable via `JWT_REFRESH_EXPIRY`)
 - ✅ **Password hashing** - Uses `password_hash()` with `PASSWORD_ARGON2ID`
 - ✅ **JWT signature verification** - All tokens validated with HS256 algorithm
+- ✅ **CSRF protection** - JWT in `Authorization` header (not cookies) provides inherent CSRF protection; explicit CSRF tokens may be added in Phase 5 for defense-in-depth
 
 **Recommended for Production (Not Yet Implemented):**
 
