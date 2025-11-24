@@ -24,7 +24,7 @@ use Psr\Http\Message\ServerRequestInterface;
  * - refresh_token (string) - JWT refresh token
  *
  * Returns:
- * - token (string) - New JWT access token
+ * - access_token (string) - New JWT access token
  * - expires_in (int) - Token expiry in seconds
  * - token_type (string) - "Bearer"
  *
