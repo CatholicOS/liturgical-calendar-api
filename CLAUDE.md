@@ -91,6 +91,9 @@ composer lint
 # Auto-fix code style issues
 composer lint:fix
 
+# Lint OpenAPI schema with Redocly
+composer lint:openapi
+
 # Parallel syntax checking
 composer parallel-lint
 ```

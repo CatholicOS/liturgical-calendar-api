@@ -2687,7 +2687,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Update a diocesan calendar data resource",
         "operationId": "diocesanDataPATCH",
@@ -2889,7 +2891,9 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          }
         ],
         "summary": "Update a wider region calendar data resource",
         "operationId": "widerregionDataPATCH",
