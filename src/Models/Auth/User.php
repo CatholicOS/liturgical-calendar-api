@@ -94,8 +94,14 @@ class User
                 // Cache the development password hash to avoid re-hashing on every authentication
                 // Argon2id is intentionally slow, so caching significantly improves performance
                 if (self::$devPasswordHash === null) {
-                    // password_hash with PASSWORD_ARGON2ID always returns a non-empty string
-                    self::$devPasswordHash = password_hash('password', PASSWORD_ARGON2ID);
+                    $hash = password_hash('password', PASSWORD_ARGON2ID);
+                    // Defensive check: password_hash() can theoretically return false
+                    // @phpstan-ignore identical.alwaysFalse
+                    if ($hash === false) {
+                        error_log('Authentication failed: password_hash() returned false');
+                        throw new \RuntimeException('Failed to generate password hash');
+                    }
+                    self::$devPasswordHash = $hash;
                 }
                 $adminPasswordHash = self::$devPasswordHash;
             } else {
