@@ -7,6 +7,10 @@ use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
+use LiturgicalCalendar\Api\Services\JwtService;
+use LiturgicalCalendar\Api\Services\JwtServiceFactory;
+use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -27,6 +31,9 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class LogoutHandler extends AbstractHandler
 {
+    private ?JwtService $jwtService = null;
+    private Logger $authLogger;
+
     /**
      * Initialize the logout handler with allowed methods and accepted content types.
      *
@@ -42,6 +49,22 @@ final class LogoutHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+
+        // Initialize auth logger
+        $this->authLogger = LoggerFactory::create('auth', null, 30, false, true, false);
+    }
+
+    /**
+     * Get the JWT service instance, creating it if needed (lazy loading).
+     *
+     * @throws \RuntimeException If JWT configuration is missing or invalid.
+     */
+    private function getJwtService(): JwtService
+    {
+        if ($this->jwtService === null) {
+            $this->jwtService = JwtServiceFactory::fromEnv();
+        }
+        return $this->jwtService;
     }
 
     /**
@@ -73,6 +96,29 @@ final class LogoutHandler extends AbstractHandler
         // Validate Accept header
         $mime     = $this->validateAcceptHeader($request, AcceptabilityLevel::LAX);
         $response = $response->withHeader('Content-Type', $mime);
+
+        // Get client IP for logging
+        $serverParams = $request->getServerParams();
+        $clientIp     = $serverParams['REMOTE_ADDR'] ?? 'unknown';
+
+        // Try to extract username from Authorization header for logging
+        $username   = 'unknown';
+        $authHeader = $request->getHeaderLine('Authorization');
+        if (!empty($authHeader) && str_starts_with($authHeader, 'Bearer ')) {
+            $token = substr($authHeader, 7);
+            try {
+                $jwtService = $this->getJwtService();
+                $username   = $jwtService->extractUsername($token) ?? 'unknown';
+            } catch (\RuntimeException) {
+                // JWT configuration missing, continue with 'unknown' username
+            }
+        }
+
+        // Log the logout event
+        $this->authLogger->info('Logout', [
+            'username'  => $username,
+            'client_ip' => $clientIp
+        ]);
 
         // Prepare response data
         $responseData = [

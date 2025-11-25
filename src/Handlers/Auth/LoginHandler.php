@@ -9,9 +9,11 @@ use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Models\Auth\User;
 use LiturgicalCalendar\Api\Services\JwtService;
 use LiturgicalCalendar\Api\Services\JwtServiceFactory;
+use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -35,6 +37,7 @@ use Psr\Http\Message\ServerRequestInterface;
 final class LoginHandler extends AbstractHandler
 {
     private ?JwtService $jwtService = null;
+    private Logger $authLogger;
 
     /**
      * Initialize the login handler with allowed methods, accepted content types.
@@ -53,6 +56,9 @@ final class LoginHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+
+        // Initialize auth logger
+        $this->authLogger = LoggerFactory::create('auth', null, 30, false, true, false);
     }
 
     /**
@@ -112,10 +118,20 @@ final class LoginHandler extends AbstractHandler
             throw new ValidationException('Username and password are required and must be strings');
         }
 
+        // Get client IP for logging
+        $serverParams = $request->getServerParams();
+        $clientIp     = $serverParams['REMOTE_ADDR'] ?? 'unknown';
+
         // Authenticate user
         $user = User::authenticate($username, $password);
 
         if ($user === null) {
+            // Log failed login attempt
+            $this->authLogger->warning('Login failed', [
+                'username'  => $username,
+                'client_ip' => $clientIp,
+                'reason'    => 'Invalid credentials'
+            ]);
             throw new UnauthorizedException('Invalid username or password');
         }
 
@@ -123,6 +139,12 @@ final class LoginHandler extends AbstractHandler
         $jwtService   = $this->getJwtService();
         $token        = $jwtService->generate($user->username, ['roles' => $user->roles]);
         $refreshToken = $jwtService->generateRefreshToken($user->username);
+
+        // Log successful login
+        $this->authLogger->info('Login successful', [
+            'username'  => $user->username,
+            'client_ip' => $clientIp
+        ]);
 
         // Prepare response data
         $responseData = [

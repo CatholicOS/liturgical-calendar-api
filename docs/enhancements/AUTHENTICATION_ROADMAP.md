@@ -62,6 +62,7 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
 
 4. **HTTP Handlers**
    - ✅ `LoginHandler` (`src/Handlers/Auth/LoginHandler.php`) - POST `/auth/login`
+   - ✅ `LogoutHandler` (`src/Handlers/Auth/LogoutHandler.php`) - POST `/auth/logout`
    - ✅ `RefreshHandler` (`src/Handlers/Auth/RefreshHandler.php`) - POST `/auth/refresh`
 
 5. **HTTP Exceptions**
@@ -70,7 +71,7 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
    - ✅ Updated `StatusCode` enum with UNAUTHORIZED and FORBIDDEN cases
 
 6. **Router Updates**
-   - ✅ Added `/auth/login` and `/auth/refresh` routes
+   - ✅ Added `/auth/login`, `/auth/logout`, and `/auth/refresh` routes
    - ✅ Applied JWT middleware to `/data` endpoint for PUT/PATCH/DELETE operations
 
 7. **Configuration**
@@ -89,6 +90,7 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
 **API Endpoints:**
 
 - `POST /auth/login` - Authenticate and receive tokens
+- `POST /auth/logout` - End session (stateless; client deletes tokens)
 - `POST /auth/refresh` - Refresh access token using refresh token
 - `PUT /data/{category}/{calendar}` - Protected (requires JWT)
 - `PATCH /data/{category}/{calendar}` - Protected (requires JWT)
@@ -441,6 +443,7 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 - ✅ **Password hashing** - Uses `password_hash()` with `PASSWORD_ARGON2ID`
 - ✅ **JWT signature verification** - All tokens validated with HS256 algorithm
 - ✅ **CSRF protection** - JWT in `Authorization` header (not cookies) provides inherent CSRF protection; explicit CSRF tokens may be added in Phase 5 for defense-in-depth
+- ✅ **Authentication logging** - All login attempts (success/failure) and logouts logged to dedicated `auth.log` file
 
 **Recommended for Production (Not Yet Implemented):**
 
@@ -455,10 +458,45 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 - **No password reset** - Requires manual `.env` update
 - **No RBAC** - All authenticated users have same permissions
 - **No calendar-specific permissions** - Any authenticated user can modify any calendar
-- **No audit logging** - Who modified what is not tracked
+- **Limited audit logging** - Authentication events logged, but data modifications not yet tracked
 - **No refresh token rotation** - Refresh tokens don't expire on use
 
 These limitations are acceptable for the initial implementation to protect against unauthorized modifications. Future phases will address them.
+
+#### Authentication Logging
+
+Authentication events are logged to dedicated log files in the `logs/` directory:
+
+- **Log files:** `auth-YYYY-MM-DD.log` (plain text) and `auth.json-YYYY-MM-DD.log` (JSON format)
+- **Rotation:** Daily rotation, 30 days retention
+- **Events logged:**
+  - Successful logins (INFO level) - username, client IP
+  - Failed login attempts (WARNING level) - attempted username, client IP, reason
+  - Logouts (INFO level) - username (extracted from token if provided), client IP
+
+**Example log entries:**
+
+```text
+[2025-11-25 14:30:00] INFO: Login successful
+    username: admin
+    client_ip: 192.168.1.100
+
+[2025-11-25 14:35:00] WARNING: Login failed
+    username: hacker
+    client_ip: 192.168.1.50
+    reason: Invalid credentials
+
+[2025-11-25 15:00:00] INFO: Logout
+    username: admin
+    client_ip: 192.168.1.100
+```
+
+This logging helps with:
+
+- **Security monitoring** - Detect brute force attacks via repeated failed logins
+- **Audit trails** - Track who authenticated and when
+- **Debugging** - Troubleshoot authentication issues
+- **Compliance** - Meet audit requirements for access logging
 
 ---
 
