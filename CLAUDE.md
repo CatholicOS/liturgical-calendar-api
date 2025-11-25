@@ -384,6 +384,7 @@ All markdown files must conform to rules in `.markdownlint.yml`:
   - Example: If list item is `1. Item`, code block starts at column 4 (3 spaces indent)
 - **Fenced code blocks:** Use ``` style, not indented code blocks (MD046)
 - **Ordered lists:** Use sequential numbering (1, 2, 3...) not all 1's (MD029)
+- **Tables:** Columns must be vertically aligned using consistent spacing (MD060)
 
 Example of properly indented code block in a list:
 
@@ -401,6 +402,15 @@ Example of properly indented code block in a list:
    ```
 
 `````
+
+Example of properly aligned table:
+
+```markdown
+| Column A | Column B | Column C |
+|----------|----------|----------|
+| Short    | Medium   | Longer   |
+| Value    | Value    | Value    |
+```
 
 ### Markdown Linting
 
@@ -450,6 +460,7 @@ npx --yes markdownlint-cli CLAUDE.md
 - **Line length (MD013):** Keep lines under 180 characters (excludes code blocks and tables)
 - **Blank lines around lists (MD032):** Surround lists with blank lines
 - **Blank lines around code blocks (MD031):** Surround code blocks with blank lines
+- **Table alignment (MD060):** Use consistent spacing to align table columns vertically
 
 ## Important Notes
 
