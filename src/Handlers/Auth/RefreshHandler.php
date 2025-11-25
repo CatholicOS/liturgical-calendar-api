@@ -9,8 +9,10 @@ use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Services\JwtService;
 use LiturgicalCalendar\Api\Services\JwtServiceFactory;
+use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -32,6 +34,7 @@ use Psr\Http\Message\ServerRequestInterface;
 final class RefreshHandler extends AbstractHandler
 {
     private ?JwtService $jwtService = null;
+    private Logger $authLogger;
 
     /**
      * Configure handler defaults for the refresh endpoint.
@@ -50,6 +53,9 @@ final class RefreshHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+
+        // Initialize auth logger
+        $this->authLogger = LoggerFactory::create('auth', null, 30, false, true, false);
     }
 
     /**
@@ -63,6 +69,39 @@ final class RefreshHandler extends AbstractHandler
             $this->jwtService = JwtServiceFactory::fromEnv();
         }
         return $this->jwtService;
+    }
+
+    /**
+     * Get the client IP address, checking proxy headers first.
+     *
+     * Checks X-Forwarded-For and X-Real-IP headers (common in reverse proxy setups)
+     * before falling back to REMOTE_ADDR. For X-Forwarded-For, uses the first IP
+     * in the chain (the original client).
+     *
+     * @param ServerRequestInterface $request The incoming HTTP request.
+     * @param array<string, mixed> $serverParams Server parameters from the request.
+     * @return string The client IP address, or 'unknown' if not determinable.
+     */
+    private function getClientIp(ServerRequestInterface $request, array $serverParams): string
+    {
+        // Check X-Forwarded-For header (may contain comma-separated list of IPs)
+        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
+        if ($forwardedFor !== '') {
+            // Use the first IP in the chain (original client)
+            $ips = array_map('trim', explode(',', $forwardedFor));
+            if (!empty($ips[0])) {
+                return $ips[0];
+            }
+        }
+
+        // Check X-Real-IP header
+        $realIp = $request->getHeaderLine('X-Real-IP');
+        if ($realIp !== '') {
+            return $realIp;
+        }
+
+        // Fall back to REMOTE_ADDR
+        return is_string($serverParams['REMOTE_ADDR'] ?? null) ? $serverParams['REMOTE_ADDR'] : 'unknown';
     }
 
     /**
@@ -100,6 +139,11 @@ final class RefreshHandler extends AbstractHandler
         // Parse request body (required=true handles Content-Type and empty body validation)
         $parsedBodyParams = $this->parseBodyParams($request, true);
 
+        // Get client IP for logging (check proxy headers first, then fall back to REMOTE_ADDR)
+        /** @var array<string, mixed> $serverParams */
+        $serverParams = $request->getServerParams();
+        $clientIp     = $this->getClientIp($request, $serverParams);
+
         // Extract refresh token
         $refreshToken = $parsedBodyParams['refresh_token'] ?? null;
 
@@ -112,8 +156,20 @@ final class RefreshHandler extends AbstractHandler
         $newToken   = $jwtService->refresh($refreshToken);
 
         if ($newToken === null) {
+            // Log failed refresh attempt
+            $this->authLogger->warning('Token refresh failed', [
+                'client_ip' => $clientIp,
+                'reason'    => 'Invalid or expired refresh token'
+            ]);
             throw new UnauthorizedException('Invalid or expired refresh token');
         }
+
+        // Log successful refresh
+        $username = $jwtService->extractUsername($refreshToken) ?? 'unknown';
+        $this->authLogger->info('Token refresh successful', [
+            'username'  => $username,
+            'client_ip' => $clientIp
+        ]);
 
         // Prepare response data
         $responseData = [
@@ -121,6 +177,9 @@ final class RefreshHandler extends AbstractHandler
             'expires_in'   => $jwtService->getExpiry(),
             'token_type'   => 'Bearer'
         ];
+
+        // Add Cache-Control header to prevent intermediaries from caching tokens
+        $response = $response->withHeader('Cache-Control', 'no-store');
 
         // Encode response (encodeResponseBody sets status to 200 OK by default)
         return $this->encodeResponseBody($response, $responseData);

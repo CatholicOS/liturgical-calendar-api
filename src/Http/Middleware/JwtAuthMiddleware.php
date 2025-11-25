@@ -61,8 +61,8 @@ class JwtAuthMiddleware implements MiddlewareInterface
             throw new UnauthorizedException('Missing Authorization header');
         }
 
-        // Check for Bearer token format
-        if (!str_starts_with($authHeader, 'Bearer ')) {
+        // Check for Bearer token format (case-insensitive per RFC 7235)
+        if (!str_starts_with(strtolower($authHeader), 'bearer ')) {
             throw new UnauthorizedException('Invalid Authorization header format. Expected: Bearer <token>');
         }
 

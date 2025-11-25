@@ -66,14 +66,16 @@ class JwtService
         $issuedAt  = time();
         $expiresAt = $issuedAt + $this->expiry;
 
-        $payload = array_merge([
+        // Merge custom claims first, then standard claims, so standard claims always take precedence
+        // This prevents callers from overwriting iss, aud, iat, exp, sub, or type
+        $payload = array_merge($claims, [
             'iss'  => $_SERVER['HTTP_HOST'] ?? 'liturgicalcalendar.org',  // Issuer
             'aud'  => $_SERVER['HTTP_HOST'] ?? 'liturgicalcalendar.org',  // Audience
             'iat'  => $issuedAt,                                           // Issued at
             'exp'  => $expiresAt,                                          // Expires at
             'sub'  => $username,                                           // Subject (username)
-            'type' => 'access'                                            // Token type
-        ], $claims);
+            'type' => 'access'                                             // Token type
+        ]);
 
         return JWT::encode($payload, $this->secret, $this->algorithm);
     }
@@ -137,11 +139,11 @@ class JwtService
     }
 
     /**
-         * Validate a JWT refresh token and return its decoded payload.
-         *
-         * @param string $token The JWT refresh token string to validate.
-         * @return object|null Decoded token payload when the token is valid and has type `refresh`, `null` otherwise.
-         */
+     * Validate a JWT refresh token and return its decoded payload.
+     *
+     * @param string $token The JWT refresh token string to validate.
+     * @return object|null Decoded token payload when the token is valid and has type `refresh`, `null` otherwise.
+     */
     public function verifyRefreshToken(string $token): ?object
     {
         try {

@@ -68,6 +68,39 @@ final class LogoutHandler extends AbstractHandler
     }
 
     /**
+     * Get the client IP address, checking proxy headers first.
+     *
+     * Checks X-Forwarded-For and X-Real-IP headers (common in reverse proxy setups)
+     * before falling back to REMOTE_ADDR. For X-Forwarded-For, uses the first IP
+     * in the chain (the original client).
+     *
+     * @param ServerRequestInterface $request The incoming HTTP request.
+     * @param array<string, mixed> $serverParams Server parameters from the request.
+     * @return string The client IP address, or 'unknown' if not determinable.
+     */
+    private function getClientIp(ServerRequestInterface $request, array $serverParams): string
+    {
+        // Check X-Forwarded-For header (may contain comma-separated list of IPs)
+        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
+        if ($forwardedFor !== '') {
+            // Use the first IP in the chain (original client)
+            $ips = array_map('trim', explode(',', $forwardedFor));
+            if (!empty($ips[0])) {
+                return $ips[0];
+            }
+        }
+
+        // Check X-Real-IP header
+        $realIp = $request->getHeaderLine('X-Real-IP');
+        if ($realIp !== '') {
+            return $realIp;
+        }
+
+        // Fall back to REMOTE_ADDR
+        return is_string($serverParams['REMOTE_ADDR'] ?? null) ? $serverParams['REMOTE_ADDR'] : 'unknown';
+    }
+
+    /**
      * Process a logout request and return a success response.
      *
      * Since JWTs are stateless, this endpoint simply returns a success message.
@@ -97,20 +130,24 @@ final class LogoutHandler extends AbstractHandler
         $mime     = $this->validateAcceptHeader($request, AcceptabilityLevel::LAX);
         $response = $response->withHeader('Content-Type', $mime);
 
-        // Get client IP for logging
+        // Get client IP for logging (check proxy headers first, then fall back to REMOTE_ADDR)
+        /** @var array<string, mixed> $serverParams */
         $serverParams = $request->getServerParams();
-        $clientIp     = $serverParams['REMOTE_ADDR'] ?? 'unknown';
+        $clientIp     = $this->getClientIp($request, $serverParams);
 
         // Try to extract username from Authorization header for logging
         $username   = 'unknown';
         $authHeader = $request->getHeaderLine('Authorization');
-        if (!empty($authHeader) && str_starts_with($authHeader, 'Bearer ')) {
+        if (!empty($authHeader) && str_starts_with(strtolower($authHeader), 'bearer ')) {
             $token = substr($authHeader, 7);
             try {
                 $jwtService = $this->getJwtService();
                 $username   = $jwtService->extractUsername($token) ?? 'unknown';
-            } catch (\RuntimeException) {
-                // JWT configuration missing, continue with 'unknown' username
+            } catch (\Throwable $e) {
+                // Any JWT/config issue: keep logout successful, log at debug level
+                $this->authLogger->debug('Failed to extract username from JWT during logout', [
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 

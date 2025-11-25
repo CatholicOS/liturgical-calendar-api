@@ -62,11 +62,12 @@ class User
     public static function authenticate(string $username, string $password): ?self
     {
         // Get admin credentials from environment
+        /** @var string $adminUsername */
         $adminUsername     = $_ENV['ADMIN_USERNAME'] ?? 'admin';
         $adminPasswordHash = $_ENV['ADMIN_PASSWORD_HASH'] ?? null;
 
-        // Check if credentials match
-        if ($username !== $adminUsername) {
+        // Check if credentials match (use constant-time comparison to prevent timing attacks)
+        if (!hash_equals($adminUsername, $username)) {
             return null;
         }
 
