@@ -154,6 +154,9 @@ final class LoginHandler extends AbstractHandler
             'token_type'    => 'Bearer'
         ];
 
+        // Add Cache-Control header to prevent intermediaries from caching tokens
+        $response = $response->withHeader('Cache-Control', 'no-store');
+
         // Encode response (encodeResponseBody sets status to 200 OK by default)
         return $this->encodeResponseBody($response, $responseData);
     }

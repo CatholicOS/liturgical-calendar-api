@@ -9,8 +9,10 @@ use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Services\JwtService;
 use LiturgicalCalendar\Api\Services\JwtServiceFactory;
+use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -32,6 +34,7 @@ use Psr\Http\Message\ServerRequestInterface;
 final class RefreshHandler extends AbstractHandler
 {
     private ?JwtService $jwtService = null;
+    private Logger $authLogger;
 
     /**
      * Configure handler defaults for the refresh endpoint.
@@ -50,6 +53,9 @@ final class RefreshHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+
+        // Initialize auth logger
+        $this->authLogger = LoggerFactory::create('auth', null, 30, false, true, false);
     }
 
     /**
@@ -100,6 +106,10 @@ final class RefreshHandler extends AbstractHandler
         // Parse request body (required=true handles Content-Type and empty body validation)
         $parsedBodyParams = $this->parseBodyParams($request, true);
 
+        // Get client IP for logging
+        $serverParams = $request->getServerParams();
+        $clientIp     = $serverParams['REMOTE_ADDR'] ?? 'unknown';
+
         // Extract refresh token
         $refreshToken = $parsedBodyParams['refresh_token'] ?? null;
 
@@ -112,8 +122,20 @@ final class RefreshHandler extends AbstractHandler
         $newToken   = $jwtService->refresh($refreshToken);
 
         if ($newToken === null) {
+            // Log failed refresh attempt
+            $this->authLogger->warning('Token refresh failed', [
+                'client_ip' => $clientIp,
+                'reason'    => 'Invalid or expired refresh token'
+            ]);
             throw new UnauthorizedException('Invalid or expired refresh token');
         }
+
+        // Log successful refresh
+        $username = $jwtService->extractUsername($refreshToken) ?? 'unknown';
+        $this->authLogger->info('Token refresh successful', [
+            'username'  => $username,
+            'client_ip' => $clientIp
+        ]);
 
         // Prepare response data
         $responseData = [
@@ -121,6 +143,9 @@ final class RefreshHandler extends AbstractHandler
             'expires_in'   => $jwtService->getExpiry(),
             'token_type'   => 'Bearer'
         ];
+
+        // Add Cache-Control header to prevent intermediaries from caching tokens
+        $response = $response->withHeader('Cache-Control', 'no-store');
 
         // Encode response (encodeResponseBody sets status to 200 OK by default)
         return $this->encodeResponseBody($response, $responseData);
