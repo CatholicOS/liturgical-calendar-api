@@ -221,6 +221,113 @@ JSON;
         $this->assertSame(401, $response->getStatusCode(), 'Expected HTTP 401 Unauthorized (authentication required for PATCH), instead got ' . $response->getBody());
     }
 
+    /**
+     * Test PUT with authentication returns 409 Conflict for existing calendar.
+     *
+     * This tests the handler-level behavior that was previously bypassed by 401 auth checks.
+     */
+    public function testAuthenticatedPutDataExistingCalendarReturns409(): void
+    {
+        $token = self::getJwtToken();
+        $this->assertNotNull($token, 'Failed to obtain JWT token for authenticated test');
+
+        $response = self::$http->put('/data/nation', [
+            'headers' => array_merge(
+                self::authHeaders($token),
+                [ 'Content-Type' => 'application/json' ]
+            ),
+            'body'    => self::$existingBody
+        ]);
+        $this->assertSame(409, $response->getStatusCode(), 'Expected HTTP 409 Conflict for existing calendar, instead got ' . $response->getStatusCode() . ': ' . $response->getBody());
+    }
+
+    /**
+     * Test PATCH with authentication returns 422 Unprocessable Content for ID mismatch.
+     *
+     * This tests the handler-level behavior that was previously bypassed by 401 auth checks.
+     * Attempting to patch the national calendar of Italy with data for Canada.
+     */
+    public function testAuthenticatedPatchCalendarDataIdMismatchReturns422(): void
+    {
+        $token = self::getJwtToken();
+        $this->assertNotNull($token, 'Failed to obtain JWT token for authenticated test');
+
+        // Attempting to patch Italy with Canada's data
+        $response = self::$http->patch('/data/nation/IT', [
+            'headers' => array_merge(
+                self::authHeaders($token),
+                [ 'Content-Type' => 'application/json' ]
+            ),
+            'body'    => self::$existingBody
+        ]);
+        $this->assertSame(422, $response->getStatusCode(), 'Expected HTTP 422 Unprocessable Content for ID mismatch, instead got ' . $response->getStatusCode() . ': ' . $response->getBody());
+    }
+
+    /**
+     * Test PUT/PATCH with authentication but without Content-Type header returns 415.
+     *
+     * This tests the handler-level Content-Type validation that was previously bypassed by 401 auth checks.
+     */
+    public function testAuthenticatedPutPatchWithoutContentTypeReturns415(): void
+    {
+        $token = self::getJwtToken();
+        $this->assertNotNull($token, 'Failed to obtain JWT token for authenticated test');
+
+        // PUT without Content-Type
+        $putResponse = self::$http->put('/data/nation', [
+            'headers' => self::authHeaders($token),
+            'body'    => self::$existingBody
+        ]);
+        $this->assertSame(415, $putResponse->getStatusCode(), 'Expected HTTP 415 Unsupported Media Type for PUT without Content-Type, instead got ' . $putResponse->getStatusCode() . ': ' . $putResponse->getBody());
+
+        // PATCH without Content-Type
+        $patchResponse = self::$http->patch('/data/nation/IT', [
+            'headers' => self::authHeaders($token),
+            'body'    => self::$existingBody
+        ]);
+        $this->assertSame(415, $patchResponse->getStatusCode(), 'Expected HTTP 415 Unsupported Media Type for PATCH without Content-Type, instead got ' . $patchResponse->getStatusCode() . ': ' . $patchResponse->getBody());
+    }
+
+    /**
+     * Test authenticated PUT/PATCH/DELETE without path parameters returns proper validation errors.
+     *
+     * This tests the handler-level path parameter validation that was previously bypassed by 401 auth checks.
+     */
+    public function testAuthenticatedWriteOperationsWithoutPathParametersReturnValidationErrors(): void
+    {
+        $token = self::getJwtToken();
+        $this->assertNotNull($token, 'Failed to obtain JWT token for authenticated test');
+
+        // PUT without path params should return 400 (expects one path param)
+        $putResponse = self::$http->put('/data', [
+            'headers' => array_merge(
+                self::authHeaders($token),
+                [ 'Content-Type' => 'application/json' ]
+            ),
+            'body'    => self::$existingBody
+        ]);
+        $this->assertSame(400, $putResponse->getStatusCode(), 'Expected HTTP 400 Bad Request for PUT without path params');
+        $this->validatePutNoPathParametersErrorResponse($putResponse);
+
+        // PATCH without path params should return 400 (expects two path params)
+        $patchResponse = self::$http->patch('/data', [
+            'headers' => array_merge(
+                self::authHeaders($token),
+                [ 'Content-Type' => 'application/json' ]
+            ),
+            'body'    => self::$existingBody
+        ]);
+        $this->assertSame(400, $patchResponse->getStatusCode(), 'Expected HTTP 400 Bad Request for PATCH without path params');
+        $this->validatePatchDeleteNoPathParametersErrorResponse($patchResponse);
+
+        // DELETE without path params should return 400 (expects two path params)
+        $deleteResponse = self::$http->delete('/data', [
+            'headers' => self::authHeaders($token)
+        ]);
+        $this->assertSame(400, $deleteResponse->getStatusCode(), 'Expected HTTP 400 Bad Request for DELETE without path params');
+        $this->validatePatchDeleteNoPathParametersErrorResponse($deleteResponse);
+    }
+
     public function deleteCalendarDataNationStillHeldByDiocesanCalendarsReturnsError(\Psr\Http\Message\ResponseInterface $response): void
     {
         $response = self::$http->delete('/data/nation/CA', []);

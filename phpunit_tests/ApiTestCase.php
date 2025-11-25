@@ -187,4 +187,48 @@ abstract class ApiTestCase extends TestCase
         // Neither reachable
         return ['preferV4' => null, 'addr' => null];
     }
+
+    /**
+     * Obtain a JWT access token for authenticated tests.
+     *
+     * Uses the default admin credentials (admin/password) which are available
+     * in development and test environments when ADMIN_PASSWORD_HASH is not set.
+     *
+     * @return string|null The JWT access token, or null if authentication fails.
+     */
+    protected static function getJwtToken(): ?string
+    {
+        if (self::$http === null) {
+            return null;
+        }
+
+        $response = self::$http->post('/auth/login', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Accept'       => 'application/json'
+            ],
+            'json'    => [
+                'username' => $_ENV['ADMIN_USERNAME'] ?? 'admin',
+                'password' => 'password'
+            ]
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            return null;
+        }
+
+        $data = json_decode((string) $response->getBody(), true);
+        return $data['access_token'] ?? null;
+    }
+
+    /**
+     * Create authorization headers with the provided JWT token.
+     *
+     * @param string $token The JWT access token.
+     * @return array<string, string> Headers array with Authorization header.
+     */
+    protected static function authHeaders(string $token): array
+    {
+        return ['Authorization' => 'Bearer ' . $token];
+    }
 }
