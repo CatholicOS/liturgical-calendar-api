@@ -138,7 +138,7 @@ final class LogoutHandler extends AbstractHandler
         // Try to extract username from Authorization header for logging
         $username   = 'unknown';
         $authHeader = $request->getHeaderLine('Authorization');
-        if (!empty($authHeader) && str_starts_with($authHeader, 'Bearer ')) {
+        if (!empty($authHeader) && str_starts_with(strtolower($authHeader), 'bearer ')) {
             $token = substr($authHeader, 7);
             try {
                 $jwtService = $this->getJwtService();
