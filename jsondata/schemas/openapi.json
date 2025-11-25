@@ -1990,11 +1990,7 @@
                   "properties": {
                     "success": {
                       "type": "string",
-                      "examples": [
-                        "National calendar created or updated for nation {NATION}",
-                        "Wider region calendar created or updated for region {REGION}",
-                        "Diocesan calendar created or updated for diocese {DIOCESE}"
-                      ]
+                      "example": "National calendar created or updated for nation {NATION}"
                     }
                   },
                   "required": [
@@ -2051,7 +2047,7 @@
                   "properties": {
                     "success": {
                       "type": "string",
-                      "example": "Diocesan calendar {DIOCESE} deleted from nation {NATION}"
+                      "example": "National calendar {NATION} deleted"
                     }
                   },
                   "required": [
@@ -2203,11 +2199,7 @@
                   "properties": {
                     "success": {
                       "type": "string",
-                      "examples": [
-                        "National calendar created or updated for nation {NATION}",
-                        "Wider region calendar created or updated for region {REGION}",
-                        "Diocesan calendar created or updated for diocese {DIOCESE}"
-                      ]
+                      "example": "Diocesan calendar created or updated for diocese {DIOCESE}"
                     }
                   },
                   "required": [
@@ -2415,11 +2407,7 @@
                   "properties": {
                     "success": {
                       "type": "string",
-                      "examples": [
-                        "National calendar created or updated for nation {NATION}",
-                        "Wider region calendar created or updated for region {REGION}",
-                        "Diocesan calendar created or updated for diocese {DIOCESE}"
-                      ]
+                      "example": "Wider region calendar created or updated for region {REGION}"
                     }
                   },
                   "required": [
@@ -2475,7 +2463,7 @@
                   "properties": {
                     "success": {
                       "type": "string",
-                      "example": "Diocesan calendar {DIOCESE} deleted from nation {NATION}"
+                      "example": "Wider region calendar {REGION} deleted"
                     }
                   },
                   "required": [
