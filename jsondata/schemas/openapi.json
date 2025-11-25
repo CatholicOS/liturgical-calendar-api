@@ -129,40 +129,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           }
         ],
         "requestBody": {
@@ -294,40 +264,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -458,40 +398,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -624,40 +534,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -797,40 +677,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -955,40 +805,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -1257,26 +1077,7 @@
         "operationId": "retrieveEventsGET",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           }
         ],
         "responses": {
@@ -1363,26 +1164,7 @@
         "operationId": "retrieveEventsPOST",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           }
         ],
         "responses": {
@@ -1473,26 +1255,7 @@
         "operationId": "retrieveEventsForNationalCalendarGET",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
             "in": "path",
@@ -1596,26 +1359,7 @@
         "operationId": "retrieveEventsForNationalCalendarPOST",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
             "in": "path",
@@ -1721,26 +1465,7 @@
         "operationId": "retrieveEventsForDiocesanCalendarGET",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
             "in": "path",
@@ -1837,26 +1562,7 @@
         "operationId": "retrieveEventsForDiocesanCalendarPOST",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
             "in": "path",
