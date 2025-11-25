@@ -14,19 +14,22 @@ class JwtServiceFactory
      * Create a JwtService configured from environment variables.
      *
      * Reads these environment variables:
-     * - JWT_SECRET (required): signing secret, must be a non-empty string.
+     * - JWT_SECRET (required): signing secret, must be at least 32 characters.
      * - JWT_ALGORITHM: algorithm name, defaults to 'HS256'.
      * - JWT_EXPIRY: access token lifetime in seconds, defaults to 3600; must be greater than 0.
      * - JWT_REFRESH_EXPIRY: refresh token lifetime in seconds, defaults to 604800; must be greater than 0.
      *
      * @return JwtService The configured JWT service instance.
-     * @throws \RuntimeException If JWT_SECRET is missing/empty or if expiry values are not positive integers.
+     * @throws \RuntimeException If JWT_SECRET is missing/empty/too short, or if expiry values are not positive integers.
      */
     public static function fromEnv(): JwtService
     {
         $secret = $_ENV['JWT_SECRET'] ?? null;
         if ($secret === null || !is_string($secret) || $secret === '') {
             throw new \RuntimeException('JWT_SECRET environment variable is required and must be a non-empty string');
+        }
+        if (strlen($secret) < 32) {
+            throw new \RuntimeException('JWT_SECRET must be at least 32 characters long');
         }
 
         $algorithmEnv = $_ENV['JWT_ALGORITHM'] ?? 'HS256';
