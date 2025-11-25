@@ -8258,7 +8258,7 @@
                             "properties": {
                                 "move": {
                                     "type": "string",
-                                    "pattern": "^\\-?P\\d+D$"
+                                    "pattern": "^-?P\\d+D$"
                                 }
                             }
                         },

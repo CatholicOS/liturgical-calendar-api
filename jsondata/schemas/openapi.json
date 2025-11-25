@@ -1925,6 +1925,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./NationalCalendar.json"
+              },
+              "examples": {
+                "ItalyNationalCalendar": {
+                  "$ref": "#/components/examples/NationalCalendarRequestBody"
+                },
+                "USANationalCalendar": {
+                  "$ref": "#/components/examples/NationalCalendarUSRequestBody"
+                }
               }
             }
           }
@@ -1961,6 +1969,9 @@
           "403": {
             "$ref": "#/components/responses/Forbidden403"
           },
+          "409": {
+            "$ref": "#/components/responses/Conflict409"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -1985,6 +1996,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./WiderRegionCalendar.json"
+              },
+              "examples": {
+                "EuropeWiderRegion": {
+                  "$ref": "#/components/examples/WiderRegionCalendarRequestBody"
+                },
+                "AsiaWiderRegion": {
+                  "$ref": "#/components/examples/WiderRegionCalendarAsiaRequestBody"
+                }
               }
             }
           }
@@ -2021,6 +2040,9 @@
           "403": {
             "$ref": "#/components/responses/Forbidden403"
           },
+          "409": {
+            "$ref": "#/components/responses/Conflict409"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2045,6 +2067,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./DiocesanCalendar.json"
+              },
+              "examples": {
+                "BostonDiocesan": {
+                  "$ref": "#/components/examples/DiocesanCalendarRequestBody"
+                },
+                "RomeDiocesan": {
+                  "$ref": "#/components/examples/DiocesanCalendarRomeRequestBody"
+                }
               }
             }
           }
@@ -2080,6 +2110,9 @@
           },
           "403": {
             "$ref": "#/components/responses/Forbidden403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict409"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
@@ -2192,6 +2225,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./NationalCalendar.json"
+              },
+              "examples": {
+                "ItalyNationalCalendar": {
+                  "$ref": "#/components/examples/NationalCalendarRequestBody"
+                },
+                "USANationalCalendar": {
+                  "$ref": "#/components/examples/NationalCalendarUSRequestBody"
+                }
               }
             }
           }
@@ -2397,6 +2438,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./DiocesanCalendar.json"
+              },
+              "examples": {
+                "BostonDiocesan": {
+                  "$ref": "#/components/examples/DiocesanCalendarRequestBody"
+                },
+                "RomeDiocesan": {
+                  "$ref": "#/components/examples/DiocesanCalendarRomeRequestBody"
+                }
               }
             }
           }
@@ -2601,6 +2650,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./WiderRegionCalendar.json"
+              },
+              "examples": {
+                "EuropeWiderRegion": {
+                  "$ref": "#/components/examples/WiderRegionCalendarRequestBody"
+                },
+                "AsiaWiderRegion": {
+                  "$ref": "#/components/examples/WiderRegionCalendarAsiaRequestBody"
+                }
               }
             }
           }
@@ -4763,6 +4820,367 @@
           "corpus_christi": "THURSDAY",
           "eternal_high_priest": true
         }
+      },
+      "NationalCalendarRequestBody": {
+        "summary": "National Calendar for Italy",
+        "description": "Example of a national calendar definition for Italy with patron saints and settings",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "StCatherineSiena",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1939,
+                "until_year": 1999,
+                "url": "https://www.vatican.va/content/pius-xii/it/briefs/documents/hf_p-xii_brief_19390618_patroni-italia.html"
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StFrancisAssisi",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1939,
+                "url": "https://www.vatican.va/content/pius-xii/it/briefs/documents/hf_p-xii_brief_19390618_patroni-italia.html"
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StNicholas",
+                "grade": 3
+              },
+              "metadata": {
+                "action": "setProperty",
+                "property": "grade",
+                "since_year": 2017,
+                "url": "https://liturgico.chiesacattolica.it/memoria-di-san-nicola/"
+              }
+            }
+          ],
+          "settings": {
+            "epiphany": "JAN6",
+            "ascension": "SUNDAY",
+            "corpus_christi": "SUNDAY",
+            "eternal_high_priest": false,
+            "holydays_of_obligation": {
+              "Christmas": true,
+              "Epiphany": true,
+              "Ascension": false,
+              "CorpusChristi": false,
+              "MaryMotherOfGod": true,
+              "ImmaculateConception": true,
+              "Assumption": true,
+              "StJoseph": false,
+              "StsPeterPaulAp": false,
+              "AllSaints": true
+            }
+          },
+          "metadata": {
+            "nation": "IT",
+            "wider_region": "Europe",
+            "missals": [
+              "IT_1983",
+              "IT_2020"
+            ],
+            "locales": [
+              "it_IT"
+            ]
+          },
+          "i18n": {
+            "it_IT": {
+              "StCatherineSiena": "Santa Caterina da Siena, vergine e dottore della Chiesa, patrona d'Italia",
+              "StFrancisAssisi": "San Francesco d'Assisi, patrono d'Italia"
+            }
+          }
+        }
+      },
+      "NationalCalendarUSRequestBody": {
+        "summary": "National Calendar for USA",
+        "description": "Example of a national calendar definition for USA with moved events and new celebrations",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "ImmaculateConception",
+                "grade": 6
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1970
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StVincentDeacon",
+                "day": 23,
+                "month": 1
+              },
+              "metadata": {
+                "action": "moveEvent",
+                "missal": "US_2011",
+                "reason": "National Day of Prayer for the Unborn",
+                "since_year": 1970
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "ThanksgivingDay",
+                "color": ["white"],
+                "grade": 3,
+                "strtotime": "fourth thursday of november",
+                "common": []
+              },
+              "metadata": {
+                "action": "createNew",
+                "since_year": 1970
+              }
+            }
+          ],
+          "settings": {
+            "epiphany": "SUNDAY_JAN2_JAN8",
+            "ascension": "SUNDAY",
+            "corpus_christi": "SUNDAY",
+            "eternal_high_priest": false,
+            "holydays_of_obligation": {
+              "Christmas": true,
+              "Epiphany": false,
+              "Ascension": true,
+              "CorpusChristi": false,
+              "MaryMotherOfGod": true,
+              "ImmaculateConception": true,
+              "Assumption": true,
+              "StJoseph": false,
+              "StsPeterPaulAp": false,
+              "AllSaints": true
+            }
+          },
+          "metadata": {
+            "nation": "US",
+            "locales": ["en_US"],
+            "wider_region": "Americas",
+            "missals": ["US_2011"]
+          },
+          "i18n": {
+            "en_US": {
+              "ThanksgivingDay": "Thanksgiving Day"
+            }
+          }
+        }
+      },
+      "DiocesanCalendarRequestBody": {
+        "summary": "Diocesan Calendar for Archdiocese of Boston",
+        "description": "Example of a diocesan calendar definition with local celebrations",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "DedicationoftheCathedraloftheHolyCross",
+                "color": ["white"],
+                "grade": 4,
+                "common": ["Dedication of a Church"],
+                "day": 8,
+                "month": 12
+              },
+              "metadata": {
+                "form_rownum": 1,
+                "since_year": 1970
+              }
+            }
+          ],
+          "settings": {
+            "epiphany": "JAN6",
+            "ascension": "THURSDAY",
+            "corpus_christi": "THURSDAY"
+          },
+          "metadata": {
+            "diocese_id": "boston_us",
+            "diocese_name": "Archdiocese of Boston (Massachusetts)",
+            "nation": "US",
+            "locales": ["en_US"],
+            "timezone": "America/New_York"
+          },
+          "i18n": {
+            "en_US": {
+              "DedicationoftheCathedraloftheHolyCross": "Dedication of the Cathedral of the Holy Cross"
+            }
+          }
+        }
+      },
+      "DiocesanCalendarRomeRequestBody": {
+        "summary": "Diocesan Calendar for Diocese of Rome",
+        "description": "Example of a diocesan calendar definition for the Diocese of Rome",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "DedicationoftheBasilicaofStJohnLateran",
+                "color": ["white"],
+                "grade": 6,
+                "common": ["Dedication of a Church"],
+                "day": 9,
+                "month": 11
+              },
+              "metadata": {
+                "form_rownum": 1,
+                "since_year": 1970
+              }
+            }
+          ],
+          "settings": {
+            "epiphany": "JAN6",
+            "ascension": "SUNDAY",
+            "corpus_christi": "SUNDAY"
+          },
+          "metadata": {
+            "diocese_id": "romamo_it",
+            "diocese_name": "Diocesi di Roma",
+            "nation": "IT",
+            "locales": ["it_IT"],
+            "timezone": "Europe/Rome"
+          },
+          "i18n": {
+            "it_IT": {
+              "DedicationoftheBasilicaofStJohnLateran": "Dedicazione della Basilica Lateranense"
+            }
+          }
+        }
+      },
+      "WiderRegionCalendarRequestBody": {
+        "summary": "Wider Region Calendar for Europe",
+        "description": "Example of a wider region calendar definition for Europe with patron saints",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "StBenedict",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1964,
+                "url": "https://www.vatican.va/content/paul-vi/la/apost_letters/documents/hf_p-vi_apl_19641024_pacis-nuntius.html",
+                "url_lang_map": {
+                  "it": "it",
+                  "es": "es",
+                  "la": "la"
+                }
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StsCyrilMethodius",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1980,
+                "url": "https://www.vatican.va/content/john-paul-ii/la/apost_letters/1980/documents/hf_jp-ii_apl_31121980_egregiae-virtutis.html",
+                "url_lang_map": {
+                  "es": "es",
+                  "it": "it",
+                  "la": "la",
+                  "pt": "pt"
+                }
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StBridget",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1999,
+                "url": "https://www.vatican.va/content/john-paul-ii/en/motu_proprio/documents/hf_jp-ii_motu-proprio_01101999_co-patronesses-europe.html",
+                "url_lang_map": {
+                  "de": "de",
+                  "en": "en",
+                  "es": "es",
+                  "fr": "fr",
+                  "it": "it",
+                  "la": "la",
+                  "pt": "pt"
+                }
+              }
+            }
+          ],
+          "national_calendars": {
+            "Bulgaria": "BG",
+            "Czechia": "CZ",
+            "Croatia": "HR",
+            "Denmark": "DK",
+            "Italy": "IT",
+            "Netherlands": "NL",
+            "Poland": "PL",
+            "Spain": "ES"
+          },
+          "metadata": {
+            "locales": [
+              "it_IT",
+              "nl_NL",
+              "pl_PL",
+              "es_ES",
+              "de_DE",
+              "fr_FR"
+            ],
+            "wider_region": "Europe"
+          },
+          "i18n": {
+            "it_IT": {
+              "StBenedict": "San Benedetto, abate, patrono d'Europa",
+              "StsCyrilMethodius": "Santi Cirillo, monaco, e Metodio, vescovo, patroni d'Europa",
+              "StBridget": "Santa Brigida, religiosa, patrona d'Europa"
+            },
+            "en_GB": {
+              "StBenedict": "Saint Benedict, Abbot, Patron of Europe",
+              "StsCyrilMethodius": "Saints Cyril, Monk, and Methodius, Bishop, Patrons of Europe",
+              "StBridget": "Saint Bridget, Religious, Patroness of Europe"
+            }
+          }
+        }
+      },
+      "WiderRegionCalendarAsiaRequestBody": {
+        "summary": "Wider Region Calendar for Asia",
+        "description": "Example of a wider region calendar definition for Asia",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "StFrancisXavier",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1927,
+                "url": "https://www.vatican.va/content/pius-xi/la/encyclicals/documents/hf_p-xi_enc_19271215_rerum-ecclesiae.html",
+                "url_lang_map": {
+                  "la": "la"
+                }
+              }
+            }
+          ],
+          "national_calendars": {
+            "Japan": "JP",
+            "China": "CN"
+          },
+          "metadata": {
+            "locales": [
+              "ja_JP",
+              "zh_Hans_CN"
+            ],
+            "wider_region": "Asia"
+          },
+          "i18n": {
+            "ja_JP": {
+              "StFrancisXavier": "聖フランシスコ・ザビエル司祭"
+            }
+          }
+        }
       }
     },
     "responses": {
@@ -4858,6 +5276,22 @@
               "title": "Not Acceptable",
               "status": 406,
               "detail": "The requested content type is not supported"
+            }
+          }
+        }
+      },
+      "Conflict409": {
+        "description": "409 Conflict. The request could not be completed due to a conflict with the current state of the resource. This typically occurs when trying to create a resource that already exists.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409",
+              "title": "Conflict",
+              "status": 409,
+              "detail": "A resource with this identifier already exists"
             }
           }
         }
