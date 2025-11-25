@@ -8,9 +8,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-11-23 18:32+0000\n"
-"PO-Revision-Date: 2025-11-21 04:22+0000\n"
+"PO-Revision-Date: 2025-11-25 06:01+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Dutch <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/nl/>\n"
@@ -697,6 +697,8 @@ msgid ""
 "Decree of the Dicastery for Divine Worship and the Discipline of the "
 "Sacraments"
 msgstr ""
+"Decreet van de Dicasterie voor de Goddelijke Eredienst en de Discipline van "
+"de Sacramenten"
 
 #: src/Handlers/CalendarHandler.php:1269
 msgid "the Monday following the Second Sunday of Easter"
@@ -919,23 +921,23 @@ msgstr ""
 
 #. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
 #: src/Handlers/CalendarHandler.php:2315
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s': can only be relative to "
 "liturgical event with key '%2$s' using keywords %3$s"
 msgstr ""
-"Kan het verplaatsbare feest '%1$s' niet genereren: is alleen verbonden met "
-"het feest met sleutel '%2$s' met sleutelwoorden %3$s"
+"Kan mobiel liturgisch evenement '%1$s' niet aanmaken: kan alleen relatief "
+"zijn aan liturgisch evenement met sleutel '%2$s' via trefwoorden %3$s"
 
 #. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
 #: src/Handlers/CalendarHandler.php:2329
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s' relative to liturgical event "
 "with key '%2$s'"
 msgstr ""
-"Kan het verplaatsbare feest '%1$s' niet genereren dat verbonden is met het "
-"feest met sleutel '%2$s'"
+"Kan mobiele liturgische gebeurtenis '%1$s' niet aanmaken ten opzichte van "
+"liturgische gebeurtenis met sleutel '%2$s'"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1132,14 +1134,15 @@ msgstr ""
 #.  7. National or wider region calendar
 #.
 #: src/Handlers/CalendarHandler.php:3217
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "The %1$s '%2$s', usually celebrated on %3$s, was suppressed by the %4$s "
 "'%5$s' in the year %6$d, however being elevated to a Patronal festivity for "
 "the Calendar %7$s, it has been reinstated."
 msgstr ""
-"De %1$s '%2$s', gewoonlijk gevierd op %3$s, wordt vervangen door de %4$s "
-"'%5$s' in het jaar %6$d."
+"Het %1$s '%2$s', dat gewoonlijk op %3$s werd gevierd, werd onderdrukt door "
+"de %4$s '%5$s' in het jaar %6$d, maar na verheffing tot een Patronale "
+"feestdag voor de Kalender %7$s, is het hersteld."
 
 #. translators:
 #.  1. Grade of the liturgical event
@@ -1205,15 +1208,17 @@ msgid ""
 "liturgical event is greater than the number of days (%3$d) in the month "
 "(%4$d) of the liturgical event year (%5$d)."
 msgstr ""
+"Kan liturgisch evenement met sleutel \"%1$s\" niet maken: de dag (%2$d) van "
+"het liturgisch evenement is groter dan het aantal dagen (%3$d) in de maand "
+"(%4$d) van het liturgisch evenementjaar (%5$d)."
 
 #: src/Handlers/CalendarHandler.php:3429
-#, fuzzy
 msgid ""
 "We should be creating a new liturgical event, however we do not seem to have "
 "the correct date information in order to proceed"
 msgstr ""
-"Er zou een nieuw feest moeten worden aangemaakt, maar de juiste gegevens om "
-"verder te gaan lijken niet beschikbaar"
+"We zouden een nieuwe liturgische gebeurtenis moeten creëren, maar we lijken "
+"niet de juiste datumgegevens te hebben om verder te gaan."
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1346,23 +1351,23 @@ msgstr ""
 #.  5. Requested calendar year
 #.
 #: src/Handlers/CalendarHandler.php:3709
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "The liturgical event '%1$s' has been moved to %2$s since the year %3$d in "
 "the national calendar '%4$s', but this could not take place in the year %5$d "
 "since the new date %2$s seems to be a Sunday or a liturgical event of "
 "greater rank."
 msgstr ""
-"De liturgische gebeurtenis '%1$s' is sinds het jaar %3$d verplaatst naar "
-"%2$s in de nationale kalender '%4$s', maar dit kon niet plaatsvinden in het "
-"jaar %5$d omdat de nieuwe datum %2$s op een zondag of een feestdag van "
-"hogere rang lijkt te vallen."
+"De liturgische gebeurtenis '%1$s' is sinds het jaar %3$d verplaatst naar %2$"
+"s in de nationale kalender '%4$s', maar dit kon niet plaatsvinden in het "
+"jaar %5$d omdat de nieuwe datum %2$s op een zondag lijkt te vallen of een "
+"liturgische gebeurtenis van hogere rang is."
 
 #. translators: 1. Country name, 2. List of missals
 #: src/Handlers/CalendarHandler.php:3748
 #, php-format
 msgid "Found Missals for region %1$s: %2$s."
-msgstr ""
+msgstr "Missalen gevonden voor regio %1$s: %2$s."
 
 #. translators: Name of the Roman Missal
 #: src/Handlers/CalendarHandler.php:3772
@@ -1474,18 +1479,18 @@ msgstr ""
 
 #: src/Handlers/CalendarHandler.php:4531
 msgid "Error converting Liturgical Calendar to XML."
-msgstr ""
+msgstr "Fout bij het omzetten van de liturgische kalender naar XML."
 
 #: src/Handlers/CalendarHandler.php:4566
-#, fuzzy, php-format
+#, php-format
 msgid "Error receiving or parsing info from GitHub about latest release: %s."
 msgstr ""
 "Fout bij het ontvangen of verwerken van informatie van GitHub over de "
-"laatste release: %s."
+"nieuwste release: %s."
 
 #: src/Handlers/CalendarHandler.php:4577
 msgid "Error serializing Liturgical Calendar."
-msgstr ""
+msgstr "Fout bij serialiseren van Liturgische Kalender."
 
 #: src/Models/Calendar/LitCommons.php:200
 msgid "From the Common"
