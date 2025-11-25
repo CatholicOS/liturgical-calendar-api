@@ -19,6 +19,7 @@ use LiturgicalCalendar\Api\Handlers\MissalsHandler;
 use LiturgicalCalendar\Api\Handlers\DecreesHandler;
 use LiturgicalCalendar\Api\Handlers\SchemasHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\LoginHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\LogoutHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\RefreshHandler;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
@@ -302,6 +303,9 @@ class Router
                     if ($authRoute === 'login') {
                         $loginHandler  = new LoginHandler();
                         $this->handler = $loginHandler;
+                    } elseif ($authRoute === 'logout') {
+                        $logoutHandler = new LogoutHandler();
+                        $this->handler = $logoutHandler;
                     } elseif ($authRoute === 'refresh') {
                         $refreshHandler = new RefreshHandler();
                         $this->handler  = $refreshHandler;
