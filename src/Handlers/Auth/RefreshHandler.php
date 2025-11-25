@@ -72,6 +72,39 @@ final class RefreshHandler extends AbstractHandler
     }
 
     /**
+     * Get the client IP address, checking proxy headers first.
+     *
+     * Checks X-Forwarded-For and X-Real-IP headers (common in reverse proxy setups)
+     * before falling back to REMOTE_ADDR. For X-Forwarded-For, uses the first IP
+     * in the chain (the original client).
+     *
+     * @param ServerRequestInterface $request The incoming HTTP request.
+     * @param array<string, mixed> $serverParams Server parameters from the request.
+     * @return string The client IP address, or 'unknown' if not determinable.
+     */
+    private function getClientIp(ServerRequestInterface $request, array $serverParams): string
+    {
+        // Check X-Forwarded-For header (may contain comma-separated list of IPs)
+        $forwardedFor = $request->getHeaderLine('X-Forwarded-For');
+        if ($forwardedFor !== '') {
+            // Use the first IP in the chain (original client)
+            $ips = array_map('trim', explode(',', $forwardedFor));
+            if (!empty($ips[0])) {
+                return $ips[0];
+            }
+        }
+
+        // Check X-Real-IP header
+        $realIp = $request->getHeaderLine('X-Real-IP');
+        if ($realIp !== '') {
+            return $realIp;
+        }
+
+        // Fall back to REMOTE_ADDR
+        return is_string($serverParams['REMOTE_ADDR'] ?? null) ? $serverParams['REMOTE_ADDR'] : 'unknown';
+    }
+
+    /**
      * Process a refresh-token request and return a JSON response containing a new access token.
      *
      * Validates the request (method, headers, body), extracts the `refresh_token`, exchanges it for
@@ -106,9 +139,10 @@ final class RefreshHandler extends AbstractHandler
         // Parse request body (required=true handles Content-Type and empty body validation)
         $parsedBodyParams = $this->parseBodyParams($request, true);
 
-        // Get client IP for logging
+        // Get client IP for logging (check proxy headers first, then fall back to REMOTE_ADDR)
+        /** @var array<string, mixed> $serverParams */
         $serverParams = $request->getServerParams();
-        $clientIp     = $serverParams['REMOTE_ADDR'] ?? 'unknown';
+        $clientIp     = $this->getClientIp($request, $serverParams);
 
         // Extract refresh token
         $refreshToken = $parsedBodyParams['refresh_token'] ?? null;
