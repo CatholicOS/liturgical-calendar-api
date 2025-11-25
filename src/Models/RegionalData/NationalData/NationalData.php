@@ -145,24 +145,21 @@ final class NationalData extends AbstractJsonSrcData
     }
 
     /**
-     * Creates an instance of NationalData from an associative array.
+     * Construct a NationalData instance from an associative array representation.
      *
-     * The array must have the following keys:
-     * - litcal (array): The liturgical calendar items.
-     * - settings (array): The settings for the national calendar.
-     * - metadata (array): The metadata for the national calendar.
-     * - i18n (array|unset): The translations for the national calendar.
+     * The input array must include the keys: `litcal`, `settings`, and `metadata`. An optional
+     * `i18n` key may be provided for translations and will be converted to an stdClass when present.
      *
-     * @param NationalCalendarDataArray $data
-     * @return static
-     * @throws \ValueError if the keys of the data parameter do not match the expected keys.
+     * @param NationalCalendarDataArray $data Associative array with required keys `litcal`, `settings`, and `metadata`, and optional `i18n`.
+     * @return static A new NationalData populated from the provided array.
+     * @throws \ValueError If one or more required properties are missing from `$data`.
      */
     protected static function fromArrayInternal(array $data): static
     {
         $keys        = array_keys($data);
         $missingKeys = array_diff(self::REQUIRED_PROPS, $keys);
-        if (!empty($missingKeys) || count($keys) !== count(self::REQUIRED_PROPS)) {
-            throw new \ValueError('the keys of data parameter must match ' . implode(',', self::REQUIRED_PROPS));
+        if (!empty($missingKeys)) {
+            throw new \ValueError('The following required properties are missing: ' . implode(', ', $missingKeys));
         }
 
         return new static(
@@ -174,23 +171,21 @@ final class NationalData extends AbstractJsonSrcData
     }
 
     /**
-     * Creates an instance of NationalData from a stdClass object.
+     * Create a NationalData instance from a stdClass representation.
      *
-     * The object should have the following properties:
-     * - litcal (array): The liturgical calendar items.
-     * - settings (\stdClass): The settings for the national calendar.
-     * - metadata (\stdClass): The metadata for the national calendar.
-     * - i18n (\stdClass|unset): The translations for the national calendar.
+     * Expects the object to contain the properties `litcal`, `settings`, and `metadata`. An optional
+     * `i18n` property may be provided for translations.
      *
-     * @param NationalCalendarDataObject $data The stdClass object containing the properties of the national calendar.
-     * @return static
+     * @param NationalCalendarDataObject $data The stdClass containing the national calendar properties.
+     * @return static The constructed NationalData instance.
+     * @throws \ValueError If one or more required properties are missing.
      */
     protected static function fromObjectInternal(\stdClass $data): static
     {
         $keys        = array_keys(get_object_vars($data));
         $missingKeys = array_diff(self::REQUIRED_PROPS, $keys);
-        if (!empty($missingKeys) || count($keys) !== count(self::REQUIRED_PROPS)) {
-            throw new \ValueError('The keys passed in the parameter must match ' . implode(', ', self::REQUIRED_PROPS) . ': we seem to be missing ' . implode(', ', $missingKeys));
+        if (!empty($missingKeys)) {
+            throw new \ValueError('The following required properties are missing: ' . implode(', ', $missingKeys));
         }
 
         return new static(

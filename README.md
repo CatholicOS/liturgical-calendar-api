@@ -174,6 +174,41 @@ You can copy the `.env.example` file to `.env` or `.env.local` (or `.env.develop
 These environment variables are used when running the API in CLI mode, such as when using the `start-server.sh` script.
 The defaults are suitable for development and testing, but may need to be overridden for staging or production environments.
 
+### JWT Authentication Configuration
+
+The API now supports JWT authentication for protected write operations. To enable authentication, configure the following environment variables:
+
+* `JWT_SECRET`: Secret key for signing tokens (minimum 32 characters). Generate with: `php -r "echo bin2hex(random_bytes(32));"`
+* `JWT_ALGORITHM`: Algorithm for signing tokens (default: `HS256`)
+* `JWT_EXPIRY`: Access token expiry in seconds (default: `3600` = 1 hour)
+* `JWT_REFRESH_EXPIRY`: Refresh token expiry in seconds (default: `604800` = 7 days)
+* `ADMIN_USERNAME`: Admin username for authentication (default: `admin`)
+* `ADMIN_PASSWORD_HASH`: Argon2id password hash. Generate with: `php -r "echo password_hash('yourpassword', PASSWORD_ARGON2ID);"`
+* `APP_ENV`: Application environment (required). Must be one of: `development`, `test`, `staging`, `production`
+
+**Environment-Specific Security Behavior:**
+
+The API implements fail-closed authentication that requires `APP_ENV` to be explicitly set to a known value:
+
+* **`development`** and **`test`**: Allow default password if `ADMIN_PASSWORD_HASH` is not set (for convenience in testing)
+* **`staging`** and **`production`**: Require `ADMIN_PASSWORD_HASH` to be configured (throws `RuntimeException` if missing)
+* **Invalid or unset `APP_ENV`**: Throws `RuntimeException` and denies authentication
+
+This ensures that production environments cannot accidentally use weak default credentials.
+
+**Protected Routes** (require JWT authentication via `Authorization: Bearer <token>` header):
+
+* `PUT /data/{category}/{calendar}` - Create calendar data
+* `PATCH /data/{category}/{calendar}` - Update calendar data
+* `DELETE /data/{category}/{calendar}` - Delete calendar data
+
+**Authentication Endpoints:**
+
+* `POST /auth/login` - Authenticate with username/password, returns access and refresh tokens
+* `POST /auth/refresh` - Refresh access token using refresh token
+
+For detailed implementation information, see [docs/enhancements/AUTHENTICATION_ROADMAP.md](docs/enhancements/AUTHENTICATION_ROADMAP.md).
+
 For example, to run the API in production with a custom domain and HTTPS, you would set the following environment variables:
 
 ```bash
