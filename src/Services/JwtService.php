@@ -137,11 +137,11 @@ class JwtService
     }
 
     /**
-         * Validate a JWT refresh token and return its decoded payload.
-         *
-         * @param string $token The JWT refresh token string to validate.
-         * @return object|null Decoded token payload when the token is valid and has type `refresh`, `null` otherwise.
-         */
+     * Validate a JWT refresh token and return its decoded payload.
+     *
+     * @param string $token The JWT refresh token string to validate.
+     * @return object|null Decoded token payload when the token is valid and has type `refresh`, `null` otherwise.
+     */
     public function verifyRefreshToken(string $token): ?object
     {
         try {
