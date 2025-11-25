@@ -8,9 +8,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-11-23 18:32+0000\n"
-"PO-Revision-Date: 2025-11-22 15:14+0000\n"
+"PO-Revision-Date: 2025-11-25 18:29+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Latin <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/la/>\n"
@@ -1142,9 +1142,8 @@ msgid ""
 "'%5$s' in the year %6$d, however being elevated to a Patronal festivity for "
 "the Calendar %7$s, it has been reinstated."
 msgstr ""
-"The %1$s '%2$s', plerumque celebrata die %3$s, suppressa est a %4$s '%5$s' "
-"anno %6$d, tamen ad festum Patronale pro Calendario %7$s elevata, restituta "
-"est."
+"%1$s '%2$s', plerumque celebrata die %3$s, suppressa est a %4$s '%5$s' anno "
+"%6$d, tamen ad festum Patronale pro Calendario %7$s elevata, restituta est."
 
 #. translators:
 #.  1. Grade of the liturgical event
@@ -1320,8 +1319,8 @@ msgid ""
 "The %1$s '%2$s' has been moved from %3$s to %4$s since the year %5$d in the "
 "national calendar '%6$s', applicable to the year %7$d."
 msgstr ""
-"The %1$s '%2$s' mota est ex %3$s ad %4$s ex anno %5$d in calendario "
-"nationali '%6$s', applicabili ad annum %7$d."
+"%1$s '%2$s' mota est ex %3$s ad %4$s ex anno %5$d in calendario nationali "
+"'%6$s', applicabili ad annum %7$d."
 
 #. translators:
 #.  1. Name of the liturgical event
