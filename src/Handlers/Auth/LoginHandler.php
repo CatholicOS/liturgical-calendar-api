@@ -3,17 +3,15 @@
 namespace LiturgicalCalendar\Api\Handlers\Auth;
 
 use LiturgicalCalendar\Api\Handlers\AbstractHandler;
-use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
+use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
-use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Models\Auth\User;
 use LiturgicalCalendar\Api\Services\JwtService;
 use LiturgicalCalendar\Api\Services\JwtServiceFactory;
-use Nyholm\Psr7\Stream;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -36,13 +34,14 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class LoginHandler extends AbstractHandler
 {
-    private JwtService $jwtService;
+    private ?JwtService $jwtService = null;
 
     /**
-     * Initialize the login handler with allowed methods, accepted content types, and JWT service.
+     * Initialize the login handler with allowed methods, accepted content types.
      *
-     * Sets the handler to accept only POST requests with JSON accept and content-type headers,
-     * and initializes the JWT service from the environment.
+     * Sets the handler to accept only POST requests with JSON accept and content-type headers.
+     * JWT service is lazy-loaded to allow OPTIONS preflight requests to succeed even if
+     * JWT configuration is missing.
      */
     public function __construct()
     {
@@ -54,9 +53,19 @@ final class LoginHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+    }
 
-        // Initialize JWT service from environment
-        $this->jwtService = JwtServiceFactory::fromEnv();
+    /**
+     * Get the JWT service instance, creating it if needed (lazy loading).
+     *
+     * @throws \RuntimeException If JWT configuration is missing or invalid.
+     */
+    private function getJwtService(): JwtService
+    {
+        if ($this->jwtService === null) {
+            $this->jwtService = JwtServiceFactory::fromEnv();
+        }
+        return $this->jwtService;
     }
 
     /**
@@ -110,15 +119,16 @@ final class LoginHandler extends AbstractHandler
             throw new UnauthorizedException('Invalid username or password');
         }
 
-        // Generate tokens
-        $token        = $this->jwtService->generate($user->username, ['roles' => $user->roles]);
-        $refreshToken = $this->jwtService->generateRefreshToken($user->username);
+        // Generate tokens (lazy-load JWT service here, after OPTIONS check)
+        $jwtService   = $this->getJwtService();
+        $token        = $jwtService->generate($user->username, ['roles' => $user->roles]);
+        $refreshToken = $jwtService->generateRefreshToken($user->username);
 
         // Prepare response data
         $responseData = [
             'access_token'  => $token,
             'refresh_token' => $refreshToken,
-            'expires_in'    => $this->jwtService->getExpiry(),
+            'expires_in'    => $jwtService->getExpiry(),
             'token_type'    => 'Bearer'
         ];
 

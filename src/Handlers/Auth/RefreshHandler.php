@@ -3,11 +3,10 @@
 namespace LiturgicalCalendar\Api\Handlers\Auth;
 
 use LiturgicalCalendar\Api\Handlers\AbstractHandler;
-use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
+use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
-use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Services\JwtService;
@@ -32,13 +31,14 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class RefreshHandler extends AbstractHandler
 {
-    private JwtService $jwtService;
+    private ?JwtService $jwtService = null;
 
     /**
-     * Configure handler defaults and initialize services for the refresh endpoint.
+     * Configure handler defaults for the refresh endpoint.
      *
-     * Sets the allowed HTTP method to POST, restricts Accept and Content-Type to JSON,
-     * and initializes the JwtService from environment configuration.
+     * Sets the allowed HTTP method to POST and restricts Accept and Content-Type to JSON.
+     * JWT service is lazy-loaded to allow OPTIONS preflight requests to succeed even if
+     * JWT configuration is missing.
      */
     public function __construct()
     {
@@ -50,9 +50,19 @@ final class RefreshHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+    }
 
-        // Initialize JWT service from environment
-        $this->jwtService = JwtServiceFactory::fromEnv();
+    /**
+     * Get the JWT service instance, creating it if needed (lazy loading).
+     *
+     * @throws \RuntimeException If JWT configuration is missing or invalid.
+     */
+    private function getJwtService(): JwtService
+    {
+        if ($this->jwtService === null) {
+            $this->jwtService = JwtServiceFactory::fromEnv();
+        }
+        return $this->jwtService;
     }
 
     /**
@@ -97,8 +107,9 @@ final class RefreshHandler extends AbstractHandler
             throw new ValidationException('Refresh token is required and must be a string');
         }
 
-        // Refresh the access token
-        $newToken = $this->jwtService->refresh($refreshToken);
+        // Refresh the access token (lazy-load JWT service here, after OPTIONS check)
+        $jwtService = $this->getJwtService();
+        $newToken   = $jwtService->refresh($refreshToken);
 
         if ($newToken === null) {
             throw new UnauthorizedException('Invalid or expired refresh token');
@@ -107,7 +118,7 @@ final class RefreshHandler extends AbstractHandler
         // Prepare response data
         $responseData = [
             'access_token' => $newToken,
-            'expires_in'   => $this->jwtService->getExpiry(),
+            'expires_in'   => $jwtService->getExpiry(),
             'token_type'   => 'Bearer'
         ];
 
