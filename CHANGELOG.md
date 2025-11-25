@@ -2,128 +2,81 @@
 
 ## [v5.5](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.5) (unreleased)
 
-* implement `filter` parameter for limited sets of calendar events
-
-Related issues:
-
-* #43
+* implement `filter` parameter for limited sets of calendar events, see issue [#43](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/43)
 
 ## [v5.4](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.4) (November 25th 2025)
 
-* implement JWT authentication for PUT/PATCH/DELETE requests
-* fix Accept-Language header parsing for Latin locale (`la`, `la-VA`, `la_VA`)
-
-Related issues:
-
-* #262
-* #396
+* implement JWT authentication for PUT/PATCH/DELETE requests, see issue [#262](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/262)
+* fix Accept-Language header parsing for Latin locale (`la`, `la-VA`, `la_VA`), see issue [#396](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/396)
 
 Saint Catherine of Alexandria, pray for us! 🛞
 
 ## [v5.3](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.3) (November 15th 2025)
 
-* refactor the `date` property in liturgical events to be an RFC 3339 (ISO 8601) formatted date-time rather than a Unix timestamp
-
-Related issues:
-
-* #333
+* refactor the `date` property in liturgical events to be an RFC 3339 (ISO 8601) formatted date-time rather than a Unix timestamp, see issue [#333](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/333)
 
 Saint Albert the Great, pray for us! 📖
 
 ## [v5.2](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.2) (October 4th 2025)
 
-* implement conditional rules for national calendar liturgical events (was previously hardcoded into the API for USA National Day of Prayer for the Unborn)
-* implement Holy Days of Obligation (can be set on a per Bishops Conference basis)
-
-Related issues:
-
-* #206
-* #296
+* implement conditional rules for national calendar liturgical events (was previously hardcoded into the API for USA National Day of Prayer for the Unborn), see issue [#206](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/206)
+* implement Holy Days of Obligation (can be set on a per Bishops Conference basis), see issue [#296](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/296)
 
 Saint Francis of Assisi, pray for us! 🕊️
 
 ## [v5.1](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.1) (October 2nd 2025)
 
 * implement PSR-3 Logger Interface
-* fix OpenAPI validation
-
-Related issues:
-
-* #373
+* fix OpenAPI validation, see issue [#373](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/373)
 
 Holy Guardian Angels, be our protection! 🪽🪽
 
 ## [v5.0](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.0) (September 7th 2025)
 
-* add support for `PUT`, `PATCH` and `DELETE` requests
-* fix "Feria VII is a bad translation for Sabbato"
-* refactor "festivity" to "liturgical_event"
-* implement lectionary readings
-* fix Feasts of the Lord not suppressing Sundays
-* implement PSR-7 HTTP Message Interfaces, PSR-15 HTTP Server Request Handlers (including Middleware), and PSR-17 HTTP Factories
-
-Related issues:
-
-* #220
-* #239
-* #265
-* #284
-* #310
-* #321
-* #324
-* #326
-* #327
-* #337
+* add support for `PUT`, `PATCH` and `DELETE` requests, see issues:
+  * [#284](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/284)
+  * [#265](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/265)
+  * [#220](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/220)
+* fix "Feria VII is a bad translation for Sabbato", see issue [#310](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/310)
+* refactor "festivity" to "liturgical_event", see issue [#239](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/239)
+* implement lectionary readings, see issues:
+  * [#321](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/321)
+  * [#324](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/324)
+  * [#326](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/326)
+* fix Feasts of the Lord not suppressing Sundays, see issues [#324](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/324), [#327](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/327)
+* implement PSR-7 HTTP Message Interfaces, PSR-15 HTTP Server Request Handlers (including Middleware), and PSR-17 HTTP Factories, see issue [#337](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/337)
 
 Saints Carlos Acutis 🧑‍💻 and Piergiorgio Frassati ⛰️, pray for us! Released on the day of the canonizations of these saints.
 
 ## [v4.5](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v4.5) (March 25th 2025)
 
-* restore wider region calendar `PUT`, `PATCH` and `DELETE` requests with full support for all i18n languages
-
-Related issues:
-
-* #220
-* #265
-* #284
+* restore wider region calendar `PUT`, `PATCH` and `DELETE` requests with full support for all i18n languages, see issues:
+  * [#284](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/284)
+  * [#265](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/265)
+  * [#220](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/220)
 
 Happy Feast of the Annunciation! 🪽
 
 ## [v4.4](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v4.4) (March 22nd 2025)
 
-* restore national calendar `PUT`, `PATCH` and `DELETE` requests with full support for all i18n languages
-
-Related issues:
-
-* #220
-* #265
-* #284
+* restore national calendar `PUT`, `PATCH` and `DELETE` requests with full support for all i18n languages, see issues:
+  * [#284](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/284)
+  * [#265](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/265)
+  * [#220](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/220)
 
 ## [v4.3](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v4.3) (January 26th 2025)
 
-* realign XML output with latest developments
-
-Related issues:
-
-* #290
+* realign XML output with latest developments, see issue [#290](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/290)
 
 ## [v4.2](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v4.2) (January 25th 2025)
 
-* realign ICS output with latest developments
-
-Related issues:
-
-* #288
+* realign ICS output with latest developments, see issue [#288](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/288)
 
 Conversion of Saint Paul 🤺 🏇 🤯
 
 ## [v4.1](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v4.1) (January 22nd 2025)
 
-* restore diocesan calendar `PUT`, `PATCH` and `DELETE` requests with full support for all i18n languages
-
-Related issues:
-
-* #284
+* restore diocesan calendar `PUT`, `PATCH` and `DELETE` requests with full support for all i18n languages, see issue [#284](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/284)
 
 Saint Vincent deacon and martyr, pray for us! 🧣🩸
 
