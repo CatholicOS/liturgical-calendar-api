@@ -26,6 +26,7 @@ class SchemaValidationTest extends TestCase
 {
     private static string $schemasPath;
     private static string $sourceDataPath;
+    private static bool $routerInitialized = false;
 
     public static function setUpBeforeClass(): void
     {
@@ -71,8 +72,11 @@ class SchemaValidationTest extends TestCase
     #[DataProvider('schemaProvider')]
     public function testSchemaCanBeImported(LitSchema $litSchema): void
     {
-        // Initialize Router paths for each test (data provider runs before setUpBeforeClass)
-        Router::getApiPaths();
+        // Initialize Router paths once (data provider runs before setUpBeforeClass)
+        if (!self::$routerInitialized) {
+            Router::getApiPaths();
+            self::$routerInitialized = true;
+        }
 
         $schemaPath = $litSchema->path();
         $this->assertFileExists($schemaPath, "Schema file should exist: $schemaPath");
