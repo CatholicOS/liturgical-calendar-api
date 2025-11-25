@@ -71,67 +71,25 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/GeneralRomanCalendarRequestBody"
-                },
-                {
-                  "$ref": "#/components/schemas/GeneralRomanCalendarTweakedRequestBody"
-                }
-              ]
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              },
-              "GeneralRomanCalendarTweaked": {
-                "$ref": "#/components/examples/GeneralRomanCalendarTweakedRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
+          },
+          {
+            "$ref": "#/components/parameters/EpiphanyParam"
+          },
+          {
+            "$ref": "#/components/parameters/AscensionParam"
+          },
+          {
+            "$ref": "#/components/parameters/CorpusChristiParam"
+          },
+          {
+            "$ref": "#/components/parameters/EternalHighPriestParam"
           }
         ],
         "responses": {
@@ -275,78 +233,28 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "year",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 1970,
-              "maximum": 9999
-            }
+            "$ref": "#/components/parameters/YearPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/GeneralRomanCalendarRequestBody"
-                },
-                {
-                  "$ref": "#/components/schemas/GeneralRomanCalendarTweakedRequestBody"
-                }
-              ]
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              },
-              "GeneralRomanCalendarTweaked": {
-                "$ref": "#/components/examples/GeneralRomanCalendarTweakedRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
+          },
+          {
+            "$ref": "#/components/parameters/EpiphanyParam"
+          },
+          {
+            "$ref": "#/components/parameters/AscensionParam"
+          },
+          {
+            "$ref": "#/components/parameters/CorpusChristiParam"
+          },
+          {
+            "$ref": "#/components/parameters/EternalHighPriestParam"
           }
         ],
         "responses": {
@@ -501,73 +409,16 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "calendar_id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "IT",
-                "US",
-                "NL",
-                "VA",
-                "CA"
-              ],
-              "summary": "uppercase two letter ISO 3166 code of a nation for which the liturgical calendar has been defined"
-            }
+            "$ref": "#/components/parameters/NationalCalendarIdPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "$ref": "#/components/schemas/CivilOrLiturgicalYear"
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
           }
         ],
         "responses": {
@@ -721,84 +572,19 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "calendar_id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "IT",
-                "US",
-                "NL",
-                "VA",
-                "CA"
-              ],
-              "summary": "when {category} is 'nation'"
-            }
+            "$ref": "#/components/parameters/NationalCalendarIdPathParam"
           },
           {
-            "in": "path",
-            "name": "year",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 1970,
-              "maximum": 9999
-            }
+            "$ref": "#/components/parameters/YearPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "$ref": "#/components/schemas/CivilOrLiturgicalYear"
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
           }
         ],
         "responses": {
@@ -962,65 +748,16 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "calendar_id",
-            "required": true,
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/DiocesanCalendarId"
-            }
+            "$ref": "#/components/parameters/DiocesanCalendarIdPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "$ref": "#/components/schemas/CivilOrLiturgicalYear"
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
           }
         ],
         "responses": {
@@ -1166,76 +903,19 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "calendar_id",
-            "required": true,
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/DiocesanCalendarId"
-            }
+            "$ref": "#/components/parameters/DiocesanCalendarIdPathParam"
           },
           {
-            "in": "path",
-            "name": "year",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 1970,
-              "maximum": 9999
-            }
+            "$ref": "#/components/parameters/YearPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "$ref": "#/components/schemas/CivilOrLiturgicalYear"
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
           }
         ],
         "responses": {
@@ -4921,6 +4601,138 @@
           "token_type",
           "expires_in"
         ]
+      }
+    },
+    "parameters": {
+      "AcceptLanguageHeader": {
+        "in": "header",
+        "name": "Accept-Language",
+        "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
+        "schema": {
+          "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
+        },
+        "examples": {
+          "latin": {
+            "value": "la-VA",
+            "summary": "Latin (Vatican)"
+          },
+          "italian": {
+            "value": "it-IT",
+            "summary": "Italian (Italy)"
+          },
+          "english": {
+            "value": "en-US",
+            "summary": "English (United States)"
+          }
+        }
+      },
+      "AcceptHeader": {
+        "in": "header",
+        "name": "Accept",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "application/json",
+            "application/xml",
+            "application/yaml",
+            "text/calendar"
+          ],
+          "default": "application/json"
+        }
+      },
+      "YearTypeParam": {
+        "in": "query",
+        "name": "year_type",
+        "description": "Whether to return a civil year (Jan 1 - Dec 31) or liturgical year (First Sunday of Advent through Saturday of 34th week of Ordinary Time)",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "CIVIL",
+            "LITURGICAL"
+          ],
+          "default": "LITURGICAL"
+        }
+      },
+      "EpiphanyParam": {
+        "in": "query",
+        "name": "epiphany",
+        "description": "When Epiphany is celebrated: on January 6th or on the Sunday between January 2nd and 8th",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "JAN6",
+            "SUNDAY_JAN2_JAN8"
+          ]
+        }
+      },
+      "AscensionParam": {
+        "in": "query",
+        "name": "ascension",
+        "description": "When Ascension is celebrated: on Thursday (40 days after Easter) or on Sunday (7th Sunday of Easter)",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "THURSDAY",
+            "SUNDAY"
+          ]
+        }
+      },
+      "CorpusChristiParam": {
+        "in": "query",
+        "name": "corpus_christi",
+        "description": "When Corpus Christi is celebrated: on Thursday after Trinity Sunday or on the following Sunday",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "THURSDAY",
+            "SUNDAY"
+          ]
+        }
+      },
+      "EternalHighPriestParam": {
+        "in": "query",
+        "name": "eternal_high_priest",
+        "description": "Whether to include the Feast of Jesus Christ, Eternal High Priest (Thursday after Pentecost)",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      "YearPathParam": {
+        "in": "path",
+        "name": "year",
+        "required": true,
+        "description": "The calendar year for which to retrieve liturgical events",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1970,
+          "maximum": 9999
+        }
+      },
+      "NationalCalendarIdPathParam": {
+        "in": "path",
+        "name": "calendar_id",
+        "required": true,
+        "description": "Uppercase two letter ISO 3166 code of a nation for which the liturgical calendar has been defined",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "IT",
+            "US",
+            "NL",
+            "VA",
+            "CA"
+          ]
+        }
+      },
+      "DiocesanCalendarIdPathParam": {
+        "in": "path",
+        "name": "calendar_id",
+        "required": true,
+        "description": "Identifier for a diocesan calendar",
+        "schema": {
+          "$ref": "./CommonDef.json#/definitions/DiocesanCalendarId"
+        }
       }
     },
     "examples": {
