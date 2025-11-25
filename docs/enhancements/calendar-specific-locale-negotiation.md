@@ -134,7 +134,7 @@ fallback logic if no matching locale is found.
 
 ## References
 
-- CodeRabbit suggestion: [PR review comment](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/pull/XXX) *(update with actual PR link)*
+- CodeRabbit suggestion during v5.4 release development
 - Related code: `CalendarHandler::handle()` locale negotiation block in `src/Handlers/CalendarHandler.php`
 - Negotiator implementation: `Negotiator::pickLanguage()` in `src/Http/Negotiator.php`
 
