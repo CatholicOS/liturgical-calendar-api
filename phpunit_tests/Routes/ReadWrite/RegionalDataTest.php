@@ -368,12 +368,6 @@ JSON;
         $this->assertSame('Expected at least two and at most three path params for GET and POST requests, received 1', $description);
     }
 
-    private function validatePatchDeleteNationalOrDiocesanCalendarDataNoIdentifierErrorResponse(\Psr\Http\Message\ResponseInterface $response, string $content_type = 'application/problem+json'): void
-    {
-        $description = $this->validateRequestNoPathParametersErrorResponse($response, $content_type);
-        $this->assertSame('Expected two path params for PATCH and DELETE requests, received 1', $description);
-    }
-
     private function validatePutNoPathParametersErrorResponse(\Psr\Http\Message\ResponseInterface $response, string $content_type = 'application/problem+json'): void
     {
         $description = $this->validateRequestNoPathParametersErrorResponse($response, $content_type);
