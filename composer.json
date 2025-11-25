@@ -37,7 +37,8 @@
         "guzzlehttp/guzzle": "^7.10",
         "react/filesystem": "0.2.x-dev",
         "psr/log": "^3.0",
-        "monolog/monolog": "^3.9"
+        "monolog/monolog": "^3.9",
+        "firebase/php-jwt": "^6.11"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^4.0",
@@ -76,6 +77,7 @@
         "lint:fix": "phpcbf",
         "lint:md": "npx --yes markdownlint-cli \"**/*.md\" --ignore node_modules --ignore vendor",
         "lint:md:fix": "npx --yes markdownlint-cli \"**/*.md\" --ignore node_modules --ignore vendor --fix",
+        "lint:openapi": "npx --yes @redocly/cli lint",
         "analyse": "phpstan analyse",
         "parallel-lint": "parallel-lint --exclude .git --exclude vendor .",
         "test": "phpunit --testdox --display-warnings",

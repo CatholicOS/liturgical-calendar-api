@@ -46,7 +46,34 @@ composer stop
 - `API_HOST` (localhost in dev)
 - `API_PORT` (8000 in dev)
 - `API_BASE_PATH` (/ in dev)
-- `APP_ENV` (development|production)
+- `APP_ENV` (development|test|staging|production) - **Required in non-localhost environments**
+  - `development` / `test`: Allow default password if `ADMIN_PASSWORD_HASH` is unset (for testing convenience)
+  - `staging` / `production`: Require `ADMIN_PASSWORD_HASH` to be configured (throws exception if missing)
+  - Invalid/unset values throw exception (fail-closed security)
+
+**JWT Authentication configuration (required for protected endpoints):**
+
+- `JWT_SECRET` - Secret key for signing tokens (minimum 32 characters, generate with `php -r "echo bin2hex(random_bytes(32));"`)
+- `JWT_ALGORITHM` - Algorithm for signing (default: HS256)
+- `JWT_EXPIRY` - Access token expiry in seconds (default: 3600 = 1 hour), must be positive
+- `JWT_REFRESH_EXPIRY` - Refresh token expiry in seconds (default: 604800 = 7 days), must be positive
+- `ADMIN_USERNAME` - Admin username for authentication (default: admin)
+- `ADMIN_PASSWORD_HASH` - Argon2id password hash (generate with `password_hash('password', PASSWORD_ARGON2ID)`)
+  - Required in `staging` and `production` environments
+  - Optional in `development` and `test` environments (defaults to password "password")
+
+**Protected Routes:** The following routes require JWT authentication (via `Authorization: Bearer <token>` header):
+
+- `PUT /data/{category}/{calendar}` - Create calendar data
+- `PATCH /data/{category}/{calendar}` - Update calendar data
+- `DELETE /data/{category}/{calendar}` - Delete calendar data
+
+**Authentication Endpoints:**
+
+- `POST /auth/login` - Authenticate with username/password, returns access and refresh tokens
+- `POST /auth/refresh` - Refresh access token using refresh token
+
+See [Authentication Roadmap](docs/enhancements/AUTHENTICATION_ROADMAP.md) for implementation details.
 
 ### Testing
 
@@ -68,6 +95,9 @@ composer lint
 
 # Auto-fix code style issues
 composer lint:fix
+
+# Lint OpenAPI schema with Redocly
+composer lint:openapi
 
 # Parallel syntax checking
 composer parallel-lint
@@ -121,6 +151,12 @@ In VSCode, use `Ctrl+Shift+B` and select `litcal-tests-websockets`.
      - `TestsHandler`: Test data (`/tests`)
      - `EasterHandler`: Easter calculations (`/easter`)
      - `SchemasHandler`: JSON schemas (`/schemas`)
+     - `Auth/LoginHandler`: JWT authentication (`/auth/login`)
+       - POST endpoint that accepts username and password
+       - Returns JWT access token and refresh token
+     - `Auth/RefreshHandler`: Token refresh (`/auth/refresh`)
+       - POST endpoint that accepts refresh token
+       - Returns new JWT access token
 
 4. **Response:** Handlers use `Negotiator` to determine content type (JSON/YAML/XML/ICS) based on Accept header or `return_type` parameter
 
@@ -137,6 +173,8 @@ In VSCode, use `Ctrl+Shift+B` and select `litcal-tests-websockets`.
   - NOT used by `CalendarHandler` for calendar calculation
 - `Decrees/`: Decree metadata
 - `Lectionary/`: Lectionary readings
+- `Auth/`: Authentication models
+  - `User.php`: User authentication (currently environment-based)
 - `LitCalItem.php`: Individual liturgical event representation (calculated, with dates)
 - `PropriumDeSanctisEvent.php`: Saints/feasts event model
 - `PropriumDeTemporeEvent.php`: Temporal cycle event model
@@ -154,10 +192,14 @@ In VSCode, use `Ctrl+Shift+B` and select `litcal-tests-websockets`.
 **HTTP Layer:** `src/Http/`
 
 - `Enum/`: HTTP-specific enums (`AcceptHeader`, `RequestMethod`, `StatusCode`, etc.)
-- `Exception/`: Custom HTTP exceptions
-- `Middleware/`: PSR-15 middleware (ErrorHandling, Logging)
+- `Exception/`: Custom HTTP exceptions (including `UnauthorizedException`, `ForbiddenException`)
+- `Middleware/`: PSR-15 middleware (ErrorHandling, Logging, JwtAuthMiddleware)
 - `Server/`: Middleware pipeline implementation
 - `Negotiator.php`: Content negotiation logic
+
+**Services:** `src/Services/`
+
+- `JwtService.php`: JWT token generation, verification, and refresh
 
 **Params:** `src/Params/`
 
