@@ -206,6 +206,7 @@ This ensures that production environments cannot accidentally use weak default c
 
 * `POST /auth/login` - Authenticate with username/password, returns access and refresh tokens
 * `POST /auth/refresh` - Refresh access token using refresh token
+* `POST /auth/logout` - Logout (stateless; clients should delete stored tokens)
 
 For detailed implementation information, see [docs/enhancements/AUTHENTICATION_ROADMAP.md](docs/enhancements/AUTHENTICATION_ROADMAP.md).
 
