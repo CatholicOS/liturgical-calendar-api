@@ -11,6 +11,9 @@ This document outlines the implementation plan for adding authentication, author
 **Related Documentation:**
 
 - [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/AUTHENTICATION_ROADMAP.md)
+- [OpenAPI Evaluation Roadmap](OPENAPI_EVALUATION_ROADMAP.md) - Authentication gaps and missing CRUD operations
+- [Serialization Roadmap](SERIALIZATION_ROADMAP.md) - Data serialization coordination
+- [API Client Libraries Roadmap](../../../docs/API_CLIENT_LIBRARIES_ROADMAP.md) - Client library endpoint coverage
 
 ### Why Self-Hosted JWT First?
 
@@ -90,6 +93,22 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
 - `PUT /data/{category}/{calendar}` - Protected (requires JWT)
 - `PATCH /data/{category}/{calendar}` - Protected (requires JWT)
 - `DELETE /data/{category}/{calendar}` - Protected (requires JWT)
+
+**Endpoints Requiring JWT Protection (To Be Implemented):**
+
+Per the API Client Libraries Roadmap, the following CRUD endpoints also need JWT protection:
+
+- `PUT /missals` - Create missal (not yet implemented)
+- `PATCH /missals/{missal_id}` - Update missal (not yet implemented)
+- `DELETE /missals/{missal_id}` - Delete missal (not yet implemented)
+- `PUT /decrees` - Create decree (not yet implemented)
+- `PATCH /decrees/{decree_id}` - Update decree (not yet implemented)
+- `DELETE /decrees/{decree_id}` - Delete decree (not yet implemented)
+- `PUT /tests` - Create test (**exists but lacks authentication - security gap**)
+- `PATCH /tests/{test_name}` - Update test (not yet implemented)
+- `DELETE /tests/{test_name}` - Delete test (not yet implemented)
+
+See `docs/enhancements/OPENAPI_EVALUATION_ROADMAP.md` for the full gap analysis.
 
 **Development Credentials:**
 

@@ -27,3 +27,5 @@ MD036: false
 MD041: false
 MD046:
   style: fenced
+MD060:
+  style: aligned
