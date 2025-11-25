@@ -156,11 +156,7 @@ final class NationalData extends AbstractJsonSrcData
      */
     protected static function fromArrayInternal(array $data): static
     {
-        $keys        = array_keys($data);
-        $missingKeys = array_diff(self::REQUIRED_PROPS, $keys);
-        if (!empty($missingKeys)) {
-            throw new \ValueError('The following required properties are missing: ' . implode(', ', $missingKeys));
-        }
+        self::validateRequiredKeys($data, self::REQUIRED_PROPS);
 
         return new static(
             LitCalItemCollection::fromArray($data['litcal']),
@@ -182,11 +178,7 @@ final class NationalData extends AbstractJsonSrcData
      */
     protected static function fromObjectInternal(\stdClass $data): static
     {
-        $keys        = array_keys(get_object_vars($data));
-        $missingKeys = array_diff(self::REQUIRED_PROPS, $keys);
-        if (!empty($missingKeys)) {
-            throw new \ValueError('The following required properties are missing: ' . implode(', ', $missingKeys));
-        }
+        self::validateRequiredProps($data, self::REQUIRED_PROPS);
 
         return new static(
             LitCalItemCollection::fromObject($data->litcal),
