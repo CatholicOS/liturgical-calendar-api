@@ -9,9 +9,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-11-23 18:32+0000\n"
-"PO-Revision-Date: 2025-11-22 15:14+0000\n"
+"PO-Revision-Date: 2025-11-25 10:04+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: German <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/de/>\n"
@@ -699,6 +699,7 @@ msgid ""
 "Decree of the Dicastery for Divine Worship and the Discipline of the "
 "Sacraments"
 msgstr ""
+"Dekret des Dikasteriums für den Gottesdienst und die Sakramentendisziplin"
 
 #: src/Handlers/CalendarHandler.php:1269
 msgid "the Monday following the Second Sunday of Easter"
@@ -919,24 +920,24 @@ msgstr ""
 
 #. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
 #: src/Handlers/CalendarHandler.php:2315
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s': can only be relative to "
 "liturgical event with key '%2$s' using keywords %3$s"
 msgstr ""
-"Kann mobile Festlichkeit '%1$s' nicht erstellen: kann nur relativ zur "
-"Festlichkeit mit Schlüssel '%2$s' unter Verwendung der Schlüsselwörter %3$s "
-"sein"
+"Kann das mobile liturgische Ereignis '%1$s' nicht erstellen: kann nur "
+"relativ zu einem liturgischen Ereignis mit dem Schlüssel '%2$s' mit den "
+"Schlüsselwörtern %3$s sein."
 
 #. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
 #: src/Handlers/CalendarHandler.php:2329
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s' relative to liturgical event "
 "with key '%2$s'"
 msgstr ""
-"Kann das mobile Festivität '%1$s' relativ zum Festivität mit dem Schlüssel "
-"'%2$s', nicht erstellen"
+"Kann mobiles liturgisches Ereignis '%1$s' nicht relativ zu liturgischem "
+"Ereignis mit Schlüssel '%2$s' erstellen."
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1120,8 +1121,8 @@ msgid ""
 "The liturgical event '%1$s' has been moved from %2$s to %3$s due to "
 "conditional rules in the year %4$d."
 msgstr ""
-"Die liturgische Veranstaltung '%1$s' wurde aufgrund von Bedingungsregeln im "
-"Jahr %4$d von %2$s auf %3$s verschoben."
+"Die liturgisches Ereignis '%1$s' wurde aufgrund von Bedingungsregeln im Jahr "
+"%4$d von %2$s auf %3$s verschoben."
 
 #. translators:
 #.  1. Grade of the liturgical event
@@ -1208,15 +1209,17 @@ msgid ""
 "liturgical event is greater than the number of days (%3$d) in the month "
 "(%4$d) of the liturgical event year (%5$d)."
 msgstr ""
+"Kann das liturgische Ereignis mit dem Schlüssel \"%1$s\" nicht erstellen: "
+"Der Tag (%2$d) des liturgischen Ereignisses ist größer als die Anzahl der "
+"Tage (%3$d) im Monat (%4$d) des Jahres des liturgischen Ereignisses (%5$d)."
 
 #: src/Handlers/CalendarHandler.php:3429
-#, fuzzy
 msgid ""
 "We should be creating a new liturgical event, however we do not seem to have "
 "the correct date information in order to proceed"
 msgstr ""
-"Wir sollten ein neues Fest schaffen, aber wir scheinen nicht die richtigen "
-"Datumsinformationen zu haben, um fortzufahren"
+"Wir sollten ein neues liturgisches Ereignis schaffen, aber anscheinend haben "
+"wir nicht die richtigen Datumsinformationen, um fortzufahren."
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1336,7 +1339,7 @@ msgid ""
 "the national calendar '%4$s', but cannot be applied in the year %5$d simply "
 "because we could not find the data for it from the Roman Missal events."
 msgstr ""
-"Die liturgische Veranstaltung '%1$s' wurde seit dem Jahr %3$d im nationalen "
+"Die liturgisches Ereignis '%1$s' wurde seit dem Jahr %3$d im nationalen "
 "Kalender '%4$s' auf %2$s verschoben, kann aber im Jahr %5$d nicht angewendet "
 "werden, da wir die Daten dafür aus den Ereignissen des Römischen Messbuchs "
 "nicht finden konnten."
@@ -1349,23 +1352,23 @@ msgstr ""
 #.  5. Requested calendar year
 #.
 #: src/Handlers/CalendarHandler.php:3709
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "The liturgical event '%1$s' has been moved to %2$s since the year %3$d in "
 "the national calendar '%4$s', but this could not take place in the year %5$d "
 "since the new date %2$s seems to be a Sunday or a liturgical event of "
 "greater rank."
 msgstr ""
-"Die liturgische Veranstaltung '%1$s' wurde seit dem Jahr %3$d im nationalen "
-"Kalender '%4$s' auf %2$s verlegt, konnte jedoch im Jahr %5$d nicht "
-"stattfinden, da das neue Datum %2$s anscheinend ein Sonntag oder ein Fest "
-"höheren Ranges ist."
+"Die liturgisches Ereignis '%1$s' wurde seit dem Jahr %3$d im nationalen "
+"Kalender '%4$s' auf %2$s verschoben, konnte jedoch im Jahr %5$d nicht "
+"stattfinden, da das neue Datum %2$s auf einen Sonntag oder ein liturgisches "
+"Ereignis höheren Ranges zu fallen scheint."
 
 #. translators: 1. Country name, 2. List of missals
 #: src/Handlers/CalendarHandler.php:3748
 #, php-format
 msgid "Found Missals for region %1$s: %2$s."
-msgstr ""
+msgstr "Gefundene Messbücher für Region %1$s: %2$s."
 
 #. translators: Name of the Roman Missal
 #: src/Handlers/CalendarHandler.php:3772
@@ -1479,18 +1482,18 @@ msgstr ""
 
 #: src/Handlers/CalendarHandler.php:4531
 msgid "Error converting Liturgical Calendar to XML."
-msgstr ""
+msgstr "Fehler beim Konvertieren des liturgischen Kalenders in XML."
 
 #: src/Handlers/CalendarHandler.php:4566
-#, fuzzy, php-format
+#, php-format
 msgid "Error receiving or parsing info from GitHub about latest release: %s."
 msgstr ""
-"Fehler beim Empfangen oder Parsen von Informationen von GitHub über die "
-"neueste Version: %s."
+"Fehler beim Empfangen oder Analysieren von Informationen von GitHub über den "
+"neuesten Release: %s."
 
 #: src/Handlers/CalendarHandler.php:4577
 msgid "Error serializing Liturgical Calendar."
-msgstr ""
+msgstr "Fehler bei der Serialisierung des Liturgischen Kalenders."
 
 #: src/Models/Calendar/LitCommons.php:200
 msgid "From the Common"
