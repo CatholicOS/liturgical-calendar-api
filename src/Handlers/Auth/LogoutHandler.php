@@ -143,8 +143,11 @@ final class LogoutHandler extends AbstractHandler
             try {
                 $jwtService = $this->getJwtService();
                 $username   = $jwtService->extractUsername($token) ?? 'unknown';
-            } catch (\RuntimeException) {
-                // JWT configuration missing, continue with 'unknown' username
+            } catch (\Throwable $e) {
+                // Any JWT/config issue: keep logout successful, log at debug level
+                $this->authLogger->debug('Failed to extract username from JWT during logout', [
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
