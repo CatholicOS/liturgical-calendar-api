@@ -37,5 +37,5 @@ require_once $autoloaderPath;
 
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createMutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.production'], false);
+$dotenv = Dotenv::createMutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.staging', '.env.production'], false);
 $dotenv->safeLoad();

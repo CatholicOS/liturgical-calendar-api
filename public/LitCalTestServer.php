@@ -41,7 +41,7 @@ use Ratchet\WebSocket\WsServer;
 use LiturgicalCalendar\Api\Health;
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createMutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.production'], false);
+$dotenv = Dotenv::createImmutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.staging', '.env.production'], false);
 $dotenv->safeLoad();
 $dotenv->ifPresent(['API_PROTOCOL', 'API_HOST'])->notEmpty();
 $dotenv->ifPresent(['API_PORT'])->isInteger();
