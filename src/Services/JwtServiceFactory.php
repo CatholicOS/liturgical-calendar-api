@@ -10,17 +10,19 @@ namespace LiturgicalCalendar\Api\Services;
  */
 class JwtServiceFactory
 {
+    private const SUPPORTED_ALGORITHMS = ['HS256', 'HS384', 'HS512'];
+
     /**
      * Create a JwtService configured from environment variables.
      *
      * Reads these environment variables:
      * - JWT_SECRET (required): signing secret, must be at least 32 characters.
-     * - JWT_ALGORITHM: algorithm name, defaults to 'HS256'.
+     * - JWT_ALGORITHM: algorithm name (HS256, HS384, or HS512), defaults to 'HS256'.
      * - JWT_EXPIRY: access token lifetime in seconds, defaults to 3600; must be greater than 0.
      * - JWT_REFRESH_EXPIRY: refresh token lifetime in seconds, defaults to 604800; must be greater than 0.
      *
      * @return JwtService The configured JWT service instance.
-     * @throws \RuntimeException If JWT_SECRET is missing/empty/too short, or if expiry values are not positive integers.
+     * @throws \RuntimeException If JWT_SECRET is missing/empty/too short, JWT_ALGORITHM is invalid, or expiry values are not positive integers.
      */
     public static function fromEnv(): JwtService
     {
@@ -34,6 +36,9 @@ class JwtServiceFactory
 
         $algorithmEnv = $_ENV['JWT_ALGORITHM'] ?? 'HS256';
         $algorithm    = is_string($algorithmEnv) ? $algorithmEnv : 'HS256';
+        if (!in_array($algorithm, self::SUPPORTED_ALGORITHMS, true)) {
+            throw new \RuntimeException('JWT_ALGORITHM must be one of: ' . implode(', ', self::SUPPORTED_ALGORITHMS));
+        }
 
         $expiryEnv = $_ENV['JWT_EXPIRY'] ?? '3600';
         $expiry    = is_numeric($expiryEnv) ? (int) $expiryEnv : 3600;
