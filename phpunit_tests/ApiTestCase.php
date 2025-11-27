@@ -191,8 +191,9 @@ abstract class ApiTestCase extends TestCase
     /**
      * Obtain a JWT access token for authenticated tests.
      *
-     * Uses the default admin credentials (admin/password) which are available
-     * in development and test environments when ADMIN_PASSWORD_HASH is not set.
+     * Uses admin credentials from environment variables (ADMIN_USERNAME, ADMIN_PASSWORD)
+     * or defaults to admin/password which are available in development and test environments
+     * when ADMIN_PASSWORD_HASH is not set.
      *
      * @return string|null The JWT access token, or null if authentication fails.
      */
@@ -209,7 +210,7 @@ abstract class ApiTestCase extends TestCase
             ],
             'json'    => [
                 'username' => $_ENV['ADMIN_USERNAME'] ?? 'admin',
-                'password' => 'password'
+                'password' => $_ENV['ADMIN_PASSWORD'] ?? 'password'
             ]
         ]);
 
@@ -217,7 +218,13 @@ abstract class ApiTestCase extends TestCase
             return null;
         }
 
-        $data = json_decode((string) $response->getBody(), true);
+        $body = (string) $response->getBody();
+        $data = json_decode($body, true);
+
+        if (!is_array($data)) {
+            return null;
+        }
+
         return $data['access_token'] ?? null;
     }
 
