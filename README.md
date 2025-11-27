@@ -196,7 +196,7 @@ The API implements fail-closed authentication that requires `APP_ENV` to be expl
 
 This ensures that production environments cannot accidentally use weak default credentials.
 
-**Protected Routes** (require JWT authentication via `Authorization: Bearer <token>` header or HttpOnly cookie):
+**Protected Routes** (require JWT authentication via HttpOnly cookie or `Authorization: Bearer <token>` header):
 
 * `PUT /data/{category}/{calendar}` - Create calendar data
 * `PATCH /data/{category}/{calendar}` - Update calendar data
@@ -209,6 +209,18 @@ This ensures that production environments cannot accidentally use weak default c
 * `POST /auth/logout` - Logout and clear HttpOnly cookies (stateless; clients should also discard any stored tokens)
 * `GET /auth/me` - Get current authenticated user info (requires valid access token)
 
+**Cookie-Based Authentication Details:**
+
+* **Token precedence**: HttpOnly cookies are checked first; the `Authorization` header is used only as a fallback when no cookie is present
+* **Cookie handling**: Browsers automatically send cookies with same-site requests when `credentials: 'include'` is set in fetch options.
+  For cross-origin requests, the server must also return appropriate CORS headers (`Access-Control-Allow-Credentials: true`)
+* **Cookie attributes**:
+  * Access token: `SameSite=Lax`, `HttpOnly`, `Secure` (HTTPS only), path `/`
+  * Refresh token: `SameSite=Strict`, `HttpOnly`, `Secure` (HTTPS only), path `/auth`
+* **CSRF protection**: The `SameSite` attribute provides baseline CSRF protection by restricting when cookies are sent cross-site.
+  `Lax` allows same-site requests and top-level cross-site navigations; `Strict` (used for refresh tokens) only allows same-site requests.
+  For enhanced security in cross-origin scenarios, consider implementing additional CSRF tokens
+
 For detailed implementation information, see [docs/enhancements/AUTHENTICATION_ROADMAP.md](docs/enhancements/AUTHENTICATION_ROADMAP.md).
 
 For example, to run the API in production with a custom domain and HTTPS, you would set the following environment variables:
@@ -218,6 +230,13 @@ API_PROTOCOL=https
 API_HOST=mydomain.com
 API_PORT=443
 API_BASE_PATH=/api/v1/
+JWT_ALGORITHM=HS256
+JWT_EXPIRY=3600
+JWT_REFRESH_EXPIRY=604800
+JWT_SECRET=change-this-to-a-secure-random-string-in-production-minimum-32-chars
+ADMIN_PASSWORD_HASH=CHANGE_ME_GENERATE_WITH_password_hash
+ADMIN_USERNAME=admin
+APP_ENV=production
 ```
 
 ## Using a docker container
