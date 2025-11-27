@@ -40,13 +40,11 @@ class PayloadValidationTest extends TestCase
     /**
      * Ensure Router paths are initialized.
      *
-     * This is needed because:
-     * 1. Data providers (e.g., invalidPayloadProvider()) run before setUp()
-     * 2. LitSchema::path() requires Router paths to be initialized
+     * LitSchema::path() requires Router paths to be initialized.
+     * Called from setUp() before each test method.
      *
-     * Called from setUp() for test methods, and explicitly from data providers
-     * that need LitSchema. Router::getApiPaths() is idempotent, but we use a
-     * flag to avoid unnecessary repeated calls.
+     * Router::getApiPaths() is idempotent, but we use a flag to avoid
+     * unnecessary repeated calls.
      */
     private static function ensureRouterInitialized(): void
     {
@@ -122,8 +120,6 @@ class PayloadValidationTest extends TestCase
      */
     public static function invalidPayloadProvider(): array
     {
-        self::ensureRouterInitialized();
-
         return [
             'wrapped litcal (broken serialization)' => ['invalid_litcal_wrapped.json', LitSchema::DIOCESAN],
             'missing metadata'                      => ['invalid_missing_metadata.json', LitSchema::DIOCESAN],
