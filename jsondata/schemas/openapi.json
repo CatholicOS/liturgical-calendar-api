@@ -2067,25 +2067,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "National calendar {NATION} deleted"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+          "204": {
+            "description": "204 No Content: the resource was successfully deleted from the server"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
@@ -2275,25 +2258,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "Diocesan calendar {DIOCESE} deleted from nation {NATION}"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+          "204": {
+            "description": "204 No Content: the resource was successfully deleted from the server"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
@@ -2483,25 +2449,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "Wider region calendar {REGION} deleted"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+          "204": {
+            "description": "204 No Content: the resource was successfully deleted from the server"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
