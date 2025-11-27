@@ -15,17 +15,19 @@ use LiturgicalCalendar\Api\Models\RegionalData\Translations;
  * @phpstan-import-type DiocesanMetadataArray from DiocesanMetadata
  * @phpstan-import-type TranslationMapObject from \LiturgicalCalendar\Api\Models\RegionalData\TranslationMap
  * @phpstan-import-type TranslationObject from \LiturgicalCalendar\Api\Models\RegionalData\Translations
+ * @phpstan-type I18nObject \stdClass&object<string,\stdClass&object<string,string>>
+ * @phpstan-type I18nArray array<string,array<string,string>>
  * @phpstan-type DiocesanCalendarDataArray array{
  *      litcal:LiturgicalEventArray[],
  *      metadata:DiocesanMetadataArray,
  *      settings?:DiocesanCalendarSettingsArray,
- *      i18n?:array<string,string>
+ *      i18n?:I18nArray
  * }
  * @phpstan-type DiocesanCalendarDataObject \stdClass&object{
  *      litcal:LiturgicalEventObject[],
  *      metadata:DiocesanMetadataObject,
  *      settings?:DiocesanCalendarSettingsObject,
- *      i18n?:TranslationObject
+ *      i18n?:I18nObject
  * }
  */
 final class DiocesanData extends AbstractJsonSrcData
@@ -158,8 +160,12 @@ final class DiocesanData extends AbstractJsonSrcData
      */
     protected static function fromArrayInternal(array $data): static
     {
-        /** @var \stdClass|null $i18n */
-        $i18n = isset($data['i18n']) ? (object) $data['i18n'] : null;
+        $i18n = null;
+        if (isset($data['i18n'])) {
+            /** @var \stdClass $i18n Deep cast nested arrays to stdClass for Translations::fromObject() */
+            $i18n = json_decode(json_encode($data['i18n'], JSON_THROW_ON_ERROR), false, 512, JSON_THROW_ON_ERROR);
+        }
+
         return new static(
             DiocesanLitCalItemCollection::fromArray($data['litcal']),
             DiocesanMetadata::fromArray($data['metadata']),

@@ -13,17 +13,19 @@ use LiturgicalCalendar\Api\Models\RegionalData\Translations;
  * @phpstan-import-type NationalMetadataObject from NationalMetadata
  * @phpstan-import-type NationalMetadataArray from NationalMetadata
  * @phpstan-type LiturgicalEventObjectFixed \stdClass&object{event_key:string,day:int,month:int,color:string[],grade:int,common:string[]}
+ * @phpstan-type I18nObject \stdClass&object<string,\stdClass&object<string,string>>
+ * @phpstan-type I18nArray array<string,array<string,string>>
  * @phpstan-type NationalCalendarDataObject \stdClass&object{
  *      litcal:LiturgicalEventObjectFixed[],
  *      settings:NationalCalendarSettingsObject,
  *      metadata:NationalMetadataObject,
- *      i18n?:\stdClass&object<string,string>
+ *      i18n?:I18nObject
  * }
  * @phpstan-type NationalCalendarDataArray array{
  *      litcal:array{event_key:string,day:int,month:int,color:string[],grade:int,common:string[]},
  *      settings:NationalCalendarSettingsArray,
  *      metadata:NationalMetadataArray,
- *      i18n?:array<string,string>
+ *      i18n?:I18nArray
  * }
  */
 final class NationalData extends AbstractJsonSrcData
@@ -158,11 +160,17 @@ final class NationalData extends AbstractJsonSrcData
     {
         self::validateRequiredKeys($data, self::REQUIRED_PROPS);
 
+        $i18n = null;
+        if (isset($data['i18n'])) {
+            /** @var \stdClass $i18n Deep cast nested arrays to stdClass for Translations::fromObject() */
+            $i18n = json_decode(json_encode($data['i18n'], JSON_THROW_ON_ERROR), false, 512, JSON_THROW_ON_ERROR);
+        }
+
         return new static(
             LitCalItemCollection::fromArray($data['litcal']),
             MetadataNationalCalendarSettings::fromArray($data['settings']),
             NationalMetadata::fromArray($data['metadata']),
-            isset($data['i18n']) ? (object) $data['i18n'] : null
+            $i18n
         );
     }
 
