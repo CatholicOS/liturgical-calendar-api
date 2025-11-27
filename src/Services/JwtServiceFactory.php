@@ -40,16 +40,32 @@ class JwtServiceFactory
             throw new \RuntimeException('JWT_ALGORITHM must be one of: ' . implode(', ', self::SUPPORTED_ALGORITHMS));
         }
 
-        $expiryEnv = $_ENV['JWT_EXPIRY'] ?? '3600';
-        $expiry    = is_numeric($expiryEnv) ? (int) $expiryEnv : 3600;
-        if ($expiry <= 0) {
-            throw new \RuntimeException('JWT_EXPIRY must be a positive integer (got: ' . $expiry . ')');
+        $expiryEnv = $_ENV['JWT_EXPIRY'] ?? null;
+        if ($expiryEnv === null) {
+            $expiry = 3600;
+        } elseif (is_string($expiryEnv) && !is_numeric($expiryEnv)) {
+            throw new \RuntimeException('JWT_EXPIRY must be a numeric value (got: ' . $expiryEnv . ')');
+        } elseif (!is_numeric($expiryEnv)) {
+            throw new \RuntimeException('JWT_EXPIRY must be a numeric value (got type: ' . get_debug_type($expiryEnv) . ')');
+        } else {
+            $expiry = (int) $expiryEnv;
+            if ($expiry <= 0) {
+                throw new \RuntimeException('JWT_EXPIRY must be a positive integer (got: ' . $expiry . ')');
+            }
         }
 
-        $refreshExpiryEnv = $_ENV['JWT_REFRESH_EXPIRY'] ?? '604800';
-        $refreshExpiry    = is_numeric($refreshExpiryEnv) ? (int) $refreshExpiryEnv : 604800;
-        if ($refreshExpiry <= 0) {
-            throw new \RuntimeException('JWT_REFRESH_EXPIRY must be a positive integer (got: ' . $refreshExpiry . ')');
+        $refreshExpiryEnv = $_ENV['JWT_REFRESH_EXPIRY'] ?? null;
+        if ($refreshExpiryEnv === null) {
+            $refreshExpiry = 604800;
+        } elseif (is_string($refreshExpiryEnv) && !is_numeric($refreshExpiryEnv)) {
+            throw new \RuntimeException('JWT_REFRESH_EXPIRY must be a numeric value (got: ' . $refreshExpiryEnv . ')');
+        } elseif (!is_numeric($refreshExpiryEnv)) {
+            throw new \RuntimeException('JWT_REFRESH_EXPIRY must be a numeric value (got type: ' . get_debug_type($refreshExpiryEnv) . ')');
+        } else {
+            $refreshExpiry = (int) $refreshExpiryEnv;
+            if ($refreshExpiry <= 0) {
+                throw new \RuntimeException('JWT_REFRESH_EXPIRY must be a positive integer (got: ' . $refreshExpiry . ')');
+            }
         }
 
         return new JwtService($secret, $algorithm, $expiry, $refreshExpiry);
