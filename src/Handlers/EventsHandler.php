@@ -11,6 +11,7 @@ use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Exception\UnprocessableContentException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
+use LiturgicalCalendar\Api\Http\Negotiator;
 use LiturgicalCalendar\Api\Models\Decrees\DecreeItemCollection;
 use LiturgicalCalendar\Api\Models\Decrees\DecreeItemCreateNewFixed;
 use LiturgicalCalendar\Api\Models\Decrees\DecreeItemCreateNewMobile;
@@ -605,10 +606,7 @@ final class EventsHandler extends AbstractHandler
         $params = [];
 
         // Second of all, we check if an Accept-Language header was set in the request
-        $acceptLanguageHeader = $request->getHeaderLine('Accept-Language');
-        $locale               = '' !== $acceptLanguageHeader
-            ? \Locale::acceptFromHttp($acceptLanguageHeader)
-            : LitLocale::LATIN;
+        $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
         if ($locale && LitLocale::isValid($locale)) {
             $params['locale'] = $locale;
         } else {

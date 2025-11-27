@@ -1,6 +1,5 @@
 {
     "$schema": "https://json-schema.org/draft-07/schema#",
-    "$id": "./LitCal.json",
     "title": "LitCal",
     "type": "object",
     "additionalProperties": false,
@@ -176,18 +175,30 @@
                 "ascension": "SUNDAY",
                 "corpus_christi": "SUNDAY",
                 "year_type": "CIVIL",
-                "locale": "string",
+                "locale": "it_IT",
                 "return_type": "JSON",
                 "national_calendar": "IT",
                 "diocesan_calendar": "romamo_it",
-                "eternal_high_priest": true
+                "eternal_high_priest": false,
+                "holydays_of_obligation": {
+                    "Christmas": true,
+                    "Epiphany": true,
+                    "Ascension": false,
+                    "CorpusChristi": false,
+                    "MaryMotherOfGod": true,
+                    "ImmaculateConception": true,
+                    "Assumption": true,
+                    "StJoseph": false,
+                    "StsPeterPaulAp": false,
+                    "AllSaints": true
+                }
             },
             "metadata": {
-                "version": "string",
+                "version": "5.3",
                 "timestamp": 1501027200,
                 "date_time": "2024-05-02T03:32:58.936Z",
                 "request_headers": {
-                    "Accept-Language": "it-IT,it;",
+                    "Accept-Language": "it-IT,it;q=0.9",
                     "Accept": "application/json"
                 },
                 "solemnities_lord_bvm": [
@@ -319,7 +330,7 @@
                     "common": [],
                     "common_lcl": "",
                     "type": "fixed",
-                    "date": 1672531200,
+                    "date": "2023-01-01T00:00:00+00:00",
                     "year": 2023,
                     "month": 1,
                     "month_short": "Ian.",
@@ -361,7 +372,7 @@
                     ],
                     "common_lcl": "Proprio",
                     "type": "fixed",
-                    "date": 1672617600,
+                    "date": "2023-01-02T00:00:00+00:00",
                     "year": 2023,
                     "month": 1,
                     "month_short": "Ian.",

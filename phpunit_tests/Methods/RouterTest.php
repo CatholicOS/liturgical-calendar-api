@@ -40,7 +40,7 @@ class RouterTest extends TestCase
     public function tearDown(): void
     {
         // Clean up environment variables after each test
-        $dotenv = Dotenv::createMutable(self::getProjectRoot(), ['.env', '.env.local', '.env.development', '.env.production'], false);
+        $dotenv = Dotenv::createMutable(self::getProjectRoot(), ['.env', '.env.local', '.env.development', '.env.staging', '.env.production'], false);
         $dotenv->safeLoad();
     }
 

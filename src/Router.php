@@ -18,10 +18,15 @@ use LiturgicalCalendar\Api\Handlers\RegionalDataHandler;
 use LiturgicalCalendar\Api\Handlers\MissalsHandler;
 use LiturgicalCalendar\Api\Handlers\DecreesHandler;
 use LiturgicalCalendar\Api\Handlers\SchemasHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\LoginHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\LogoutHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\MeHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\RefreshHandler;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Middleware\ErrorHandlingMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\LoggingMiddleware;
+use LiturgicalCalendar\Api\Http\Middleware\JwtAuthMiddleware;
 use LiturgicalCalendar\Api\Http\Server\MiddlewarePipeline;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
@@ -70,11 +75,11 @@ class Router
     }
 
     /**
-     * This is the main entry point of the API. It takes care of determining which
-     * endpoint is being requested and delegates the request to the appropriate
-     * class.
+     * Route the incoming HTTP request to the appropriate API endpoint, execute the configured middleware pipeline, and emit the HTTP response.
      *
-     * @return never
+     * The method selects and configures a per-endpoint request handler based on the request path, applies middlewares (including error handling, logging, and conditional JWT authentication for protected data modification routes), runs the pipeline, appends the X-Request-Id header to the final response, and terminates execution by emitting the response.
+     *
+     * @return never Terminates execution after emitting the HTTP response.
      */
     public function route(): never
     {
@@ -292,6 +297,31 @@ class Router
                 ]);
                 $this->handler = $schemasHandler;
                 break;
+            case 'auth':
+                // Handle authentication routes
+                if (count($requestPathParts) === 1) {
+                    $authRoute = $requestPathParts[0];
+                    if ($authRoute === 'login') {
+                        $loginHandler  = new LoginHandler();
+                        $this->handler = $loginHandler;
+                    } elseif ($authRoute === 'logout') {
+                        $logoutHandler = new LogoutHandler();
+                        $this->handler = $logoutHandler;
+                    } elseif ($authRoute === 'refresh') {
+                        $refreshHandler = new RefreshHandler();
+                        $this->handler  = $refreshHandler;
+                    } elseif ($authRoute === 'me') {
+                        $meHandler     = new MeHandler();
+                        $this->handler = $meHandler;
+                    } else {
+                        $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
+                        $this->emitResponse();
+                    }
+                } else {
+                    $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
+                    $this->emitResponse();
+                }
+                break;
             case 'data':
                 $regionalDataHandler = new RegionalDataHandler($requestPathParts);
                 $pathCount           = count($requestPathParts);
@@ -358,7 +388,15 @@ class Router
 
         $pipeline = new MiddlewarePipeline($this->handler);
         $pipeline->pipe(new ErrorHandlingMiddleware($this->psr17Factory, self::$debug)); // outermost middleware
-        $pipeline->pipe(new LoggingMiddleware(self::$debug));                            // innermost middleware
+        $pipeline->pipe(new LoggingMiddleware(self::$debug));
+
+        // Apply JWT authentication middleware for protected routes
+        if (
+            $route === 'data'
+            && in_array($this->request->getMethod(), [RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value], true)
+        ) {
+            $pipeline->pipe(new JwtAuthMiddleware());
+        }
 
         $this->response = $pipeline->handle($this->request)
             ->withHeader('X-Request-Id', $this->requestId);

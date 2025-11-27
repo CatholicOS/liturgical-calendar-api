@@ -29,6 +29,7 @@ use LiturgicalCalendar\Api\Http\Exception\ImplementationException;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Exception\YamlException;
+use LiturgicalCalendar\Api\Http\Negotiator;
 use LiturgicalCalendar\Api\Models\LitCalItem;
 use LiturgicalCalendar\Api\Models\LitCalItemCollection;
 use LiturgicalCalendar\Api\Models\MissalsMap;
@@ -113,7 +114,7 @@ final class CalendarHandler extends AbstractHandler
     private string $BaptismLordFmt;
     private string $BaptismLordMod;
 
-    public const API_VERSION                  = '5.3';
+    public const API_VERSION                  = '5.4';
     private string $CachePath                 = '';
     private string $CacheFile                 = '';
     private string $CacheDuration             = '';
@@ -5039,10 +5040,13 @@ final class CalendarHandler extends AbstractHandler
         $params['return_type'] = AcceptHeader::from($mimeWithoutCharset)->toReturnTypeParam()->value;
 
         // Second of all, we check if an Accept-Language header was set in the request
-        $acceptLanguageHeader = $request->getHeaderLine('Accept-Language');
-        $locale               = \Locale::acceptFromHttp($acceptLanguageHeader);
-        if ($locale && LitLocale::isValid($locale)) {
-            $params['locale'] = $locale;
+        // TODO: Future enhancement - pass calendar-specific supported locales once calendar
+        // metadata is available (requires reordering to parse calendar param first)
+        if ($request->getHeaderLine('Accept-Language') !== '') {
+            $locale = Negotiator::pickLanguage($request, [], null);
+            if ($locale && LitLocale::isValid($locale)) {
+                $params['locale'] = $locale;
+            }
         }
 
         switch ($method) {

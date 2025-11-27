@@ -174,6 +174,55 @@ You can copy the `.env.example` file to `.env` or `.env.local` (or `.env.develop
 These environment variables are used when running the API in CLI mode, such as when using the `start-server.sh` script.
 The defaults are suitable for development and testing, but may need to be overridden for staging or production environments.
 
+### JWT Authentication Configuration
+
+The API now supports JWT authentication for protected write operations. To enable authentication, configure the following environment variables:
+
+* `JWT_SECRET`: Secret key for signing tokens (minimum 32 characters). Generate a secure 64-character hex string with: `php -r "echo bin2hex(random_bytes(32));"`
+* `JWT_ALGORITHM`: Algorithm for signing tokens (default: `HS256`)
+* `JWT_EXPIRY`: Access token expiry in seconds (default: `3600` = 1 hour)
+* `JWT_REFRESH_EXPIRY`: Refresh token expiry in seconds (default: `604800` = 7 days)
+* `ADMIN_USERNAME`: Admin username for authentication (default: `admin`)
+* `ADMIN_PASSWORD_HASH`: Argon2id password hash. Generate with: `php -r "echo password_hash('yourpassword', PASSWORD_ARGON2ID);"`
+* `APP_ENV`: Application environment (required). Must be one of: `development`, `test`, `staging`, `production`
+
+**Environment-Specific Security Behavior:**
+
+The API implements fail-closed authentication that requires `APP_ENV` to be explicitly set to a known value:
+
+* **`development`** and **`test`**: Allow default password (`password`) if `ADMIN_PASSWORD_HASH` is not set or is not a valid hash format (for convenience in testing)
+* **`staging`** and **`production`**: Require `ADMIN_PASSWORD_HASH` to be a valid password hash (throws `RuntimeException` if missing or invalid)
+* **Invalid or unset `APP_ENV`**: Throws `RuntimeException` and denies authentication
+
+This ensures that production environments cannot accidentally use weak default credentials.
+
+**Protected Routes** (require JWT authentication via HttpOnly cookie or `Authorization: Bearer <token>` header):
+
+* `PUT /data/{category}/{calendar}` - Create calendar data
+* `PATCH /data/{category}/{calendar}` - Update calendar data
+* `DELETE /data/{category}/{calendar}` - Delete calendar data
+
+**Authentication Endpoints:**
+
+* `POST /auth/login` - Authenticate with username/password, returns access and refresh tokens (also sets HttpOnly cookies)
+* `POST /auth/refresh` - Refresh access token using refresh token (from cookie or request body)
+* `POST /auth/logout` - Logout and clear HttpOnly cookies (stateless; clients should also discard any stored tokens)
+* `GET /auth/me` - Get current authenticated user info (requires valid access token)
+
+**Cookie-Based Authentication Details:**
+
+* **Token precedence**: HttpOnly cookies are checked first; the `Authorization` header is used only as a fallback when no cookie is present
+* **Cookie handling**: Browsers automatically send cookies with same-site requests when `credentials: 'include'` is set in fetch options.
+  For cross-origin requests, the server must also return appropriate CORS headers (`Access-Control-Allow-Credentials: true`)
+* **Cookie attributes**:
+  * Access token: `SameSite=Lax`, `HttpOnly`, `Secure` (HTTPS only), path `/`
+  * Refresh token: `SameSite=Strict`, `HttpOnly`, `Secure` (HTTPS only), path `/auth`
+* **CSRF protection**: The `SameSite` attribute provides baseline CSRF protection by restricting when cookies are sent cross-site.
+  `Lax` allows same-site requests and top-level cross-site navigations; `Strict` (used for refresh tokens) only allows same-site requests.
+  For enhanced security in cross-origin scenarios, consider implementing additional CSRF tokens
+
+For detailed implementation information, see [docs/enhancements/AUTHENTICATION_ROADMAP.md](docs/enhancements/AUTHENTICATION_ROADMAP.md).
+
 For example, to run the API in production with a custom domain and HTTPS, you would set the following environment variables:
 
 ```bash
@@ -181,6 +230,13 @@ API_PROTOCOL=https
 API_HOST=mydomain.com
 API_PORT=443
 API_BASE_PATH=/api/v1/
+JWT_ALGORITHM=HS256
+JWT_EXPIRY=3600
+JWT_REFRESH_EXPIRY=604800
+JWT_SECRET=change-this-to-a-secure-random-string-in-production-minimum-32-chars
+ADMIN_PASSWORD_HASH=CHANGE_ME_GENERATE_WITH_password_hash
+ADMIN_USERNAME=admin
+APP_ENV=production
 ```
 
 ## Using a docker container
