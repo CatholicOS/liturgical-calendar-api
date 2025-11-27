@@ -603,12 +603,12 @@ class PayloadValidationTest extends TestCase
         // Serialize each locale's translations separately
         foreach ($rawI18n as $locale => $translations) {
             $encoded = json_encode($translations, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            $this->assertIsString($encoded);
-            $this->assertNotFalse($encoded);
+            $this->assertIsString($encoded, "Failed to encode i18n for locale: $locale");
+            $this->assertNotFalse($encoded, "json_encode returned false for locale: $locale");
 
             // Verify it can be decoded back
             $reDecoded = json_decode($encoded);
-            $this->assertInstanceOf(\stdClass::class, $reDecoded);
+            $this->assertInstanceOf(\stdClass::class, $reDecoded, "Failed to decode i18n for locale: $locale");
         }
 
         // Remove i18n from main payload
