@@ -1,15 +1,17 @@
 # CHANGELOG
 
+<!--
 ## [v5.5](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.5) (unreleased)
 
 * implement `filter` parameter for limited sets of calendar events, see issue [#43](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/43)
+-->
 
-## [v5.4](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.4) (November 25th 2025)
+## [v5.4](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.4) (November 27th 2025)
 
 * implement JWT authentication for PUT/PATCH/DELETE requests, see issue [#262](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/262)
 * fix Accept-Language header parsing for Latin locale (`la`, `la-VA`, `la_VA`), see issue [#396](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/396)
 
-Saint Catherine of Alexandria, pray for us! 🛞
+Happy Thanksgiving! 🦃
 
 ## [v5.3](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.3) (November 15th 2025)
 

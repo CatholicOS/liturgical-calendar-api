@@ -190,13 +190,13 @@ The API now supports JWT authentication for protected write operations. To enabl
 
 The API implements fail-closed authentication that requires `APP_ENV` to be explicitly set to a known value:
 
-* **`development`** and **`test`**: Allow default password if `ADMIN_PASSWORD_HASH` is not set (for convenience in testing)
-* **`staging`** and **`production`**: Require `ADMIN_PASSWORD_HASH` to be configured (throws `RuntimeException` if missing)
+* **`development`** and **`test`**: Allow default password (`password`) if `ADMIN_PASSWORD_HASH` is not set or is not a valid hash format (for convenience in testing)
+* **`staging`** and **`production`**: Require `ADMIN_PASSWORD_HASH` to be a valid password hash (throws `RuntimeException` if missing or invalid)
 * **Invalid or unset `APP_ENV`**: Throws `RuntimeException` and denies authentication
 
 This ensures that production environments cannot accidentally use weak default credentials.
 
-**Protected Routes** (require JWT authentication via `Authorization: Bearer <token>` header):
+**Protected Routes** (require JWT authentication via `Authorization: Bearer <token>` header or HttpOnly cookie):
 
 * `PUT /data/{category}/{calendar}` - Create calendar data
 * `PATCH /data/{category}/{calendar}` - Update calendar data
@@ -204,9 +204,10 @@ This ensures that production environments cannot accidentally use weak default c
 
 **Authentication Endpoints:**
 
-* `POST /auth/login` - Authenticate with username/password, returns access and refresh tokens
-* `POST /auth/refresh` - Refresh access token using refresh token
-* `POST /auth/logout` - Logout (stateless; clients should delete stored tokens)
+* `POST /auth/login` - Authenticate with username/password, returns access and refresh tokens (also sets HttpOnly cookies)
+* `POST /auth/refresh` - Refresh access token using refresh token (from cookie or request body)
+* `POST /auth/logout` - Logout and clear HttpOnly cookies (stateless; clients should also discard any stored tokens)
+* `GET /auth/me` - Get current authenticated user info (requires valid access token)
 
 For detailed implementation information, see [docs/enhancements/AUTHENTICATION_ROADMAP.md](docs/enhancements/AUTHENTICATION_ROADMAP.md).
 
