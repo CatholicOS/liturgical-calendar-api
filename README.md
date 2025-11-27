@@ -178,7 +178,7 @@ The defaults are suitable for development and testing, but may need to be overri
 
 The API now supports JWT authentication for protected write operations. To enable authentication, configure the following environment variables:
 
-* `JWT_SECRET`: Secret key for signing tokens (minimum 32 characters). Generate with: `php -r "echo bin2hex(random_bytes(32));"`
+* `JWT_SECRET`: Secret key for signing tokens (minimum 32 characters). Generate a secure 64-character hex string with: `php -r "echo bin2hex(random_bytes(32));"`
 * `JWT_ALGORITHM`: Algorithm for signing tokens (default: `HS256`)
 * `JWT_EXPIRY`: Access token expiry in seconds (default: `3600` = 1 hour)
 * `JWT_REFRESH_EXPIRY`: Refresh token expiry in seconds (default: `604800` = 7 days)
