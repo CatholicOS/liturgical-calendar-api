@@ -50,14 +50,15 @@ class User
     /**
      * Authenticate the configured admin user using credentials sourced from environment variables.
      *
-     * Validates that APP_ENV is one of: development, test, staging, production. Uses ADMIN_PASSWORD_HASH when provided;
-     * in development/test, a cached default hash for the literal password "password" is permitted. Returns null for
-     * non-matching username or password.
+     * Validates that APP_ENV is one of: development, test, staging, production. Uses ADMIN_PASSWORD_HASH when provided
+     * and valid (must be a properly formatted password hash); in development/test, falls back to a cached default hash
+     * for the literal password "password" when ADMIN_PASSWORD_HASH is missing or invalid. Returns null for non-matching
+     * username or password.
      *
      * @param string $username The username to authenticate; compared against the `ADMIN_USERNAME` environment variable (default: "admin").
      * @param string $password The plain-text password to verify against the configured or generated admin password hash.
      * @return self|null A User instance representing the authenticated admin, or `null` if authentication fails.
-     * @throws \RuntimeException If APP_ENV is missing/invalid, if ADMIN_PASSWORD_HASH is required but missing, or if a development password hash cannot be generated.
+     * @throws \RuntimeException If APP_ENV is missing/invalid, if ADMIN_PASSWORD_HASH is required but missing/invalid in production/staging, or if a development password hash cannot be generated.
      */
     public static function authenticate(string $username, string $password): ?self
     {
@@ -87,8 +88,12 @@ class User
             );
         }
 
-        // Validate that password hash is configured
-        if ($adminPasswordHash === null || !is_string($adminPasswordHash)) {
+        // Validate that password hash is configured and is a valid hash format
+        // password_get_info() returns ['algo' => null] for invalid hashes
+        $hashInfo    = is_string($adminPasswordHash) ? password_get_info($adminPasswordHash) : null;
+        $isValidHash = $hashInfo !== null && $hashInfo['algo'] !== null;
+
+        if ($adminPasswordHash === null || !is_string($adminPasswordHash) || !$isValidHash) {
             // Only allow default password in development and test environments
             if ($appEnv === 'development' || $appEnv === 'test') {
                 // Cache the development password hash to avoid re-hashing on every authentication
@@ -105,13 +110,13 @@ class User
                 }
                 $adminPasswordHash = self::$devPasswordHash;
             } else {
-                // Production and staging MUST have ADMIN_PASSWORD_HASH configured
+                // Production and staging MUST have a valid ADMIN_PASSWORD_HASH configured
                 error_log(sprintf(
-                    'Authentication failed: ADMIN_PASSWORD_HASH not set in %s environment',
+                    'Authentication failed: ADMIN_PASSWORD_HASH not set or invalid in %s environment',
                     $appEnv
                 ));
                 throw new \RuntimeException(
-                    "ADMIN_PASSWORD_HASH environment variable is required in {$appEnv} environment"
+                    "ADMIN_PASSWORD_HASH environment variable must be a valid password hash in {$appEnv} environment"
                 );
             }
         }
