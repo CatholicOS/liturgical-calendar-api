@@ -60,6 +60,78 @@ PHP model classes (`DiocesanData`, `DiocesanLitCalItemCollection`, etc.) do not 
 When `json_encode()` is called on these objects, PHP serializes all public properties, including internal
 wrapper properties like `$litcalItems`, resulting in nested structures that don't match the schema.
 
+### Additional Issue: Incorrect PHPStan Type Declarations (FIXED)
+
+During analysis, an additional issue was discovered: the `@phpstan-type` declarations in several model classes
+were describing **computed output data** (with properties like `missal`, `grade_lcl`, `common_lcl`) instead of
+**raw source data** (with `{ liturgical_event, metadata }` structure).
+
+**Affected files (now fixed):**
+
+- `src/Models/LitCalItemCollection.php` - Incorrect `LiturgicalEventArray/Object` types
+- `src/Models/RegionalData/DiocesanData/DiocesanLitCalItemCollection.php` - Imported incorrect types
+- `src/Models/RegionalData/DiocesanData/DiocesanData.php` - Imported incorrect types
+- `src/Models/RegionalData/WiderRegionData/WiderRegionData.php` - Imported incorrect types
+- `src/Models/RegionalData/NationalData/NationalData.php` - Had local incorrect types
+
+**Fix applied:** Updated all type declarations to correctly reference the `{ liturgical_event, metadata }`
+structure defined in `LitCalItem` and `DiocesanLitCalItem`.
+
+---
+
+## Recommended Solution: Skip DTO Conversion for Write Operations
+
+After further analysis, a simpler approach was identified that avoids the serialization issue entirely:
+
+### The Problem with DTO Conversion
+
+The current PUT/PATCH flow is:
+
+1. Raw JSON payload received
+2. Schema validation **PASSES**
+3. Convert to DTO: `DiocesanData::fromObject($payload)` ← **Unnecessary for write operations**
+4. `json_encode($dto)` to write to disk ← **Produces INVALID structure**
+
+### The Simpler Solution
+
+Since schema validation already ensures data integrity, the handler can write the validated raw payload directly:
+
+```php
+// Current code (problematic):
+if (RegionalDataHandler::validateDataAgainstSchema($payload, LitSchema::DIOCESAN->path())) {
+    $params['payload'] = DiocesanData::fromObject($payload);  // ← Converts to DTO
+}
+// Later...
+$calendarData = json_encode($payload, ...);  // ← DTO serializes incorrectly
+
+// Proposed fix:
+if (RegionalDataHandler::validateDataAgainstSchema($payload, LitSchema::DIOCESAN->path())) {
+    // Keep raw payload for writing to disk
+    $params['rawPayload'] = $payload;  // stdClass - validated against schema
+
+    // Only convert to DTO if we need to access typed properties (e.g., for metadata extraction)
+    $params['payload'] = DiocesanData::fromObject($payload);
+}
+// Later...
+$calendarData = json_encode($params['rawPayload'], ...);  // ← Write raw validated JSON
+```
+
+### Benefits of This Approach
+
+1. **No new models needed** - Avoids code duplication and bloat
+2. **Schema validation ensures correctness** - Already validated before conversion
+3. **DTOs remain for their intended purpose** - Reading and manipulating data programmatically
+4. **Simple fix** - Minimal code changes required
+5. **Consistent with GET flow** - GET already returns raw JSON from files
+
+### When DTOs Are Still Needed
+
+DTOs should still be used when:
+
+- Extracting typed properties (e.g., `$params['payload']->metadata->nation`)
+- Iterating over items with type safety
+- Applying translations or other business logic
+
 ---
 
 ## Entity Types Requiring Implementation
@@ -102,88 +174,232 @@ wrapper properties like `$litcalItems`, resulting in nested structures that don'
 
 ### Phase 1: Fix Immediate Serialization Issues
 
-#### 1.1 Implement `JsonSerializable` Interface
+#### 1.1 Use Raw Payload for Write Operations (RECOMMENDED)
 
-All model classes that are serialized to JSON for storage must implement `JsonSerializable`.
+Instead of implementing `JsonSerializable` on all model classes (which is complex and error-prone),
+the simpler approach is to write the validated raw payload directly to disk.
 
-**Affected base classes:**
+**Changes required in `RegionalDataHandler`:**
 
-- `AbstractJsonSrcData`
-- `AbstractJsonSrcDataArray`
+1. Add `rawPayload` property to `RegionalDataParams`
+2. Store the raw `\stdClass` payload alongside the DTO
+3. Use raw payload when writing to files
 
-**Affected model classes (Diocesan):**
-
-- `DiocesanData`
-- `DiocesanLitCalItemCollection`
-- `DiocesanLitCalItem`
-- `DiocesanLitCalItemCreateNewFixed`
-- `DiocesanLitCalItemCreateNewMobile`
-- `DiocesanLitCalItemMetadata`
-- `DiocesanMetadata`
-
-**Affected model classes (National):**
-
-- `NationalData`
-- `NationalMetadata`
-- `LitCalItemCreateNewFixed`
-- `LitCalItemCreateNewMobile`
-- `LitCalItemCreateNewMetadata`
-- `LitCalItemMakePatron`
-- `LitCalItemMakePatronMetadata`
-- `LitCalItemMoveEvent`
-- `LitCalItemMoveEventMetadata`
-- `LitCalItemSetPropertyGrade`
-- `LitCalItemSetPropertyGradeMetadata`
-- `LitCalItemSetPropertyName`
-- `LitCalItemSetPropertyNameMetadata`
-
-**Affected model classes (Wider Region):**
-
-- `WiderRegionData`
-- `WiderRegionMetadata`
-
-**Pattern for implementation:**
+**Implementation:**
 
 ```php
-final class DiocesanLitCalItemCollection extends AbstractJsonSrcDataArray
-    implements \IteratorAggregate, \JsonSerializable
-{
-    /** @var DiocesanLitCalItem[] */
-    public readonly array $litcalItems;
+// In RegionalDataHandler::initParams() - after schema validation
+if (RegionalDataHandler::validateDataAgainstSchema($payload, LitSchema::DIOCESAN->path())) {
+    $params['rawPayload'] = $payload;  // Keep raw for writing
+    $params['payload'] = DiocesanData::fromObject($payload);  // DTO for property access
+    $key = $params['payload']->metadata->diocese_id;
+}
 
-    /**
-     * Serialize to JSON as a plain array (not wrapped in object).
-     * @return array<int, mixed>
-     */
-    public function jsonSerialize(): array
-    {
-        return array_map(
-            fn(DiocesanLitCalItem $item) => $item->jsonSerialize(),
-            $this->litcalItems
-        );
+// In createDiocesanCalendar() - use raw payload for writing
+$calendarData = json_encode($this->params->rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+file_put_contents($diocesanCalendarFile, $calendarData . PHP_EOL);
+```
+
+#### 1.2 Fix PHPStan Type Declarations (COMPLETED)
+
+The incorrect `@phpstan-type` declarations have been fixed. See "Additional Issue" section above.
+
+#### 1.3 Optional: Post-Write Validation
+
+For extra safety, validate the written file after saving:
+
+```php
+// After writing to disk
+$writtenData = Utilities::jsonFileToObject($diocesanCalendarFile);
+if (!self::validateDataAgainstSchema($writtenData, LitSchema::DIOCESAN->path())) {
+    // Log error, rollback, or alert
+    throw new ImplementationException('Written data does not conform to schema');
+}
+```
+
+### Alternative Approach: Implement `JsonSerializable` (More Complex)
+
+If the raw payload approach is not feasible for some use cases, `JsonSerializable` can be implemented
+on model classes. This is more complex because:
+
+1. All nested classes must also implement `JsonSerializable`
+2. Enums must serialize to their `value` property, not `name`
+3. Computed properties must be excluded
+4. Collection classes must serialize as arrays, not objects
+
+**If needed, affected classes would be:**
+
+- `AbstractJsonSrcData`, `AbstractJsonSrcDataArray` (base classes)
+- `DiocesanData`, `DiocesanLitCalItemCollection`, `DiocesanLitCalItem`, etc.
+- `NationalData`, `LitCalItemCollection`, `LitCalItem`, etc.
+- `WiderRegionData`, `WiderRegionMetadata`
+- All `LitCalItem*` subclasses for different action types
+
+---
+
+## Data Flow: Frontend to Backend to Storage
+
+Understanding how data flows from the frontend through the backend to storage is essential for coordinating
+this effort.
+
+### Expected Payload Structure (from JSON Schema)
+
+The frontend must produce a payload matching the JSON schema. For diocesan calendars (`DiocesanCalendar.json`):
+
+```json
+{
+    "litcal": [
+        {
+            "liturgical_event": {
+                "event_key": "StExampleSaint",
+                "color": ["white"],
+                "grade": 3,
+                "common": ["Martyrs"],
+                "day": 15,
+                "month": 6
+            },
+            "metadata": {
+                "form_rownum": 0,
+                "since_year": 2020
+            }
+        }
+    ],
+    "metadata": {
+        "diocese_id": "DIOCESE_ID",
+        "diocese_name": "Diocese Name",
+        "nation": "US",
+        "locales": ["en_US"],
+        "timezone": "America/New_York"
+    },
+    "settings": {
+        "epiphany": "SUNDAY_JAN2_JAN8",
+        "ascension": "SUNDAY",
+        "corpus_christi": "SUNDAY"
+    },
+    "i18n": {
+        "en_US": {
+            "StExampleSaint": "Saint Example"
+        }
     }
 }
 ```
 
-#### 1.2 Add Post-Serialization Validation
+### Backend Write Operations (How Data is Split)
 
-Before saving any data to disk, validate the serialized output against the schema:
+The backend handles the payload in two stages:
+
+1. **Write `i18n` data** to separate locale files in the `i18n/` folder
+2. **Write remaining data** (`litcal`, `metadata`, `settings`) to the calendar resource file
+
+```text
+Frontend Payload
+       │
+       ▼
+┌──────────────────────────────────────┐
+│  Backend receives payload            │
+│  - Validates against JSON schema     │
+│  - Converts to DTO (for property     │
+│    access like metadata.diocese_id)  │
+└──────────────────────────────────────┘
+       │
+       ├──────────────────────────────────────────────────┐
+       ▼                                                  ▼
+┌──────────────────────────────┐    ┌─────────────────────────────────────┐
+│  Write i18n data             │    │  Write calendar data                │
+│                              │    │                                     │
+│  For each locale in i18n:    │    │  Remove i18n from payload           │
+│  - Write to                  │    │  Write to:                          │
+│    i18n/{locale}.json        │    │    {calendar_id}.json               │
+│                              │    │                                     │
+│  Example:                    │    │  Contains:                          │
+│  i18n/en_US.json =           │    │  - litcal (array)                   │
+│  {"StExampleSaint":          │    │  - metadata (object)                │
+│   "Saint Example"}           │    │  - settings (object, optional)      │
+└──────────────────────────────┘    └─────────────────────────────────────┘
+```
+
+### Current Implementation Issues
+
+**Problem 1: `litcal` serialization**
 
 ```php
-// In createDiocesanCalendar(), createNationalCalendar(), etc.
-$calendarData = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+// In createDiocesanCalendar()
+$payload = $this->params->payload;  // DiocesanData DTO
+// ...
+$calendarData = json_encode($payload, ...);  // ← Serializes DTO incorrectly!
+```
 
-// Validate output against schema before saving
-$serializedPayload = json_decode($calendarData);
-if (!self::validateDataAgainstSchema($serializedPayload, LitSchema::DIOCESAN->path())) {
-    throw new ImplementationException(
-        'Internal serialization error: output does not conform to schema'
+The `DiocesanData` DTO has a `$litcal` property of type `DiocesanLitCalItemCollection`, which has a
+`$litcalItems` property. Without `JsonSerializable`, this produces:
+
+```json
+{ "litcal": { "litcalItems": [...] } }  // WRONG!
+```
+
+Instead of:
+
+```json
+{ "litcal": [...] }  // Correct
+```
+
+**Problem 2: `i18n` serialization**
+
+```php
+foreach ($payload->i18n as $locale => $litCalEventsI18n) {
+    json_encode($litCalEventsI18n, ...);  // ← TranslationMap with private properties
+}
+```
+
+`TranslationMap` has **private** properties (`$translations`, `$keys`), so `json_encode()` produces `{}`
+(empty object) instead of the translation data.
+
+### Solution: Use Raw Payload for Write Operations
+
+The fix is straightforward - use the raw `\stdClass` payload for writing instead of the DTO:
+
+**Step 1: Store raw payload in `RegionalDataParams`**
+
+```php
+// In RegionalDataParams.php
+public DiocesanData|NationalData|WiderRegionData $payload;
+public \stdClass $rawPayload;  // NEW: Keep raw payload for writing
+```
+
+**Step 2: Store raw payload during initialization**
+
+```php
+// In RegionalDataHandler::initParams()
+if (RegionalDataHandler::validateDataAgainstSchema($payload, LitSchema::DIOCESAN->path())) {
+    $params['rawPayload'] = $payload;  // Raw stdClass for writing
+    $params['payload'] = DiocesanData::fromObject($payload);  // DTO for property access
+    $key = $params['payload']->metadata->diocese_id;
+}
+```
+
+**Step 3: Use raw payload for writing**
+
+```php
+// In createDiocesanCalendar()
+$rawPayload = $this->params->rawPayload;
+
+// Write i18n from raw payload
+foreach ($rawPayload->i18n as $locale => $litCalEventsI18n) {
+    $diocesanCalendarI18nFile = /* ... */;
+    file_put_contents(
+        $diocesanCalendarI18nFile,
+        json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL
     );
 }
 
-// Only save if validation passes
+// Remove i18n from raw payload before writing calendar file
+unset($rawPayload->i18n);
+
+// Write calendar data from raw payload
+$calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 file_put_contents($diocesanCalendarFile, $calendarData . PHP_EOL);
 ```
+
+---
 
 ### Phase 2: Establish Contract Between Frontend and Backend
 
@@ -559,6 +775,145 @@ This roadmap addresses technical details for work tracked in the following GitHu
 - [Authentication Roadmap](AUTHENTICATION_ROADMAP.md) - JWT authentication implementation
 - [OpenAPI Evaluation Roadmap](OPENAPI_EVALUATION_ROADMAP.md) - API schema gaps and missing CRUD operations
 - [API Client Libraries Roadmap](../../../docs/API_CLIENT_LIBRARIES_ROADMAP.md) - Client library coordination
+
+---
+
+## DTO Architecture and Type System
+
+This section documents the design of the DTO (Data Transfer Object) type system, explaining how raw source data
+is transformed into computed properties and ensuring type coherence across the codebase.
+
+### Type System Overview
+
+The codebase distinguishes between two categories of data:
+
+1. **Raw Source Data**: JSON data stored in `jsondata/sourcedata/` files
+2. **Computed Data**: Properties derived from raw data plus i18n translations
+
+### PHPStan Type Declarations
+
+The `@phpstan-type` declarations define the shape of **raw source data** (what's in the JSON files),
+NOT the computed output data. This is intentional and correct.
+
+**Example - LitCalItemCreateNewFixed:**
+
+```php
+/**
+ * @phpstan-type LitCalItemCreateNewFixedObject \stdClass&object{
+ *      event_key:string,      // ✓ In raw JSON
+ *      day:int,               // ✓ In raw JSON
+ *      month:int,             // ✓ In raw JSON
+ *      color:string[],        // ✓ In raw JSON
+ *      grade:int,             // ✓ In raw JSON
+ *      common:string[]        // ✓ In raw JSON
+ *      // NOTE: `name` is NOT here - it's computed from i18n
+ * }
+ */
+```
+
+### The `name` Property: Computed from i18n
+
+The `name` property is a **computed property** that does not exist in raw source data. It is:
+
+1. **Declared** in `LiturgicalEventData` base class: `public string $name;`
+2. **Not initialized** in subclass constructors
+3. **Populated** via `setName()` from i18n translation data
+
+**Data Flow:**
+
+```text
+Raw JSON Source Data              DTO Creation                    Translation Step
+────────────────────              ────────────────                ────────────────
+jsondata/sourcedata/              LitCalItem::fromObject()        NationalData::applyTranslations()
+calendars/nations/US.json         DiocesanData::fromObject()      DiocesanData::applyTranslations()
+                                  WiderRegionData::fromObject()   WiderRegionData::applyTranslations()
+{                                        │                               │
+  "litcal": [                            │                               │
+    {                                    ▼                               ▼
+      "liturgical_event": {        ┌─────────────────┐           ┌─────────────────┐
+        "event_key": "...",        │ LitCalItem      │           │ setName()       │
+        "day": 15,                 │ - event_key ✓   │    ──►    │ - name ✓ (set)  │
+        "month": 6,                │ - day ✓         │           │                 │
+        "color": ["white"],        │ - month ✓       │           │ Translation     │
+        "grade": 3,                │ - color ✓       │           │ from i18n/*.json│
+        "common": [...]            │ - grade ✓       │           └─────────────────┘
+      },                           │ - common ✓      │
+      "metadata": {...}            │ - name ✗        │  ← Uninitialized until
+    }                              │   (uninitialized)│    applyTranslations()
+  ]                                └─────────────────┘
+}
+```
+
+### Translation Application
+
+Each regional data class provides methods to populate the `name` property:
+
+| Class             | Method                  | i18n Source                              |
+|-------------------|-------------------------|------------------------------------------|
+| `NationalData`    | `applyTranslations()`   | `i18n/{nation}/{locale}.json`            |
+| `NationalData`    | `setNames()`            | External translation array               |
+| `DiocesanData`    | `applyTranslations()`   | `i18n/{nation}/{diocese}/{locale}.json`  |
+| `WiderRegionData` | `applyTranslations()`   | `i18n/{region}/{locale}.json`            |
+
+**Example from NationalData:**
+
+```php
+public function applyTranslations(string $locale): void
+{
+    foreach ($this->litcal as $litcalItem) {
+        $translation = $this->i18n->getTranslation($litcalItem->getEventKey(), $locale);
+        if (null === $translation) {
+            throw new \ValueError('translation not found for event key: ' . $litcalItem->getEventKey());
+        }
+        $litcalItem->setName($translation);  // ← Populates the computed `name` property
+    }
+}
+```
+
+### CalendarHandler Type Annotations
+
+In `CalendarHandler`, `@var` annotations are used to narrow union types after conditional checks.
+These annotations reference the DTO classes (not the `@phpstan-type` declarations) and assume
+`name` has been populated via translations.
+
+**Example type narrowing:**
+
+```php
+// Line 3383 - Union type before narrowing
+/** @var LitCalItemCreateNewFixed|LitCalItemCreateNewMobile|LitCalItemMakePatron $liturgicalEvent */
+$liturgicalEvent = $litEvent->liturgical_event;
+
+// Line 3390 - Narrowed after property check
+if (property_exists($liturgicalEvent, 'strtotime') && $liturgicalEvent->strtotime !== '') {
+    /** @var LitCalItemCreateNewMobile $liturgicalEvent */
+    // ... now PHPStan knows $liturgicalEvent has strtotime property
+}
+```
+
+### Type Annotation Patterns
+
+| Pattern                  | Purpose                    | Example                                                  |
+|--------------------------|----------------------------|----------------------------------------------------------|
+| `@phpstan-type`          | Define raw JSON structure  | `LitCalItemCreateNewFixedObject`                         |
+| `@phpstan-import-type`   | Reuse types across files   | `@phpstan-import-type LitCalItemArray from LitCalItem`   |
+| `@var ClassName $var`    | Narrow union types         | `/** @var LitCalItemMakePatron $liturgicalEvent */`      |
+| `@param TypeName $param` | Document parameter types   | `@param LitCalItemObject $data`                          |
+
+### Validation Summary
+
+The type system has been verified to be coherent:
+
+- **PHPStan level 10**: ✅ Passes with no errors
+- **All tests**: ✅ 94 tests passing
+- **Raw vs computed separation**: ✅ Correctly implemented
+- **i18n flow**: ✅ `name` properly populated before use in CalendarHandler
+
+### Key Design Decisions
+
+1. **`@phpstan-type` = Raw Input**: Types describe JSON schema, not runtime object state
+2. **`name` is Computed**: Never in source JSON, always from i18n lookup
+3. **Translations Before Processing**: `applyTranslations()` must be called before accessing `name`
+4. **Type Narrowing**: `@var` annotations help PHPStan understand conditional type refinement
 
 ---
 

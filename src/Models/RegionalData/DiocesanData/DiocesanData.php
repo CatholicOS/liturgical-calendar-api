@@ -7,8 +7,8 @@ use LiturgicalCalendar\Api\Models\Metadata\MetadataDiocesanCalendarSettings;
 use LiturgicalCalendar\Api\Models\RegionalData\Translations;
 
 /**
- * @phpstan-import-type LiturgicalEventArray from \LiturgicalCalendar\Api\Models\LitCalItemCollection
- * @phpstan-import-type LiturgicalEventObject from \LiturgicalCalendar\Api\Models\LitCalItemCollection
+ * @phpstan-import-type DiocesanLitCalItemArray from DiocesanLitCalItem
+ * @phpstan-import-type DiocesanLitCalItemObject from DiocesanLitCalItem
  * @phpstan-import-type DiocesanCalendarSettingsObject from \LiturgicalCalendar\Api\Models\Metadata\MetadataDiocesanCalendarSettings
  * @phpstan-import-type DiocesanCalendarSettingsArray from \LiturgicalCalendar\Api\Models\Metadata\MetadataDiocesanCalendarSettings
  * @phpstan-import-type DiocesanMetadataObject from DiocesanMetadata
@@ -18,13 +18,13 @@ use LiturgicalCalendar\Api\Models\RegionalData\Translations;
  * @phpstan-type I18nObject \stdClass&object<string,\stdClass&object<string,string>>
  * @phpstan-type I18nArray array<string,array<string,string>>
  * @phpstan-type DiocesanCalendarDataArray array{
- *      litcal:LiturgicalEventArray[],
+ *      litcal:DiocesanLitCalItemArray[],
  *      metadata:DiocesanMetadataArray,
  *      settings?:DiocesanCalendarSettingsArray,
  *      i18n?:I18nArray
  * }
  * @phpstan-type DiocesanCalendarDataObject \stdClass&object{
- *      litcal:LiturgicalEventObject[],
+ *      litcal:DiocesanLitCalItemObject[],
  *      metadata:DiocesanMetadataObject,
  *      settings?:DiocesanCalendarSettingsObject,
  *      i18n?:I18nObject
