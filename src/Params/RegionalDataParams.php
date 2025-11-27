@@ -96,9 +96,11 @@ class RegionalDataParams implements ParamsInterface
 
         if (array_key_exists('payload', $params)) {
             $this->payload = $params['payload'];
-        }
 
-        if (array_key_exists('rawPayload', $params)) {
+            // Require rawPayload when payload (DTO) is present for write operations
+            if (!array_key_exists('rawPayload', $params)) {
+                throw new ValidationException('rawPayload is required for write operations');
+            }
             $this->rawPayload = $params['rawPayload'];
         }
 
