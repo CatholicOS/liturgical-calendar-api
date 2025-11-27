@@ -160,6 +160,10 @@ final class RefreshHandler extends AbstractHandler
         // Set HttpOnly cookie for secure token storage
         $response = CookieHelper::setAccessTokenCookie($response, $newToken, $jwtService->getExpiry());
 
+        // TODO: Consider implementing refresh token rotation for enhanced security.
+        // Rotating the refresh token on each use limits the window of exposure if compromised.
+        // This would involve generating a new refresh token and updating its cookie here.
+
         // Prepare response data (token still included for backwards compatibility)
         $responseData = [
             'access_token' => $newToken,
