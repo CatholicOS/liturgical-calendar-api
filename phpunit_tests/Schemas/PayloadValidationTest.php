@@ -70,6 +70,10 @@ class PayloadValidationTest extends TestCase
             throw new \RuntimeException("Failed to parse JSON in fixture: $path - " . json_last_error_msg());
         }
 
+        if (!$data instanceof \stdClass) {
+            throw new \RuntimeException('Fixture must be a JSON object, not ' . gettype($data) . ': ' . $path);
+        }
+
         return $data;
     }
 
