@@ -35,6 +35,7 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class LogoutHandler extends AbstractHandler
 {
+    use AccessTokenTrait;
     use ClientIpTrait;
 
     private ?JwtService $jwtService = null;
@@ -112,21 +113,8 @@ final class LogoutHandler extends AbstractHandler
         $clientIp     = $this->getClientIp($request, $serverParams);
 
         // Try to extract username from token for logging
-        // 1. Check HttpOnly cookie first (preferred)
-        // 2. Fall back to Authorization header
         $username = 'unknown';
-        $token    = null;
-
-        /** @var array<string, string> $cookies */
-        $cookies = $request->getCookieParams();
-        $token   = CookieHelper::getAccessToken($cookies);
-
-        if ($token === null) {
-            $authHeader = $request->getHeaderLine('Authorization');
-            if (!empty($authHeader) && str_starts_with(strtolower($authHeader), 'bearer ')) {
-                $token = substr($authHeader, 7);
-            }
-        }
+        $token    = $this->extractAccessToken($request);
 
         if ($token !== null) {
             try {

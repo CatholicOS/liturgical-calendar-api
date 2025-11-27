@@ -3,7 +3,6 @@
 namespace LiturgicalCalendar\Api\Handlers\Auth;
 
 use LiturgicalCalendar\Api\Handlers\AbstractHandler;
-use LiturgicalCalendar\Api\Http\CookieHelper;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
@@ -37,6 +36,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class MeHandler extends AbstractHandler
 {
+    use AccessTokenTrait;
+
     private ?JwtService $jwtService = null;
 
     /**
@@ -104,24 +105,10 @@ final class MeHandler extends AbstractHandler
         $mime     = $this->validateAcceptHeader($request, AcceptabilityLevel::LAX);
         $response = $response->withHeader('Content-Type', $mime);
 
-        // 1. Try to get token from HttpOnly cookie first (preferred, more secure)
-        $token = null;
+        // Extract token from cookie (preferred) or Authorization header (fallback)
+        $token = $this->extractAccessToken($request);
 
-        /** @var array<string, string> $cookies */
-        $cookies = $request->getCookieParams();
-        $token   = CookieHelper::getAccessToken($cookies);
-
-        // 2. Fall back to Authorization header for backwards compatibility
         if ($token === null) {
-            $authHeader = $request->getHeaderLine('Authorization');
-
-            if (!empty($authHeader) && str_starts_with(strtolower($authHeader), 'bearer ')) {
-                $token = trim(substr($authHeader, 7));
-            }
-        }
-
-        // No token found
-        if ($token === null || $token === '') {
             throw new UnauthorizedException('Not authenticated');
         }
 
