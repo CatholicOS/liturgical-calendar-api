@@ -8,7 +8,7 @@
 
 ## [v5.5](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.5) (November 27th 2025)
 
-* fix bug with decrees serialization, see issue [#262](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/408)
+* fix bug with decrees serialization, see issue [#408](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/408)
 
 Happy Thanksgiving! 🦃
 
