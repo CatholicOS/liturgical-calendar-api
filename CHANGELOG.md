@@ -1,10 +1,16 @@
 # CHANGELOG
 
 <!--
-## [v5.5](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.5) (unreleased)
+## [v5.6](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.6) (unreleased)
 
 * implement `filter` parameter for limited sets of calendar events, see issue [#43](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/43)
 -->
+
+## [v5.5](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.5) (November 27th 2025)
+
+* fix bug with decrees serialization, see issue [#262](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/408)
+
+Happy Thanksgiving! 🦃
 
 ## [v5.4](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.4) (November 27th 2025)
 
