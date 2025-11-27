@@ -975,12 +975,12 @@
             "BearerAuth": []
           }
         ],
-        "summary": "Logout and invalidate tokens",
+        "summary": "Logout user session",
         "operationId": "authLogout",
-        "description": "Invalidates the current access token and associated refresh token. Requires a valid access token in the Authorization header.",
+        "description": "Performs a stateless logout by clearing HttpOnly auth cookies and logging the event. Since JWTs are stateless, the client must also discard any stored access and refresh tokens. The endpoint extracts the username from the token (if available) for audit logging purposes.",
         "responses": {
           "200": {
-            "description": "OK: Logout successful",
+            "description": "OK: Logout successful, cookies cleared",
             "content": {
               "application/json": {
                 "schema": {
@@ -988,7 +988,7 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Logout successful"
+                      "example": "Logged out successfully"
                     }
                   }
                 }
