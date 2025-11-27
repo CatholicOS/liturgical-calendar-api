@@ -15,6 +15,12 @@ use LiturgicalCalendar\Api\Router;
 /**
  * Test suite for validating frontend payloads against JSON schemas.
  *
+ * NOTE: This test intentionally extends TestCase rather than ApiTestCase.
+ * Unlike integration tests in phpunit_tests/Routes/ that make HTTP requests
+ * to a running API, this is a unit test that validates JSON payloads against
+ * schemas locally using Swaggest\JsonSchema. It does not require the API
+ * server to be running and should execute quickly without network overhead.
+ *
  * These tests ensure that:
  * 1. Sample payloads (representing what the frontend should produce) validate against schemas
  * 2. Invalid payloads (like the broken serialization format) are correctly rejected
