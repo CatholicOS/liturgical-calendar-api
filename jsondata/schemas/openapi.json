@@ -3607,7 +3607,7 @@
                     "type": "string",
                     "examples": [
                       "application/json",
-                      "application/yml",
+                      "application/yaml",
                       "application/xml",
                       "text/calendar"
                     ]
