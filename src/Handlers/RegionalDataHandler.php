@@ -344,35 +344,12 @@ final class RegionalDataHandler extends AbstractHandler
             }
         }
 
-        // Capture i18n locales before unsetting for audit logging
-        // Use raw payload for i18n iteration to avoid DTO serialization issues
-        // Convert stdClass to array for PHPStan-compatible iteration
-        /** @var array<string, \stdClass> $rawI18n */
-        $rawI18n     = (array) $rawPayload->i18n;
-        $i18nLocales = array_keys($rawI18n);
-
-        foreach ($rawI18n as $locale => $litCalEventsI18n) {
-            $diocesanCalendarI18nFile = strtr(
-                JsonData::DIOCESAN_CALENDAR_I18N_FILE->path(),
-                [
-                    '{nation}'  => $nation,
-                    '{diocese}' => $diocese_id,
-                    '{locale}'  => $locale
-                ]
-            );
-            if (
-                false === file_put_contents(
-                    $diocesanCalendarI18nFile,
-                    json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL
-                )
-            ) {
-                $description = "Failed to write to file {$diocesanCalendarI18nFile}";
-                throw new ServiceUnavailableException($description);
-            }
-        }
-
-        // Remove i18n from raw payload before writing calendar file
-        unset($rawPayload->i18n);
+        // Write i18n files and capture locales for audit logging
+        $i18nLocales = $this->writeI18nFiles(
+            $rawPayload,
+            JsonData::DIOCESAN_CALENDAR_I18N_FILE,
+            ['{nation}' => $nation, '{diocese}' => $diocese_id]
+        );
 
         $diocesanCalendarFile = strtr(
             JsonData::DIOCESAN_CALENDAR_FILE->path(),
@@ -455,34 +432,12 @@ final class RegionalDataHandler extends AbstractHandler
             }
         }
 
-        // Capture i18n locales before unsetting for audit logging
-        // Use raw payload for i18n iteration to avoid DTO serialization issues
-        // Convert stdClass to array for PHPStan-compatible iteration
-        /** @var array<string, \stdClass> $rawI18n */
-        $rawI18n     = (array) $rawPayload->i18n;
-        $i18nLocales = array_keys($rawI18n);
-
-        foreach ($rawI18n as $locale => $litCalEventsI18n) {
-            $nationalCalendarI18nFile = strtr(
-                JsonData::NATIONAL_CALENDAR_I18N_FILE->path(),
-                [
-                    '{nation}' => $nation,
-                    '{locale}' => $locale
-                ]
-            );
-            if (
-                false === file_put_contents(
-                    $nationalCalendarI18nFile,
-                    json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL
-                )
-            ) {
-                $description = "Failed to write to file {$nationalCalendarI18nFile}";
-                throw new ServiceUnavailableException($description);
-            }
-        }
-
-        // Remove i18n from raw payload before writing calendar file
-        unset($rawPayload->i18n);
+        // Write i18n files and capture locales for audit logging
+        $i18nLocales = $this->writeI18nFiles(
+            $rawPayload,
+            JsonData::NATIONAL_CALENDAR_I18N_FILE,
+            ['{nation}' => $nation]
+        );
 
         $nationalCalendarFile = strtr(
             JsonData::NATIONAL_CALENDAR_FILE->path(),
@@ -566,34 +521,12 @@ final class RegionalDataHandler extends AbstractHandler
             }
         }
 
-        // Capture i18n locales before unsetting for audit logging
-        // Use raw payload for i18n iteration to avoid DTO serialization issues
-        // Convert stdClass to array for PHPStan-compatible iteration
-        /** @var array<string, \stdClass> $rawI18n */
-        $rawI18n     = (array) $rawPayload->i18n;
-        $i18nLocales = array_keys($rawI18n);
-
-        foreach ($rawI18n as $locale => $litCalEventsI18n) {
-            $widerRegionI18nFile = strtr(
-                JsonData::WIDER_REGION_I18N_FILE->path(),
-                [
-                    '{wider_region}' => $widerRegion,
-                    '{locale}'       => $locale
-                ]
-            );
-            if (
-                false === file_put_contents(
-                    $widerRegionI18nFile,
-                    json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL
-                )
-            ) {
-                $description = "Failed to write to file {$widerRegionI18nFile}";
-                throw new ServiceUnavailableException($description);
-            }
-        }
-
-        // Remove i18n from raw payload before writing calendar file
-        unset($rawPayload->i18n);
+        // Write i18n files and capture locales for audit logging
+        $i18nLocales = $this->writeI18nFiles(
+            $rawPayload,
+            JsonData::WIDER_REGION_I18N_FILE,
+            ['{wider_region}' => $widerRegion]
+        );
 
         $widerRegionFile = strtr(
             JsonData::WIDER_REGION_FILE->path(),
@@ -1303,6 +1236,43 @@ final class RegionalDataHandler extends AbstractHandler
     }
 
 
+    /**
+     * Write i18n data from raw payload to locale-specific files.
+     *
+     * Extracts i18n data from the raw payload, writes each locale's translations
+     * to a separate JSON file, and removes the i18n property from the payload.
+     *
+     * @param \stdClass $rawPayload The raw payload containing i18n data
+     * @param JsonData $i18nFileEnum The JsonData enum case for the i18n file path pattern
+     * @param array<string, string> $baseSubstitutions Substitutions for the file path (without {locale})
+     * @return string[] Array of locale codes that were written
+     * @throws ServiceUnavailableException If writing to a file fails
+     */
+    private function writeI18nFiles(\stdClass $rawPayload, JsonData $i18nFileEnum, array $baseSubstitutions): array
+    {
+        /** @var array<string, \stdClass> $rawI18n */
+        $rawI18n = (array) $rawPayload->i18n;
+
+        foreach ($rawI18n as $locale => $litCalEventsI18n) {
+            $substitutions             = $baseSubstitutions;
+            $substitutions['{locale}'] = $locale;
+            $i18nFile                  = strtr($i18nFileEnum->path(), $substitutions);
+
+            if (
+                false === file_put_contents(
+                    $i18nFile,
+                    json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL
+                )
+            ) {
+                throw new ServiceUnavailableException("Failed to write to file {$i18nFile}");
+            }
+        }
+
+        // Remove i18n from raw payload before writing calendar file
+        unset($rawPayload->i18n);
+
+        return array_keys($rawI18n);
+    }
 
     /**
      * Validate payload data against a schema
