@@ -41,11 +41,12 @@ class PayloadValidationTest extends TestCase
      * Ensure Router paths are initialized.
      *
      * This is needed because:
-     * 1. Data providers run before setUpBeforeClass()
+     * 1. Data providers (e.g., invalidPayloadProvider()) run before setUp()
      * 2. LitSchema::path() requires Router paths to be initialized
      *
-     * Router::getApiPaths() is idempotent, but we use a flag to avoid
-     * unnecessary repeated calls.
+     * Called from setUp() for test methods, and explicitly from data providers
+     * that need LitSchema. Router::getApiPaths() is idempotent, but we use a
+     * flag to avoid unnecessary repeated calls.
      */
     private static function ensureRouterInitialized(): void
     {
