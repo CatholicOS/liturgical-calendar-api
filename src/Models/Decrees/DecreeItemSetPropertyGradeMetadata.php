@@ -100,4 +100,16 @@ final class DecreeItemSetPropertyGradeMetadata extends DecreeEventMetadata
             $url_lang_map
         );
     }
+
+    /**
+     * Returns an associative array representing the object, including the property field.
+     *
+     * @return array<string,string|int|array<string,string>> The associative array containing the properties of the object.
+     */
+    public function jsonSerialize(): array
+    {
+        $result             = parent::jsonSerialize();
+        $result['property'] = $this->property;
+        return $result;
+    }
 }
