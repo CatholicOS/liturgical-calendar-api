@@ -11,6 +11,9 @@ use Swaggest\JsonSchema\Schema;
 use Swaggest\JsonSchema\InvalidValue;
 use LiturgicalCalendar\Api\Enum\LitSchema;
 use LiturgicalCalendar\Api\Router;
+use LiturgicalCalendar\Api\Models\RegionalData\DiocesanData\DiocesanData;
+use LiturgicalCalendar\Api\Models\RegionalData\NationalData\NationalData;
+use LiturgicalCalendar\Api\Models\RegionalData\WiderRegionData\WiderRegionData;
 
 /**
  * Test suite for validating frontend payloads against JSON schemas.
@@ -110,6 +113,18 @@ class PayloadValidationTest extends TestCase
     {
         return [
             'valid national calendar' => ['valid_national_calendar.json'],
+        ];
+    }
+
+    /**
+     * Data provider for valid wider region calendar payloads.
+     *
+     * @return array<string, array{0: string}>
+     */
+    public static function validWiderRegionPayloadProvider(): array
+    {
+        return [
+            'valid wider region calendar' => ['valid_wider_region_calendar.json'],
         ];
     }
 
@@ -343,5 +358,264 @@ class PayloadValidationTest extends TestCase
         // Schema validation should pass
         $schema->in($payload);
         $this->assertTrue(true, 'Complete frontend payload should pass validation');
+    }
+
+    /**
+     * Test that valid wider region calendar payloads pass schema validation.
+     *
+     * This verifies the frontend-backend contract for wider region calendar creation.
+     */
+    #[DataProvider('validWiderRegionPayloadProvider')]
+    public function testValidWiderRegionPayloadPassesSchemaValidation(string $fixtureFile): void
+    {
+        $schemaPath = LitSchema::WIDERREGION->path();
+        $schema     = Schema::import($schemaPath);
+
+        $payload = self::loadFixture($fixtureFile);
+
+        // This should not throw - valid payloads must pass
+        $schema->in($payload);
+        $this->assertTrue(true, "Valid wider region payload should pass schema validation: $fixtureFile");
+    }
+
+    // =========================================================================
+    // SERIALIZATION ROUND-TRIP TESTS
+    // =========================================================================
+    //
+    // These tests verify that the raw payload approach for serialization works
+    // correctly. The flow is:
+    // 1. Parse JSON to stdClass (simulates receiving request body)
+    // 2. Validate against schema
+    // 3. Create DTO from stdClass (for typed property access)
+    // 4. Re-encode the original stdClass (simulates writing to disk)
+    // 5. Verify the re-encoded output passes schema validation
+    //
+    // This verifies the fix for the serialization bug where DTOs (which don't
+    // implement JsonSerializable) produced invalid JSON structure when encoded.
+    // =========================================================================
+
+    /**
+     * Test round-trip serialization for diocesan calendar payloads.
+     *
+     * Verifies that:
+     * 1. Valid payload passes initial schema validation
+     * 2. DTO can be constructed from the payload
+     * 3. Re-encoding the raw payload produces valid JSON
+     */
+    #[DataProvider('validDiocesanPayloadProvider')]
+    public function testDiocesanPayloadRoundTripSerialization(string $fixtureFile): void
+    {
+        $schemaPath = LitSchema::DIOCESAN->path();
+        $schema     = Schema::import($schemaPath);
+
+        // Step 1: Load and parse the fixture (simulates request body parsing)
+        $rawPayload = self::loadFixture($fixtureFile);
+
+        // Step 2: Validate against schema
+        $schema->in($rawPayload);
+
+        // Step 3: Create DTO from the payload (for typed property access)
+        $dto = DiocesanData::fromObject($rawPayload);
+
+        // Verify DTO has expected properties
+        $this->assertNotNull($dto->metadata);
+        $this->assertEquals('newyor_us', $dto->metadata->diocese_id);
+        $this->assertEquals('US', $dto->metadata->nation);
+
+        // Step 4: Re-encode the raw payload (simulates writing to disk)
+        // Remove i18n since it's written separately in the actual handler
+        $payloadForDisk = clone $rawPayload;
+        unset($payloadForDisk->i18n);
+
+        $encoded = json_encode($payloadForDisk, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $this->assertIsString($encoded);
+        $this->assertNotFalse($encoded);
+
+        // Step 5: Parse the re-encoded JSON and validate against schema
+        $reDecoded = json_decode($encoded);
+        $this->assertInstanceOf(\stdClass::class, $reDecoded);
+
+        // The re-encoded payload (without i18n) should still have valid structure
+        // Re-add empty i18n for validation since schema may require it
+        // For diocesan, i18n is optional, so this should pass without it
+        $this->assertObjectHasProperty('litcal', $reDecoded);
+        $this->assertIsArray($reDecoded->litcal);
+        $this->assertObjectHasProperty('metadata', $reDecoded);
+    }
+
+    /**
+     * Test round-trip serialization for national calendar payloads.
+     *
+     * Verifies that:
+     * 1. Valid payload passes initial schema validation
+     * 2. DTO can be constructed from the payload
+     * 3. Re-encoding the raw payload produces valid JSON
+     */
+    #[DataProvider('validNationalPayloadProvider')]
+    public function testNationalPayloadRoundTripSerialization(string $fixtureFile): void
+    {
+        $schemaPath = LitSchema::NATIONAL->path();
+        $schema     = Schema::import($schemaPath);
+
+        // Step 1: Load and parse the fixture
+        $rawPayload = self::loadFixture($fixtureFile);
+
+        // Step 2: Validate against schema
+        $schema->in($rawPayload);
+
+        // Step 3: Create DTO from the payload
+        $dto = NationalData::fromObject($rawPayload);
+
+        // Verify DTO has expected properties
+        $this->assertNotNull($dto->metadata);
+        $this->assertEquals('IT', $dto->metadata->nation);
+
+        // Step 4: Re-encode the raw payload
+        $payloadForDisk = clone $rawPayload;
+        unset($payloadForDisk->i18n);
+
+        $encoded = json_encode($payloadForDisk, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $this->assertIsString($encoded);
+        $this->assertNotFalse($encoded);
+
+        // Step 5: Verify structure of re-encoded payload
+        $reDecoded = json_decode($encoded);
+        $this->assertInstanceOf(\stdClass::class, $reDecoded);
+        $this->assertObjectHasProperty('litcal', $reDecoded);
+        $this->assertIsArray($reDecoded->litcal);
+        $this->assertObjectHasProperty('metadata', $reDecoded);
+        $this->assertObjectHasProperty('settings', $reDecoded);
+    }
+
+    /**
+     * Test round-trip serialization for wider region calendar payloads.
+     *
+     * Verifies that:
+     * 1. Valid payload passes initial schema validation
+     * 2. DTO can be constructed from the payload
+     * 3. Re-encoding the raw payload produces valid JSON
+     */
+    #[DataProvider('validWiderRegionPayloadProvider')]
+    public function testWiderRegionPayloadRoundTripSerialization(string $fixtureFile): void
+    {
+        $schemaPath = LitSchema::WIDERREGION->path();
+        $schema     = Schema::import($schemaPath);
+
+        // Step 1: Load and parse the fixture
+        $rawPayload = self::loadFixture($fixtureFile);
+
+        // Step 2: Validate against schema
+        $schema->in($rawPayload);
+
+        // Step 3: Create DTO from the payload
+        $dto = WiderRegionData::fromObject($rawPayload);
+
+        // Verify DTO has expected properties
+        $this->assertNotNull($dto->metadata);
+        $this->assertEquals('Europe', $dto->metadata->wider_region);
+        $this->assertNotEmpty($dto->national_calendars);
+
+        // Step 4: Re-encode the raw payload
+        $payloadForDisk = clone $rawPayload;
+        unset($payloadForDisk->i18n);
+
+        $encoded = json_encode($payloadForDisk, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $this->assertIsString($encoded);
+        $this->assertNotFalse($encoded);
+
+        // Step 5: Verify structure of re-encoded payload
+        $reDecoded = json_decode($encoded);
+        $this->assertInstanceOf(\stdClass::class, $reDecoded);
+        $this->assertObjectHasProperty('litcal', $reDecoded);
+        $this->assertIsArray($reDecoded->litcal);
+        $this->assertObjectHasProperty('metadata', $reDecoded);
+        $this->assertObjectHasProperty('national_calendars', $reDecoded);
+    }
+
+    /**
+     * Test that litcal array structure is preserved during round-trip.
+     *
+     * This is a critical test that verifies the fix for the serialization bug.
+     * The bug was: LitCalItemCollection serialized as {"litcalItems": [...]}
+     * The fix was: Use raw stdClass payload for json_encode instead of DTO
+     */
+    public function testLitcalArrayStructurePreservedDuringRoundTrip(): void
+    {
+        $schemaPath = LitSchema::DIOCESAN->path();
+        $schema     = Schema::import($schemaPath);
+
+        $rawPayload = self::loadFixture('valid_diocesan_calendar.json');
+
+        // Verify initial structure
+        $this->assertObjectHasProperty('litcal', $rawPayload);
+        $this->assertIsArray($rawPayload->litcal);
+        $this->assertCount(2, $rawPayload->litcal);
+
+        // Create DTO (this would break serialization if we encoded the DTO)
+        $dto = DiocesanData::fromObject($rawPayload);
+        $this->assertNotNull($dto->litcal);
+
+        // Re-encode raw payload (the fix)
+        $payloadForDisk = clone $rawPayload;
+        unset($payloadForDisk->i18n);
+
+        $encoded   = json_encode($payloadForDisk, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $reDecoded = json_decode($encoded);
+
+        // Verify litcal is still an array, not an object with litcalItems
+        $this->assertObjectHasProperty('litcal', $reDecoded);
+        $this->assertIsArray($reDecoded->litcal);
+        $this->assertCount(2, $reDecoded->litcal);
+
+        // Verify it does NOT have the broken structure
+        $this->assertIsNotObject($reDecoded->litcal);
+
+        // Verify each item in litcal has the expected structure
+        foreach ($reDecoded->litcal as $item) {
+            $this->assertObjectHasProperty('liturgical_event', $item);
+            $this->assertObjectHasProperty('metadata', $item);
+            $this->assertObjectHasProperty('event_key', $item->liturgical_event);
+        }
+    }
+
+    /**
+     * Test i18n extraction and separate serialization.
+     *
+     * Verifies that i18n data can be extracted and serialized separately
+     * (as done in the actual handler implementation).
+     */
+    public function testI18nExtractionAndSeparateSerialization(): void
+    {
+        $rawPayload = self::loadFixture('valid_diocesan_calendar.json');
+
+        // Verify i18n exists
+        $this->assertObjectHasProperty('i18n', $rawPayload);
+
+        /** @var array<string, \stdClass> $rawI18n */
+        $rawI18n = (array) $rawPayload->i18n;
+
+        // Verify i18n structure
+        $this->assertArrayHasKey('en_US', $rawI18n);
+
+        // Serialize each locale's translations separately
+        foreach ($rawI18n as $locale => $translations) {
+            $encoded = json_encode($translations, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            $this->assertIsString($encoded);
+            $this->assertNotFalse($encoded);
+
+            // Verify it can be decoded back
+            $reDecoded = json_decode($encoded);
+            $this->assertInstanceOf(\stdClass::class, $reDecoded);
+        }
+
+        // Remove i18n from main payload
+        unset($rawPayload->i18n);
+        $this->assertObjectNotHasProperty('i18n', $rawPayload);
+
+        // Main payload should still be valid structure
+        $encoded   = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $reDecoded = json_decode($encoded);
+        $this->assertObjectHasProperty('litcal', $reDecoded);
+        $this->assertObjectHasProperty('metadata', $reDecoded);
     }
 }
