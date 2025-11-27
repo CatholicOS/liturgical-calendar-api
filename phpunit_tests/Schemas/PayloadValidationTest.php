@@ -576,6 +576,9 @@ class PayloadValidationTest extends TestCase
             $this->assertObjectHasProperty('metadata', $item);
             $this->assertObjectHasProperty('event_key', $item->liturgical_event);
         }
+
+        // Validate round-trip output against schema (i18n is optional)
+        $schema->in($reDecoded);
     }
 
     /**
