@@ -20,6 +20,7 @@ use LiturgicalCalendar\Api\Handlers\DecreesHandler;
 use LiturgicalCalendar\Api\Handlers\SchemasHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\LoginHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\LogoutHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\MeHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\RefreshHandler;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
@@ -309,6 +310,9 @@ class Router
                     } elseif ($authRoute === 'refresh') {
                         $refreshHandler = new RefreshHandler();
                         $this->handler  = $refreshHandler;
+                    } elseif ($authRoute === 'me') {
+                        $meHandler     = new MeHandler();
+                        $this->handler = $meHandler;
                     } else {
                         $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
                         $this->emitResponse();

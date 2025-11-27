@@ -1001,6 +1001,36 @@
         }
       }
     },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Get current authenticated user information",
+        "operationId": "authMe",
+        "description": "Returns information about the currently authenticated user. Supports both HttpOnly cookie-based authentication and Bearer token in Authorization header. Essential for cookie-based authentication where JavaScript cannot read HttpOnly cookies.",
+        "responses": {
+          "200": {
+            "description": "OK: User information returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          }
+        }
+      }
+    },
     "/calendars": {
       "get": {
         "tags": [
@@ -4391,6 +4421,37 @@
           "access_token",
           "token_type",
           "expires_in"
+        ]
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "authenticated": {
+            "type": "boolean",
+            "description": "Whether the user is authenticated",
+            "example": true
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the authenticated user",
+            "example": "admin"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Roles assigned to the user",
+            "example": ["admin"]
+          },
+          "exp": {
+            "type": "integer",
+            "description": "Token expiration timestamp (Unix epoch)",
+            "example": 1735689600
+          }
+        },
+        "required": [
+          "authenticated"
         ]
       }
     },

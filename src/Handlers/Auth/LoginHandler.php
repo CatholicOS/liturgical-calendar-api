@@ -3,6 +3,7 @@
 namespace LiturgicalCalendar\Api\Handlers\Auth;
 
 use LiturgicalCalendar\Api\Handlers\AbstractHandler;
+use LiturgicalCalendar\Api\Http\CookieHelper;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
@@ -56,6 +57,9 @@ final class LoginHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+
+        // Enable CORS credentials for cookie-based authentication
+        $this->allowCredentials = true;
 
         // Initialize auth logger
         $this->authLogger = LoggerFactory::create('auth', null, 30, false, true, false);
@@ -180,7 +184,11 @@ final class LoginHandler extends AbstractHandler
             'client_ip' => $clientIp
         ]);
 
-        // Prepare response data
+        // Set HttpOnly cookies for secure token storage
+        $response = CookieHelper::setAccessTokenCookie($response, $token, $jwtService->getExpiry());
+        $response = CookieHelper::setRefreshTokenCookie($response, $refreshToken, $jwtService->getRefreshExpiry());
+
+        // Prepare response data (tokens still included for backwards compatibility)
         $responseData = [
             'access_token'  => $token,
             'refresh_token' => $refreshToken,

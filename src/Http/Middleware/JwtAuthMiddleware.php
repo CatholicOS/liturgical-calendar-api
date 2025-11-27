@@ -2,6 +2,7 @@
 
 namespace LiturgicalCalendar\Api\Http\Middleware;
 
+use LiturgicalCalendar\Api\Http\CookieHelper;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Models\Auth\User;
 use LiturgicalCalendar\Api\Services\JwtService;
@@ -15,10 +16,11 @@ use Psr\Http\Server\RequestHandlerInterface;
  * JWT Authentication Middleware
  *
  * This middleware:
- * 1. Extracts JWT token from Authorization header
- * 2. Verifies the token using JwtService
- * 3. Attaches authenticated user to request attributes
- * 4. Throws UnauthorizedException if token is missing or invalid
+ * 1. Extracts JWT token from HttpOnly cookie first (preferred, more secure)
+ * 2. Falls back to Authorization header for backwards compatibility
+ * 3. Verifies the token using JwtService
+ * 4. Attaches authenticated user to request attributes
+ * 5. Throws UnauthorizedException if token is missing or invalid
  *
  * @package LiturgicalCalendar\Api\Http\Middleware
  */
@@ -54,22 +56,30 @@ class JwtAuthMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        // Extract token from Authorization header
-        $authHeader = $request->getHeaderLine('Authorization');
+        $token = null;
 
-        if (empty($authHeader)) {
-            throw new UnauthorizedException('Missing Authorization header');
+        // 1. Try to get token from HttpOnly cookie first (preferred, more secure)
+        /** @var array<string, string> $cookies */
+        $cookies = $request->getCookieParams();
+        $token   = CookieHelper::getAccessToken($cookies);
+
+        // 2. Fall back to Authorization header for backwards compatibility
+        if ($token === null) {
+            $authHeader = $request->getHeaderLine('Authorization');
+
+            if (!empty($authHeader)) {
+                // Check for Bearer token format (case-insensitive per RFC 7235)
+                if (!str_starts_with(strtolower($authHeader), 'bearer ')) {
+                    throw new UnauthorizedException('Invalid Authorization header format. Expected: Bearer <token>');
+                }
+
+                // Extract token and trim whitespace
+                $token = trim(substr($authHeader, 7)); // Remove "Bearer " prefix and trim
+            }
         }
 
-        // Check for Bearer token format (case-insensitive per RFC 7235)
-        if (!str_starts_with(strtolower($authHeader), 'bearer ')) {
-            throw new UnauthorizedException('Invalid Authorization header format. Expected: Bearer <token>');
-        }
-
-        // Extract token and trim whitespace
-        $token = trim(substr($authHeader, 7)); // Remove "Bearer " prefix and trim
-
-        if (empty($token)) {
+        // No token found in either location
+        if ($token === null || $token === '') {
             throw new UnauthorizedException('Missing JWT token');
         }
 
