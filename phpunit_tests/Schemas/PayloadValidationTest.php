@@ -27,17 +27,19 @@ use LiturgicalCalendar\Api\Router;
 #[Group('Schemas')]
 class PayloadValidationTest extends TestCase
 {
-    private static string $fixturesPath;
+    private const FIXTURES_PATH = __DIR__ . '/../fixtures/payloads';
+
     private static bool $routerInitialized = false;
 
-    public static function setUpBeforeClass(): void
-    {
-        Router::getApiPaths();
-        self::$fixturesPath = dirname(__DIR__) . '/fixtures/payloads';
-    }
-
     /**
-     * Ensure Router paths are initialized for data providers.
+     * Ensure Router paths are initialized.
+     *
+     * This is needed because:
+     * 1. Data providers run before setUpBeforeClass()
+     * 2. LitSchema::path() requires Router paths to be initialized
+     *
+     * Router::getApiPaths() is idempotent, but we use a flag to avoid
+     * unnecessary repeated calls.
      */
     private static function ensureRouterInitialized(): void
     {
@@ -45,6 +47,11 @@ class PayloadValidationTest extends TestCase
             Router::getApiPaths();
             self::$routerInitialized = true;
         }
+    }
+
+    protected function setUp(): void
+    {
+        self::ensureRouterInitialized();
     }
 
     /**
@@ -55,7 +62,7 @@ class PayloadValidationTest extends TestCase
      */
     private static function loadFixture(string $filename): \stdClass
     {
-        $path = self::$fixturesPath . '/' . $filename;
+        $path = self::FIXTURES_PATH . '/' . $filename;
         if (!file_exists($path)) {
             throw new \RuntimeException("Fixture file not found: $path");
         }
