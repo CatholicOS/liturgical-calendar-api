@@ -3,6 +3,7 @@
 namespace LiturgicalCalendar\Api\Handlers\Auth;
 
 use LiturgicalCalendar\Api\Handlers\AbstractHandler;
+use LiturgicalCalendar\Api\Http\CookieHelper;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
@@ -19,10 +20,13 @@ use Psr\Http\Message\ServerRequestInterface;
  *
  * Handles POST /auth/logout requests
  *
- * This is a stateless logout endpoint. Since JWT tokens are stateless,
- * the actual token invalidation happens client-side by deleting the stored tokens.
- * This endpoint provides a consistent API for logout operations and can be
- * extended in the future to support token blacklisting if needed.
+ * This handler:
+ * 1. Extracts token from HttpOnly cookie or Authorization header for logging
+ * 2. Clears both access and refresh token HttpOnly cookies
+ * 3. Returns success message
+ *
+ * Since JWT tokens are stateless, this endpoint clears the HttpOnly cookies
+ * server-side and can be extended to support token blacklisting if needed.
  *
  * Returns:
  * - message (string) - Success message
@@ -49,6 +53,9 @@ final class LogoutHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+
+        // Enable CORS credentials for cookie-based authentication
+        $this->allowCredentials = true;
 
         // Initialize auth logger
         $this->authLogger = LoggerFactory::create('auth', null, 30, false, true, false);
@@ -135,11 +142,24 @@ final class LogoutHandler extends AbstractHandler
         $serverParams = $request->getServerParams();
         $clientIp     = $this->getClientIp($request, $serverParams);
 
-        // Try to extract username from Authorization header for logging
-        $username   = 'unknown';
-        $authHeader = $request->getHeaderLine('Authorization');
-        if (!empty($authHeader) && str_starts_with(strtolower($authHeader), 'bearer ')) {
-            $token = substr($authHeader, 7);
+        // Try to extract username from token for logging
+        // 1. Check HttpOnly cookie first (preferred)
+        // 2. Fall back to Authorization header
+        $username = 'unknown';
+        $token    = null;
+
+        /** @var array<string, string> $cookies */
+        $cookies = $request->getCookieParams();
+        $token   = CookieHelper::getAccessToken($cookies);
+
+        if ($token === null) {
+            $authHeader = $request->getHeaderLine('Authorization');
+            if (!empty($authHeader) && str_starts_with(strtolower($authHeader), 'bearer ')) {
+                $token = substr($authHeader, 7);
+            }
+        }
+
+        if ($token !== null) {
             try {
                 $jwtService = $this->getJwtService();
                 $username   = $jwtService->extractUsername($token) ?? 'unknown';
@@ -156,6 +176,9 @@ final class LogoutHandler extends AbstractHandler
             'username'  => $username,
             'client_ip' => $clientIp
         ]);
+
+        // Clear HttpOnly auth cookies
+        $response = CookieHelper::clearAuthCookies($response);
 
         // Prepare response data
         $responseData = [

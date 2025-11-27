@@ -3,6 +3,7 @@
 namespace LiturgicalCalendar\Api\Handlers\Auth;
 
 use LiturgicalCalendar\Api\Handlers\AbstractHandler;
+use LiturgicalCalendar\Api\Http\CookieHelper;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
@@ -21,8 +22,15 @@ use Psr\Http\Message\ServerRequestInterface;
  *
  * Handles POST /auth/refresh requests
  *
+ * This handler:
+ * 1. Extracts refresh token from HttpOnly cookie first (preferred, more secure)
+ * 2. Falls back to request body for backwards compatibility
+ * 3. Generates new access token
+ * 4. Sets new access token as HttpOnly cookie
+ * 5. Returns tokens in response body for backwards compatibility
+ *
  * Accepts:
- * - refresh_token (string) - JWT refresh token
+ * - refresh_token (string) - JWT refresh token (from cookie or body)
  *
  * Returns:
  * - access_token (string) - New JWT access token
@@ -53,6 +61,9 @@ final class RefreshHandler extends AbstractHandler
         // Only accept JSON
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
+
+        // Enable CORS credentials for cookie-based authentication
+        $this->allowCredentials = true;
 
         // Initialize auth logger
         $this->authLogger = LoggerFactory::create('auth', null, 30, false, true, false);
@@ -136,18 +147,24 @@ final class RefreshHandler extends AbstractHandler
         $mime     = $this->validateAcceptHeader($request, AcceptabilityLevel::LAX);
         $response = $response->withHeader('Content-Type', $mime);
 
-        // Parse request body (required=true handles Content-Type and empty body validation)
-        $parsedBodyParams = $this->parseBodyParams($request, true);
-
         // Get client IP for logging (check proxy headers first, then fall back to REMOTE_ADDR)
         /** @var array<string, mixed> $serverParams */
         $serverParams = $request->getServerParams();
         $clientIp     = $this->getClientIp($request, $serverParams);
 
-        // Extract refresh token
-        $refreshToken = $parsedBodyParams['refresh_token'] ?? null;
+        // 1. Try to get refresh token from HttpOnly cookie first (preferred, more secure)
+        /** @var array<string, string> $cookies */
+        $cookies      = $request->getCookieParams();
+        $refreshToken = CookieHelper::getRefreshToken($cookies);
 
-        if (!is_string($refreshToken) || empty($refreshToken)) {
+        // 2. Fall back to request body for backwards compatibility
+        if ($refreshToken === null) {
+            // Parse request body (required=false since cookie may have provided token)
+            $parsedBodyParams = $this->parseBodyParams($request, false);
+            $refreshToken     = $parsedBodyParams['refresh_token'] ?? null;
+        }
+
+        if (!is_string($refreshToken) || $refreshToken === '') {
             throw new ValidationException('Refresh token is required and must be a string');
         }
 
@@ -171,7 +188,10 @@ final class RefreshHandler extends AbstractHandler
             'client_ip' => $clientIp
         ]);
 
-        // Prepare response data
+        // Set HttpOnly cookie for secure token storage
+        $response = CookieHelper::setAccessTokenCookie($response, $newToken, $jwtService->getExpiry());
+
+        // Prepare response data (token still included for backwards compatibility)
         $responseData = [
             'access_token' => $newToken,
             'expires_in'   => $jwtService->getExpiry(),
