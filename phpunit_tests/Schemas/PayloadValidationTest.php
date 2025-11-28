@@ -100,7 +100,8 @@ class PayloadValidationTest extends TestCase
     public static function validDiocesanPayloadProvider(): array
     {
         return [
-            'valid diocesan calendar' => ['valid_diocesan_calendar.json'],
+            'valid diocesan calendar'     => ['valid_diocesan_calendar.json'],
+            'valid diocesan multi-locale' => ['valid_diocesan_multi_locale.json'],
         ];
     }
 
