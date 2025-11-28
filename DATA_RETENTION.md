@@ -111,4 +111,4 @@ chown www-data:www-data logs/
 
 | Date    | Change                                                             |
 |---------|--------------------------------------------------------------------|
-| 2024-11 | Initial documentation of audit logging and 90-day retention policy |
+| 2025-11 | Initial documentation of audit logging and 90-day retention policy |
