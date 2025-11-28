@@ -624,72 +624,17 @@ final class RegionalDataHandler extends AbstractHandler
             throw new NotFoundException($description);
         }
 
-        // Use raw payload for i18n iteration to avoid DTO serialization issues
-        // Convert stdClass to array for PHPStan-compatible iteration
-        /** @var array<string, \stdClass> $rawI18n */
-        $rawI18n = (array) $rawPayload->i18n;
-        foreach ($rawI18n as $locale => $i18nData) {
-            $calendarI18nFile = strtr(
-                JsonData::NATIONAL_CALENDAR_I18N_FILE->path(),
-                [
-                    '{nation}' => $this->params->key,
-                    '{locale}' => $locale
-                ]
-            );
-
-            if (false === file_exists($calendarI18nFile)) {
-                $description = "Cannot update unknown national calendar i18n resource {$this->params->key} for locale {$locale}, file {$calendarI18nFile} does not exist.";
-                throw new NotFoundException($description);
-            }
-
-            if (false === is_writable($calendarI18nFile)) {
-                $description = "Cannot update national calendar i18n resource {$this->params->key} for locale {$locale}, file {$calendarI18nFile} is not writable.";
-                throw new UnprocessableContentException($description);
-            }
-
-            // Update national calendar i18n data for locale
-            $calendarI18nData = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            if (
-                false === file_put_contents(
-                    $calendarI18nFile,
-                    $calendarI18nData . PHP_EOL
-                )
-            ) {
-                $description = "Could not update national calendar i18n resource {$this->params->key} for locale {$locale}, file {$calendarI18nFile}.";
-                throw new ServiceUnavailableException($description);
-            }
-        }
-
-        // We also want to clean up any unneeded locale files, if a locale was removed
-        $calendarI18nFolder = strtr(
-            JsonData::NATIONAL_CALENDAR_I18N_FOLDER->path(),
-            [
-                '{nation}' => $this->params->key
-            ]
+        // Update i18n files and clean up removed locales
+        /** @var string $key Already validated to exist */
+        $key         = $this->params->key;
+        $i18nLocales = $this->updateI18nFiles(
+            $rawPayload,
+            JsonData::NATIONAL_CALENDAR_I18N_FILE,
+            JsonData::NATIONAL_CALENDAR_I18N_FOLDER,
+            ['{nation}' => $key],
+            $payload->metadata->locales,
+            "national calendar {$key}"
         );
-
-        // Get all .json files in the folder
-        $jsonFiles = glob("{$calendarI18nFolder}/*.json");
-        if (false === $jsonFiles) {
-            $description = 'Unable to list national calendar i18n files in folder ' . $calendarI18nFolder;
-            throw new ServiceUnavailableException($description);
-        }
-
-        foreach ($jsonFiles as $jsonFile) {
-            $filename = pathinfo($jsonFile, PATHINFO_FILENAME);
-            if (false === in_array($filename, $payload->metadata->locales)) {
-                if (false === unlink($jsonFile)) {
-                    $description = 'Unable to delete national calendar i18n file ' . $jsonFile;
-                    throw new ServiceUnavailableException($description);
-                }
-            }
-        }
-
-        // Capture i18n locales before unsetting for audit logging
-        $i18nLocales = array_keys((array) $rawI18n);
-
-        // Remove i18n from raw payload before writing calendar file
-        unset($rawPayload->i18n);
 
         $calendarFile = strtr(
             JsonData::NATIONAL_CALENDAR_FILE->path(),
@@ -772,72 +717,17 @@ final class RegionalDataHandler extends AbstractHandler
             throw new NotFoundException($description);
         }
 
-        // Use raw payload for i18n iteration to avoid DTO serialization issues
-        // Convert stdClass to array for PHPStan-compatible iteration
-        /** @var array<string, \stdClass> $rawI18n */
-        $rawI18n = (array) $rawPayload->i18n;
-        foreach ($rawI18n as $locale => $i18nData) {
-            $widerRegionI18nFile = strtr(
-                JsonData::WIDER_REGION_I18N_FILE->path(),
-                [
-                    '{wider_region}' => $this->params->key,
-                    '{locale}'       => $locale
-                ]
-            );
-
-            if (false === file_exists($widerRegionI18nFile)) {
-                $description = "Cannot update wider region calendar i18n resource for {$this->params->key} at {$widerRegionI18nFile}, file does not exist.";
-                throw new NotFoundException($description);
-            }
-
-            if (false === is_writable($widerRegionI18nFile)) {
-                $description = "Cannot update wider region calendar i18n resource for {$this->params->key} at {$widerRegionI18nFile}, file is not writable.";
-                throw new ServiceUnavailableException($description);
-            }
-
-            // Update wider region calendar i18n data for locale
-            $widerRegionI18nData = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            if (
-                false === file_put_contents(
-                    $widerRegionI18nFile,
-                    $widerRegionI18nData . PHP_EOL
-                )
-            ) {
-                $description = "Could not update wider region calendar i18n resource for {$this->params->key} at {$widerRegionI18nFile}.";
-                throw new ServiceUnavailableException($description);
-            }
-        }
-
-        // We also want to clean up any unneeded locale files, if a locale has been removed
-        $widerRegionI18nFolder = strtr(
-            JsonData::WIDER_REGION_I18N_FOLDER->path(),
-            [
-                '{wider_region}' => $this->params->key
-            ]
+        // Update i18n files and clean up removed locales
+        /** @var string $key Already validated to exist */
+        $key         = $this->params->key;
+        $i18nLocales = $this->updateI18nFiles(
+            $rawPayload,
+            JsonData::WIDER_REGION_I18N_FILE,
+            JsonData::WIDER_REGION_I18N_FOLDER,
+            ['{wider_region}' => $key],
+            $payload->metadata->locales,
+            "wider region calendar {$key}"
         );
-
-        // Get all .json files in the folder
-        $jsonFiles = glob($widerRegionI18nFolder . '/*.json');
-        if (false === $jsonFiles) {
-            $description = 'Unable to get list of wider region i18n files in ' . $widerRegionI18nFolder;
-            throw new ServiceUnavailableException($description);
-        }
-
-        foreach ($jsonFiles as $file) {
-            $filename = pathinfo($file, PATHINFO_FILENAME);
-            if (false === in_array($filename, $payload->metadata->locales)) {
-                if (false === unlink($file)) {
-                    $description = 'Unable to delete wider region i18n file ' . $file;
-                    throw new ServiceUnavailableException($description);
-                }
-            }
-        }
-
-        // Capture i18n locales before unsetting for audit logging
-        $i18nLocales = array_keys((array) $rawI18n);
-
-        // Remove i18n from raw payload before writing calendar file
-        unset($rawPayload->i18n);
 
         $widerRegionFile = strtr(
             JsonData::WIDER_REGION_FILE->path(),
@@ -916,73 +806,17 @@ final class RegionalDataHandler extends AbstractHandler
             throw new NotFoundException($description);
         }
 
-        // Use raw payload for i18n iteration to avoid DTO serialization issues
-        // Convert stdClass to array for PHPStan-compatible iteration
-        /** @var array<string, \stdClass> $rawI18n */
-        $rawI18n = (array) $rawPayload->i18n;
-        foreach ($rawI18n as $locale => $i18nData) {
-            $DiocesanCalendarI18nFile = strtr(
-                JsonData::DIOCESAN_CALENDAR_I18N_FILE->path(),
-                [
-                    '{nation}'  => $dioceseEntry->nation,
-                    '{diocese}' => $this->params->key,
-                    '{locale}'  => $locale
-                ]
-            );
-
-            if (false === file_exists($DiocesanCalendarI18nFile)) {
-                $description = "Cannot update diocesan calendar i18n resource for {$this->params->key} at {$DiocesanCalendarI18nFile}, file not found.";
-                throw new NotFoundException($description);
-            }
-
-            if (false === is_writable($DiocesanCalendarI18nFile)) {
-                $description = "Cannot update diocesan calendar i18n resource for {$this->params->key} at {$DiocesanCalendarI18nFile}, file is not writable.";
-                throw new ServiceUnavailableException($description);
-            }
-
-            // Update diocesan calendar i18n data for locale
-            $calendarI18nData = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            if (
-                false === file_put_contents(
-                    $DiocesanCalendarI18nFile,
-                    $calendarI18nData . PHP_EOL
-                )
-            ) {
-                $description = "Could not update diocesan calendar i18n resource {$this->params->key} in path {$DiocesanCalendarI18nFile}.";
-                throw new ServiceUnavailableException($description);
-            }
-        }
-
-        // We also want to clean up any unneeded locale files, if a locale has been removed
-        $diocesanCalendarI18nFolder = strtr(
-            JsonData::DIOCESAN_CALENDAR_I18N_FOLDER->path(),
-            [
-                '{nation}'  => $dioceseEntry->nation,
-                '{diocese}' => $this->params->key
-            ]
+        // Update i18n files and clean up removed locales
+        /** @var string $key Already validated to exist */
+        $key         = $this->params->key;
+        $i18nLocales = $this->updateI18nFiles(
+            $rawPayload,
+            JsonData::DIOCESAN_CALENDAR_I18N_FILE,
+            JsonData::DIOCESAN_CALENDAR_I18N_FOLDER,
+            ['{nation}' => $dioceseEntry->nation, '{diocese}' => $key],
+            $payload->metadata->locales,
+            "diocesan calendar {$key}"
         );
-
-        // Get all .json files in the folder
-        $jsonFiles = glob($diocesanCalendarI18nFolder . '/*.json');
-        if (false === $jsonFiles) {
-            $description = 'Unable to list diocesan calendar i18n files in path ' . $diocesanCalendarI18nFolder;
-            throw new ServiceUnavailableException($description);
-        }
-
-        foreach ($jsonFiles as $file) {
-            $filename = pathinfo($file, PATHINFO_FILENAME);
-            if (false === in_array($filename, $payload->metadata->locales)) {
-                if (false === unlink($file)) {
-                    throw new ServiceUnavailableException("Could not delete diocesan calendar i18n resource {$this->params->key} in path {$file}.");
-                }
-            }
-        }
-
-        // Capture i18n locales before unsetting for audit logging
-        $i18nLocales = array_keys((array) $rawI18n);
-
-        // Remove i18n from raw payload before writing calendar file
-        unset($rawPayload->i18n);
 
         $DiocesanCalendarFile = strtr(
             JsonData::DIOCESAN_CALENDAR_FILE->path(),
@@ -1265,6 +1099,88 @@ final class RegionalDataHandler extends AbstractHandler
                 )
             ) {
                 throw new ServiceUnavailableException("Failed to write to file {$i18nFile}");
+            }
+        }
+
+        // Remove i18n from raw payload before writing calendar file
+        unset($rawPayload->i18n);
+
+        return array_keys($rawI18n);
+    }
+
+    /**
+     * Update i18n files for a calendar resource (PATCH operations).
+     *
+     * This helper handles the more complex i18n update logic required for PATCH:
+     * 1. Iterates over rawPayload->i18n and updates each locale's file (with existence/writability checks)
+     * 2. Cleans up removed locale files by comparing existing files with metadata->locales
+     * 3. Removes i18n from the raw payload before returning
+     *
+     * @param \stdClass $rawPayload The raw payload containing i18n data
+     * @param JsonData $i18nFileEnum The JsonData enum case for the i18n file path pattern
+     * @param JsonData $i18nFolderEnum The JsonData enum case for the i18n folder path pattern
+     * @param array<string, string> $baseSubstitutions Substitutions for the file path (without {locale})
+     * @param string[] $metadataLocales The locales from metadata (to determine which files to keep)
+     * @param string $resourceDescription Description of the resource for error messages
+     * @return string[] Array of locale codes that were written
+     * @throws NotFoundException If an i18n file to update does not exist
+     * @throws ServiceUnavailableException If a file is not writable or write/delete fails
+     */
+    private function updateI18nFiles(
+        \stdClass $rawPayload,
+        JsonData $i18nFileEnum,
+        JsonData $i18nFolderEnum,
+        array $baseSubstitutions,
+        array $metadataLocales,
+        string $resourceDescription
+    ): array {
+        /** @var array<string, \stdClass> $rawI18n */
+        $rawI18n = (array) $rawPayload->i18n;
+
+        // Update existing i18n files
+        foreach ($rawI18n as $locale => $i18nData) {
+            $substitutions             = $baseSubstitutions;
+            $substitutions['{locale}'] = $locale;
+            $i18nFile                  = strtr($i18nFileEnum->path(), $substitutions);
+
+            if (false === file_exists($i18nFile)) {
+                throw new NotFoundException(
+                    "Cannot update {$resourceDescription} i18n resource, file {$i18nFile} does not exist."
+                );
+            }
+
+            if (false === is_writable($i18nFile)) {
+                throw new ServiceUnavailableException(
+                    "Cannot update {$resourceDescription} i18n resource, file {$i18nFile} is not writable."
+                );
+            }
+
+            $i18nContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            if (false === file_put_contents($i18nFile, $i18nContent . PHP_EOL)) {
+                throw new ServiceUnavailableException(
+                    "Could not update {$resourceDescription} i18n resource at {$i18nFile}."
+                );
+            }
+        }
+
+        // Clean up removed locale files
+        $i18nFolder = strtr($i18nFolderEnum->path(), $baseSubstitutions);
+        $jsonFiles  = glob("{$i18nFolder}/*.json");
+
+        if (false === $jsonFiles) {
+            throw new ServiceUnavailableException(
+                "Unable to list {$resourceDescription} i18n files in folder {$i18nFolder}."
+            );
+        }
+
+        foreach ($jsonFiles as $jsonFile) {
+            $filename = pathinfo($jsonFile, PATHINFO_FILENAME);
+            if (false === in_array($filename, $metadataLocales)) {
+                if (false === unlink($jsonFile)) {
+                    throw new ServiceUnavailableException(
+                        "Unable to delete {$resourceDescription} i18n file {$jsonFile}."
+                    );
+                }
             }
         }
 
