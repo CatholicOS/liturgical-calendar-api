@@ -1,10 +1,14 @@
 # CHANGELOG
 
 <!--
-## [v5.6](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.6) (unreleased)
+## [v5.7](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.7) (unreleased)
 
 * implement `filter` parameter for limited sets of calendar events, see issue [#43](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/43)
 -->
+
+## [v5.6](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.6) (November 28th 2025)
+
+* fix bug [PUT/PATCH requests to /data serializing incorrectly](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/411)
 
 ## [v5.5](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.5) (November 27th 2025)
 
