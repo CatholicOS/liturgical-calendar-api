@@ -189,20 +189,24 @@ the simpler approach is to write the validated raw payload directly to disk.
 2. Store the raw `\stdClass` payload alongside the DTO
 3. Use raw payload when writing to files
 
-**Implementation:**
+**Implementation (actual):**
 
 ```php
-// In RegionalDataHandler::initParams() - after schema validation
-if (RegionalDataHandler::validateDataAgainstSchema($payload, LitSchema::DIOCESAN->path())) {
-    $params['rawPayload'] = $payload;  // Keep raw for writing
-    $params['payload'] = DiocesanData::fromObject($payload);  // DTO for property access
-    $key = $params['payload']->metadata->diocese_id;
-}
+// In RegionalDataHandler::parsePayload() - after schema validation
+$this->validateDataAgainstSchema($payload, LitSchema::DIOCESAN->path());
+$params['rawPayload'] = $payload;  // Keep raw stdClass for writing
+$params['payload'] = DiocesanData::fromObject($payload);  // DTO for typed property access
 
 // In createDiocesanCalendar() - use raw payload for writing
+// Remove i18n first (written separately)
+unset($this->params->rawPayload->i18n);
 $calendarData = json_encode($this->params->rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 file_put_contents($diocesanCalendarFile, $calendarData . PHP_EOL);
 ```
+
+> **Status (2025-11):** This approach is now fully implemented for all calendar types
+> (diocesan, national, wider region). The raw payload strategy avoids the complexity
+> of implementing `JsonSerializable` on all model classes.
 
 #### 1.2 Fix PHPStan Type Declarations (COMPLETED)
 
@@ -680,32 +684,38 @@ Using a test framework (e.g., Playwright, Cypress) to test the full flow:
 
 ## File Changes Summary
 
-### API Backend Files to Modify
+### API Backend Files Modified (Raw Payload Approach)
+
+> **Note (2025-11):** The original plan to implement `JsonSerializable` on all model classes
+> has been superseded by the raw payload approach. The files below were modified to support
+> the raw payload strategy instead.
 
 ```text
-src/Models/AbstractJsonSrcData.php          # Add JsonSerializable support
-src/Models/AbstractJsonSrcDataArray.php     # Add JsonSerializable support
+src/Params/RegionalDataParams.php           # ✅ Added rawPayload property
+src/Handlers/RegionalDataHandler.php        # ✅ Uses rawPayload for json_encode()
+                                            # ✅ Added writeI18nFiles() helper
+                                            # ✅ Added updateI18nFiles() helper
+                                            # ✅ Added audit logging
 
-src/Models/RegionalData/DiocesanData/
-├── DiocesanData.php                        # Implement JsonSerializable
-├── DiocesanLitCalItem.php                  # Implement JsonSerializable
-├── DiocesanLitCalItemCollection.php        # Implement JsonSerializable
-├── DiocesanLitCalItemCreateNewFixed.php    # Implement JsonSerializable
-├── DiocesanLitCalItemCreateNewMobile.php   # Implement JsonSerializable
-├── DiocesanLitCalItemMetadata.php          # Implement JsonSerializable
-└── DiocesanMetadata.php                    # Implement JsonSerializable
+phpunit_tests/Schemas/PayloadValidationTest.php  # ✅ Round-trip serialization tests
+phpunit_tests/fixtures/payloads/                 # ✅ Test fixtures for all calendar types
+```
 
-src/Models/RegionalData/NationalData/
-├── NationalData.php                        # Implement JsonSerializable
-├── NationalMetadata.php                    # Implement JsonSerializable
-└── ... (all other model classes)
+### API Backend Files - No Changes Needed
 
-src/Models/RegionalData/WiderRegionData/
-├── WiderRegionData.php                     # Implement JsonSerializable
-└── WiderRegionMetadata.php                 # Implement JsonSerializable
+The following model classes do **not** need `JsonSerializable` implementation because
+the raw payload approach writes the original `\stdClass` directly:
 
-src/Handlers/RegionalDataHandler.php        # Add post-serialization validation
-src/Handlers/MissalsHandler.php             # Implement PUT/PATCH/DELETE with validation
+```text
+src/Models/RegionalData/DiocesanData/*      # No changes needed (raw payload used)
+src/Models/RegionalData/NationalData/*      # No changes needed (raw payload used)
+src/Models/RegionalData/WiderRegionData/*   # No changes needed (raw payload used)
+```
+
+### Future Work
+
+```text
+src/Handlers/MissalsHandler.php             # TODO: Implement PUT/PATCH/DELETE with validation
 ```
 
 ### Frontend Files to Review/Modify
