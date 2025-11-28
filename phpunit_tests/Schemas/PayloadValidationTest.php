@@ -498,11 +498,13 @@ class PayloadValidationTest extends TestCase
         $this->assertInstanceOf(\stdClass::class, $reDecoded);
 
         // The re-encoded payload (without i18n) should still have valid structure
-        // Re-add empty i18n for validation since schema may require it
-        // For diocesan, i18n is optional, so this should pass without it
         $this->assertObjectHasProperty('litcal', $reDecoded);
         $this->assertIsArray($reDecoded->litcal);
         $this->assertObjectHasProperty('metadata', $reDecoded);
+
+        // Final check: round-tripped payload (without i18n) still conforms to schema
+        // For diocesan, i18n is optional, so this should pass without it
+        $schema->in($reDecoded);
     }
 
     /**
@@ -547,6 +549,9 @@ class PayloadValidationTest extends TestCase
         $this->assertIsArray($reDecoded->litcal);
         $this->assertObjectHasProperty('metadata', $reDecoded);
         $this->assertObjectHasProperty('settings', $reDecoded);
+
+        // Final check: round-tripped payload (without i18n) still conforms to schema
+        $schema->in($reDecoded);
     }
 
     /**
@@ -592,6 +597,9 @@ class PayloadValidationTest extends TestCase
         $this->assertIsArray($reDecoded->litcal);
         $this->assertObjectHasProperty('metadata', $reDecoded);
         $this->assertObjectHasProperty('national_calendars', $reDecoded);
+
+        // Final check: round-tripped payload (without i18n) still conforms to schema
+        $schema->in($reDecoded);
     }
 
     /**
