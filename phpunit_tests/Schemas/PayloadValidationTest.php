@@ -337,6 +337,58 @@ class PayloadValidationTest extends TestCase
     }
 
     /**
+     * Test that multi-locale i18n structure passes schema validation.
+     *
+     * Verifies that schemas correctly allow multiple locales in the i18n property,
+     * mirroring real-world usage where dioceses may support multiple languages.
+     */
+    public function testMultiLocaleI18nPassesSchemaValidation(): void
+    {
+        $schemaPath = LitSchema::DIOCESAN->path();
+        $schema     = Schema::import($schemaPath);
+
+        $payload = self::loadFixture('valid_diocesan_multi_locale.json');
+
+        // Verify multi-locale structure
+        $this->assertObjectHasProperty('i18n', $payload);
+        $this->assertObjectHasProperty('en_US', $payload->i18n);
+        $this->assertObjectHasProperty('es_US', $payload->i18n);
+
+        // Verify metadata.locales matches i18n keys
+        $this->assertContains('en_US', $payload->metadata->locales);
+        $this->assertContains('es_US', $payload->metadata->locales);
+
+        // Schema validation should pass
+        $schema->in($payload);
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * Test that i18n locale mismatch is rejected at the DTO level.
+     *
+     * The JSON schema allows any locale keys in i18n, but the DTO's
+     * validateTranslations() method enforces that i18n keys must match
+     * metadata.locales exactly. This test verifies that validation behavior.
+     */
+    public function testI18nLocaleMismatchRejectedByDto(): void
+    {
+        // First verify the payload passes schema validation
+        // (schema doesn't enforce locale matching)
+        $schemaPath = LitSchema::DIOCESAN->path();
+        $schema     = Schema::import($schemaPath);
+
+        $payload = self::loadFixture('invalid_diocesan_i18n_mismatch.json');
+        $schema->in($payload);
+
+        // But DTO validation should reject it because i18n keys (en_US, it_IT)
+        // don't match metadata.locales (en_US, es_US)
+        $this->expectException(\ValueError::class);
+        $this->expectExceptionMessage('keys of i18n parameter must be the same as the values of metadata.locales');
+
+        DiocesanData::fromObject($payload);
+    }
+
+    /**
      * Test that a payload matching exactly what the frontend should produce validates.
      *
      * This is a comprehensive test using a complete payload structure.
