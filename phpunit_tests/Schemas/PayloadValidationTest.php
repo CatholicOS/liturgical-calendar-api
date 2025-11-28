@@ -154,9 +154,9 @@ class PayloadValidationTest extends TestCase
 
         $payload = self::loadFixture($fixtureFile);
 
-        // This should not throw - valid payloads must pass
+        // Implicit pass if no exception thrown
         $schema->in($payload);
-        $this->assertTrue(true, "Valid diocesan payload should pass schema validation: $fixtureFile");
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -172,9 +172,9 @@ class PayloadValidationTest extends TestCase
 
         $payload = self::loadFixture($fixtureFile);
 
-        // This should not throw - valid payloads must pass
+        // Implicit pass if no exception thrown
         $schema->in($payload);
-        $this->assertTrue(true, "Valid national payload should pass schema validation: $fixtureFile");
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -275,9 +275,9 @@ class PayloadValidationTest extends TestCase
             ],
         ];
 
-        // This should not throw
+        // Implicit pass if no exception thrown
         $schema->in($correctPayload);
-        $this->assertTrue(true, 'Correct litcal array format should pass validation');
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -321,9 +321,9 @@ class PayloadValidationTest extends TestCase
             ],
         ];
 
-        // This should not throw
+        // Implicit pass if no exception thrown
         $schema->in($payload);
-        $this->assertTrue(true, 'Correct i18n structure should pass validation');
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -355,9 +355,9 @@ class PayloadValidationTest extends TestCase
             $this->assertObjectHasProperty('event_key', $item->liturgical_event);
         }
 
-        // Schema validation should pass
+        // Implicit pass if no exception thrown
         $schema->in($payload);
-        $this->assertTrue(true, 'Complete frontend payload should pass validation');
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -373,9 +373,9 @@ class PayloadValidationTest extends TestCase
 
         $payload = self::loadFixture($fixtureFile);
 
-        // This should not throw - valid payloads must pass
+        // Implicit pass if no exception thrown
         $schema->in($payload);
-        $this->assertTrue(true, "Valid wider region payload should pass schema validation: $fixtureFile");
+        $this->addToAssertionCount(1);
     }
 
     // =========================================================================
