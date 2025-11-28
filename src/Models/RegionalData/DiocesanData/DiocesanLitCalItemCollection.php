@@ -7,8 +7,8 @@ use LiturgicalCalendar\Api\Models\AbstractJsonSrcDataArray;
 /**
  * Represents a collection of liturgical calendar items.
  *
- * @phpstan-import-type LiturgicalEventArray from \LiturgicalCalendar\Api\Models\LitCalItemCollection
- * @phpstan-import-type LiturgicalEventObject from \LiturgicalCalendar\Api\Models\LitCalItemCollection
+ * @phpstan-import-type DiocesanLitCalItemArray from DiocesanLitCalItem
+ * @phpstan-import-type DiocesanLitCalItemObject from DiocesanLitCalItem
  * @implements \IteratorAggregate<DiocesanLitCalItem>
  */
 final class DiocesanLitCalItemCollection extends AbstractJsonSrcDataArray implements \IteratorAggregate
@@ -46,7 +46,7 @@ final class DiocesanLitCalItemCollection extends AbstractJsonSrcDataArray implem
      * If the elements are associative arrays, they must have the same keys as the properties of DiocesanLitCalItem.
      * If the elements are objects, they must have the same properties as DiocesanLitCalItem.
      *
-     * @param LiturgicalEventArray[] $data The associative array containing the properties of the class.
+     * @param DiocesanLitCalItemArray[] $data The associative array containing the properties of the class.
      * @return static The newly created instance.
      * @throws \TypeError if the array is empty.
      */
@@ -58,9 +58,9 @@ final class DiocesanLitCalItemCollection extends AbstractJsonSrcDataArray implem
         if (reset($data) instanceof \stdClass) {
             throw new \InvalidArgumentException('Perhaps you meant to use fromObject?');
         } else {
-            /** @var LiturgicalEventArray[] $data */
+            /** @var DiocesanLitCalItemArray[] $data */
             $items = array_values(array_map(
-                /** @param LiturgicalEventArray $litCalItem */
+                /** @param DiocesanLitCalItemArray $litCalItem */
                 fn (array $litcalItem): DiocesanLitCalItem => DiocesanLitCalItem::fromArray($litcalItem),
                 $data
             ));
@@ -74,7 +74,7 @@ final class DiocesanLitCalItemCollection extends AbstractJsonSrcDataArray implem
      * The input array must be non-empty and contain stdClass objects that can be
      * converted into DiocesanLitCalItem instances.
      *
-     * @param LiturgicalEventObject[] $data An array of stdClass objects containing the properties of the class.
+     * @param DiocesanLitCalItemObject[] $data An array of stdClass objects containing the properties of the class.
      * @return static The newly created instance.
      * @throws \TypeError If the array is empty.
      * @throws \InvalidArgumentException If the elements are not stdClass objects.

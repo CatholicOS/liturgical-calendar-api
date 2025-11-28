@@ -1,0 +1,18 @@
+{
+    "litcal": [
+        {
+            "liturgical_event": {
+                "event_key": "StTestSaint",
+                "day": 15,
+                "month": 6,
+                "color": ["white"],
+                "grade": 3,
+                "common": ["Martyrs"]
+            },
+            "metadata": {
+                "form_rownum": 0,
+                "since_year": 2020
+            }
+        }
+    ]
+}

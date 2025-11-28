@@ -90,8 +90,7 @@
     "config": {
         "allow-plugins": {
             "captainhook/captainhook-phar": true,
-            "captainhook/hook-installer": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "captainhook/hook-installer": true
         }
     }
 }

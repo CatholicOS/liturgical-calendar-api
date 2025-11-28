@@ -11,17 +11,17 @@ use LiturgicalCalendar\Api\Models\RegionalData\NationalData\LitCalItemSetPropert
 use LiturgicalCalendar\Api\Models\RegionalData\Translations;
 
 /**
- * @phpstan-import-type LiturgicalEventArray from \LiturgicalCalendar\Api\Models\LitCalItemCollection
- * @phpstan-import-type LiturgicalEventObject from \LiturgicalCalendar\Api\Models\LitCalItemCollection
+ * @phpstan-import-type LitCalItemArray from \LiturgicalCalendar\Api\Models\LitCalItem
+ * @phpstan-import-type LitCalItemObject from \LiturgicalCalendar\Api\Models\LitCalItem
  * @phpstan-import-type TranslationMapObject from \LiturgicalCalendar\Api\Models\RegionalData\TranslationMap
  * @phpstan-type WiderRegionCalendarDataArray array{
- *      litcal:LiturgicalEventArray[],
+ *      litcal:LitCalItemArray[],
  *      national_calendars:array<string,string>,
  *      metadata:array{locales:string[],wider_region:string},
  *      i18n?:\stdClass
  * }
  * @phpstan-type WiderRegionCalendarDataObject \stdClass&object{
- *      litcal:LiturgicalEventObject[],
+ *      litcal:LitCalItemObject[],
  *      national_calendars:\stdClass&object<string,string>,
  *      metadata:\stdClass&object{locales:string[],wider_region:string},
  *      i18n?:\stdClass

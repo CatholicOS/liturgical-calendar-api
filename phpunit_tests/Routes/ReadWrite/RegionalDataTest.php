@@ -47,6 +47,14 @@ class RegionalDataTest extends ApiTestCase
             "CA_2011",
             "CA_2016"
         ]
+    },
+    "i18n": {
+        "en_CA": {
+            "RemembranceDay": "Remembrance Day"
+        },
+        "fr_CA": {
+            "RemembranceDay": "Jour du Souvenir"
+        }
     }
 }
 JSON;

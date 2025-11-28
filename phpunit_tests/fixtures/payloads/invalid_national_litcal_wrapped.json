@@ -1,0 +1,32 @@
+{
+    "litcal": {
+        "litcalItems": [
+            {
+                "liturgical_event": {
+                    "event_key": "NationalHoliday",
+                    "day": 4,
+                    "month": 7,
+                    "color": ["white"],
+                    "grade": 3,
+                    "common": []
+                },
+                "metadata": {
+                    "action": "createNew",
+                    "since_year": 2000
+                }
+            }
+        ]
+    },
+    "settings": {
+        "epiphany": "JAN6",
+        "ascension": "THURSDAY",
+        "corpus_christi": "THURSDAY",
+        "eternal_high_priest": false
+    },
+    "metadata": {
+        "nation": "IT",
+        "locales": ["it_IT"],
+        "wider_region": "Europe",
+        "missals": ["IT_1983"]
+    }
+}
