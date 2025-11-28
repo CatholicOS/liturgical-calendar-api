@@ -132,6 +132,35 @@ DTOs should still be used when:
 - Iterating over items with type safety
 - Applying translations or other business logic
 
+### Validation: i18n Required for PUT/PATCH (2025-11)
+
+An important validation rule was added: the `i18n` property is **required** for PUT/PATCH operations,
+even though the JSON schema marks it as optional.
+
+**Why the difference?**
+
+- **JSON Schema** marks `i18n` as optional because it reflects the **stored file structure** -
+  i18n data is extracted and written to separate locale files, so it's not present in the
+  calendar resource file after processing.
+- **PUT/PATCH requests** must include `i18n` because without translations, the calendar data
+  would be incomplete and unusable.
+
+**Implementation:**
+
+```php
+// In RegionalDataHandler - before processing PUT/PATCH
+// Schema marks i18n as optional (for stored files), but it's required for PUT/PATCH
+if (!property_exists($payload, 'i18n')) {
+    throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
+}
+```
+
+This explicit validation ensures that:
+
+1. Calendar data always has associated translations
+2. The API fails fast with a clear error message
+3. Schema validation alone isn't relied upon for business rules
+
 ---
 
 ## Entity Types Requiring Implementation
@@ -200,7 +229,7 @@ $params['payload'] = DiocesanData::fromObject($payload);  // DTO for typed prope
 // In createDiocesanCalendar() - use raw payload for writing
 // Remove i18n first (written separately)
 unset($this->params->rawPayload->i18n);
-$calendarData = json_encode($this->params->rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+$calendarData = json_encode($this->params->rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 file_put_contents($diocesanCalendarFile, $calendarData . PHP_EOL);
 ```
 
@@ -395,7 +424,7 @@ foreach ($rawPayload->i18n as $locale => $litCalEventsI18n) {
     $diocesanCalendarI18nFile = /* ... */;
     file_put_contents(
         $diocesanCalendarI18nFile,
-        json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL
+        json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . PHP_EOL
     );
 }
 
@@ -403,7 +432,7 @@ foreach ($rawPayload->i18n as $locale => $litCalEventsI18n) {
 unset($rawPayload->i18n);
 
 // Write calendar data from raw payload
-$calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+$calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
 file_put_contents($diocesanCalendarFile, $calendarData . PHP_EOL);
 ```
 
@@ -924,7 +953,7 @@ if (property_exists($liturgicalEvent, 'strtotime') && $liturgicalEvent->strtotim
 The type system has been verified to be coherent:
 
 - **PHPStan level 10**: ✅ Passes with no errors
-- **All tests**: ✅ 94 tests passing
+- **All tests**: ✅ 108 tests passing
 - **Raw vs computed separation**: ✅ Correctly implemented
 - **i18n flow**: ✅ `name` properly populated before use in CalendarHandler
 
