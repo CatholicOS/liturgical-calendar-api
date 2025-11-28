@@ -567,9 +567,6 @@ class PayloadValidationTest extends TestCase
         $this->assertIsArray($reDecoded->litcal);
         $this->assertCount(2, $reDecoded->litcal);
 
-        // Verify it does NOT have the broken structure
-        $this->assertIsNotObject($reDecoded->litcal);
-
         // Verify each item in litcal has the expected structure
         foreach ($reDecoded->litcal as $item) {
             $this->assertObjectHasProperty('liturgical_event', $item);
