@@ -1,0 +1,29 @@
+{
+    "litcal": {
+        "litcalItems": [
+            {
+                "liturgical_event": {
+                    "event_key": "RegionalSaint",
+                    "day": 15,
+                    "month": 7,
+                    "color": ["white"],
+                    "grade": 3,
+                    "common": ["Martyrs"]
+                },
+                "metadata": {
+                    "action": "createNew",
+                    "since_year": 2010
+                }
+            }
+        ]
+    },
+    "national_calendars": {
+        "Italy": "IT",
+        "France": "FR",
+        "Spain": "ES"
+    },
+    "metadata": {
+        "wider_region": "Europe",
+        "locales": ["en_US", "es_ES", "it_IT"]
+    }
+}

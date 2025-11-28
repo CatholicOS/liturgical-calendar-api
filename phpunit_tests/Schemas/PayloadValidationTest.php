@@ -131,13 +131,23 @@ class PayloadValidationTest extends TestCase
     /**
      * Data provider for invalid payloads that should be rejected.
      *
+     * Tests invalid payloads across all regional schema types (diocesan, national, wider region)
+     * to guard against regressions of litcal wrapping and metadata issues.
+     *
      * @return array<string, array{0: string, 1: LitSchema}>
      */
     public static function invalidPayloadProvider(): array
     {
         return [
-            'wrapped litcal (broken serialization)' => ['invalid_litcal_wrapped.json', LitSchema::DIOCESAN],
-            'missing metadata'                      => ['invalid_missing_metadata.json', LitSchema::DIOCESAN],
+            // Diocesan invalid payloads
+            'diocesan: wrapped litcal (broken serialization)'    => ['invalid_litcal_wrapped.json', LitSchema::DIOCESAN],
+            'diocesan: missing metadata'                         => ['invalid_missing_metadata.json', LitSchema::DIOCESAN],
+            // National invalid payloads
+            'national: wrapped litcal (broken serialization)'    => ['invalid_national_litcal_wrapped.json', LitSchema::NATIONAL],
+            'national: missing metadata'                         => ['invalid_national_missing_metadata.json', LitSchema::NATIONAL],
+            // Wider region invalid payloads
+            'widerregion: wrapped litcal (broken serialization)' => ['invalid_widerregion_litcal_wrapped.json', LitSchema::WIDERREGION],
+            'widerregion: missing metadata'                      => ['invalid_widerregion_missing_metadata.json', LitSchema::WIDERREGION],
         ];
     }
 
