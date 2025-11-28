@@ -12,17 +12,18 @@ use LiturgicalCalendar\Api\Models\RegionalData\Translations;
  * @phpstan-import-type NationalCalendarSettingsArray from \LiturgicalCalendar\Api\Models\Metadata\MetadataNationalCalendarSettings
  * @phpstan-import-type NationalMetadataObject from NationalMetadata
  * @phpstan-import-type NationalMetadataArray from NationalMetadata
- * @phpstan-type LiturgicalEventObjectFixed \stdClass&object{event_key:string,day:int,month:int,color:string[],grade:int,common:string[]}
+ * @phpstan-import-type LitCalItemObject from \LiturgicalCalendar\Api\Models\LitCalItem
+ * @phpstan-import-type LitCalItemArray from \LiturgicalCalendar\Api\Models\LitCalItem
  * @phpstan-type I18nObject \stdClass&object<string,\stdClass&object<string,string>>
  * @phpstan-type I18nArray array<string,array<string,string>>
  * @phpstan-type NationalCalendarDataObject \stdClass&object{
- *      litcal:LiturgicalEventObjectFixed[],
+ *      litcal:LitCalItemObject[],
  *      settings:NationalCalendarSettingsObject,
  *      metadata:NationalMetadataObject,
  *      i18n?:I18nObject
  * }
  * @phpstan-type NationalCalendarDataArray array{
- *      litcal:array{event_key:string,day:int,month:int,color:string[],grade:int,common:string[]},
+ *      litcal:LitCalItemArray[],
  *      settings:NationalCalendarSettingsArray,
  *      metadata:NationalMetadataArray,
  *      i18n?:I18nArray

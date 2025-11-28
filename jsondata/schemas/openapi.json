@@ -2068,24 +2068,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "National calendar {NATION} deleted"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/DeleteSuccess200"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
@@ -2276,24 +2259,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "Diocesan calendar {DIOCESE} deleted from nation {NATION}"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/DeleteSuccess200"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
@@ -2484,24 +2450,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "Wider region calendar {REGION} deleted"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/DeleteSuccess200"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
@@ -4975,6 +4924,29 @@
       }
     },
     "responses": {
+      "DeleteSuccess200": {
+        "description": "200 OK: the resource was successfully deleted from the server. Per RFC 9110 Section 9.3.5, we use 200 (not 204) because the response includes a representation describing the status.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "success": {
+                  "type": "string",
+                  "description": "A message indicating successful deletion",
+                  "examples": [
+                    "Calendar data \"nation/US\" deletion successful.",
+                    "Calendar data \"diocese/US_BOSTON\" deletion successful.",
+                    "Calendar data \"widerregion/Americas\" deletion successful."
+                  ]
+                }
+              },
+              "required": ["success"]
+            }
+          }
+        }
+      },
       "UnprocessableEntity422": {
         "description": "422 Unprocessable Entity. The request body does not conform to its defined schema",
         "content": {

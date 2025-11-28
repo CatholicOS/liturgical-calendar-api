@@ -26,6 +26,16 @@ class RegionalDataParams implements ParamsInterface
     public DiocesanData|NationalData|WiderRegionData $payload;
 
     /**
+     * Raw payload as stdClass for writing to disk.
+     *
+     * This preserves the original JSON structure from the request body,
+     * avoiding serialization issues with PHP model classes that don't
+     * implement JsonSerializable. The raw payload has already been
+     * validated against the appropriate JSON schema.
+     */
+    public \stdClass $rawPayload;
+
+    /**
      * Constructor for RegionalDataParams
      *
      * Initializes the RegionalDataParams object by loading calendar metadata
@@ -36,7 +46,7 @@ class RegionalDataParams implements ParamsInterface
      * is set to null.
      *
      * Additionally, it initializes the list of available system locales.
-     * @param array{category:PathCategory,key:string,i18n?:string,i18nRequest?:string,locale?:string,payload?:DiocesanData|NationalData|WiderRegionData} $params
+     * @param array{category:PathCategory,key:string,i18n?:string,i18nRequest?:string,locale?:string,payload?:DiocesanData|NationalData|WiderRegionData,rawPayload?:\stdClass} $params
      */
     public function __construct(array $params)
     {
@@ -57,6 +67,7 @@ class RegionalDataParams implements ParamsInterface
      *
      * If the request method is PUT or PATCH, we expect the payload to be of type DiocesanData, NationalData, or WiderRegionData,
      *   and if so we set the `payload` property; if not an error is produced.
+     *   We also store the raw payload (stdClass) for writing to disk without serialization issues.
      *
      * @param array{
      *      category:PathCategory,
@@ -64,7 +75,8 @@ class RegionalDataParams implements ParamsInterface
      *      i18n?: string,
      *      i18nRequest?: string,
      *      locale?: string,
-     *      payload?: NationalData|DiocesanData|WiderRegionData
+     *      payload?: NationalData|DiocesanData|WiderRegionData,
+     *      rawPayload?: \stdClass
      * } $params The parameters to validate and set.
      *
      */
@@ -84,6 +96,12 @@ class RegionalDataParams implements ParamsInterface
 
         if (array_key_exists('payload', $params)) {
             $this->payload = $params['payload'];
+
+            // Require rawPayload when payload (DTO) is present for write operations
+            if (!array_key_exists('rawPayload', $params)) {
+                throw new ValidationException('rawPayload is required for write operations');
+            }
+            $this->rawPayload = $params['rawPayload'];
         }
 
         if (array_key_exists('locale', $params)) {

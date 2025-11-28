@@ -5,32 +5,10 @@ namespace LiturgicalCalendar\Api\Models;
 /**
  * Represents a collection of liturgical calendar items from a JSON source.
  *
- * This class extends AbstractJsonSrcData and implements IteratorAggregate to provide iteration over the items in the collection.
+ * This class extends AbstractJsonSrcDataArray and implements IteratorAggregate to provide iteration over the items in the collection.
  *
- * @phpstan-type LiturgicalEventArray array{
- *      event_key: string,
- *      missal: string,
- *      grade_lcl: string,
- *      common_lcl: string,
- *      name: string,
- *      common: string[],
- *      calendar: string,
- *      decree?: string,
- *      grade: int
- * }
- *
- * @phpstan-type LiturgicalEventObject \stdClass&object{
- *      event_key: string,
- *      missal: string,
- *      grade_lcl: string,
- *      common_lcl: string,
- *      name: string,
- *      common: string[],
- *      calendar: string,
- *      decree?: string,
- *      grade: int
- * }
- *
+ * @phpstan-import-type LitCalItemArray from LitCalItem
+ * @phpstan-import-type LitCalItemObject from LitCalItem
  * @implements \IteratorAggregate<LitCalItem>
  */
 final class LitCalItemCollection extends AbstractJsonSrcDataArray implements \IteratorAggregate
@@ -68,7 +46,7 @@ final class LitCalItemCollection extends AbstractJsonSrcDataArray implements \It
      * If the elements are associative arrays, they must have the same keys as the properties of LitCalItem.
      * If the elements are objects, they must have the same properties as LitCalItem.
      *
-     * @param array<LiturgicalEventArray|\stdClass> $data The associative array containing the properties of the class.
+     * @param array<LitCalItemArray|\stdClass> $data The associative array containing the properties of the class.
      * @return static The newly created instance.
      * @throws \TypeError if the array is empty.
      */
@@ -81,7 +59,7 @@ final class LitCalItemCollection extends AbstractJsonSrcDataArray implements \It
             /** @var array<\stdClass> $data */
             $items = array_values(array_map(fn (\stdClass $litcalItem): LitCalItem => LitCalItem::fromObject($litcalItem), $data));
         } else {
-            /** @var array<LiturgicalEventArray> $data */
+            /** @var array<LitCalItemArray> $data */
             $items = array_values(array_map(fn (array $litcalItem): LitCalItem => LitCalItem::fromArray($litcalItem), $data));
         }
         return new static($items);
@@ -93,7 +71,7 @@ final class LitCalItemCollection extends AbstractJsonSrcDataArray implements \It
      * The input array must be non-empty and contain stdClass objects that can be
      * converted into LitCalItem instances.
      *
-     * @param LiturgicalEventObject[] $data An array of stdClass objects containing the properties of the class.
+     * @param LitCalItemObject[] $data An array of stdClass objects containing the properties of the class.
      * @return static The newly created instance.
      * @throws \TypeError If the array is empty.
      * @throws \InvalidArgumentException If the elements are not stdClass objects.

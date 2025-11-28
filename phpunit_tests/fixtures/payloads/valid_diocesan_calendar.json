@@ -1,0 +1,52 @@
+{
+    "litcal": [
+        {
+            "liturgical_event": {
+                "event_key": "StTestSaint",
+                "day": 15,
+                "month": 6,
+                "color": ["white"],
+                "grade": 3,
+                "common": ["Martyrs"]
+            },
+            "metadata": {
+                "form_rownum": 0,
+                "since_year": 2020
+            }
+        },
+        {
+            "liturgical_event": {
+                "event_key": "StAnotherSaint",
+                "day": 20,
+                "month": 8,
+                "color": ["red"],
+                "grade": 2,
+                "common": ["Martyrs:For One Martyr"]
+            },
+            "metadata": {
+                "form_rownum": 1,
+                "since_year": 2015,
+                "until_year": 2025
+            }
+        }
+    ],
+    "metadata": {
+        "diocese_id": "newyor_us",
+        "diocese_name": "Archdiocese of New York (New York)",
+        "nation": "US",
+        "locales": ["en_US"],
+        "timezone": "America/New_York"
+    },
+    "settings": {
+        "epiphany": "SUNDAY_JAN2_JAN8",
+        "ascension": "SUNDAY",
+        "corpus_christi": "SUNDAY",
+        "eternal_high_priest": false
+    },
+    "i18n": {
+        "en_US": {
+            "StTestSaint": "Saint Test",
+            "StAnotherSaint": "Saint Another"
+        }
+    }
+}
