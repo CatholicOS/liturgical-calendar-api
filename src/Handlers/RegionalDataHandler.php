@@ -1564,6 +1564,10 @@ final class RegionalDataHandler extends AbstractHandler
             switch ($params['category']) {
                 case PathCategory::DIOCESE:
                     if (RegionalDataHandler::validateDataAgainstSchema($payload, LitSchema::DIOCESAN->path())) {
+                        // Schema marks i18n as optional (for stored files), but it's required for PUT/PATCH
+                        if (!property_exists($payload, 'i18n')) {
+                            throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
+                        }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = DiocesanData::fromObject($payload);  // DTO for property access
                         $key                  = $params['payload']->metadata->diocese_id;
@@ -1571,6 +1575,10 @@ final class RegionalDataHandler extends AbstractHandler
                     break;
                 case PathCategory::NATION:
                     if (RegionalDataHandler::validateDataAgainstSchema($payload, LitSchema::NATIONAL->path())) {
+                        // Schema marks i18n as optional (for stored files), but it's required for PUT/PATCH
+                        if (!property_exists($payload, 'i18n')) {
+                            throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
+                        }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = NationalData::fromObject($payload);  // DTO for property access
                         $key                  = $params['payload']->metadata->nation;
@@ -1578,6 +1586,10 @@ final class RegionalDataHandler extends AbstractHandler
                     break;
                 case PathCategory::WIDERREGION:
                     if (RegionalDataHandler::validateDataAgainstSchema($payload, LitSchema::WIDERREGION->path())) {
+                        // Schema marks i18n as optional (for stored files), but it's required for PUT/PATCH
+                        if (!property_exists($payload, 'i18n')) {
+                            throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
+                        }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = WiderRegionData::fromObject($payload);  // DTO for property access
                         $key                  = $params['payload']->metadata->wider_region;
