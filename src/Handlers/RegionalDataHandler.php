@@ -361,7 +361,7 @@ final class RegionalDataHandler extends AbstractHandler
         );
 
         // Use raw payload for json_encode to preserve schema-compliant structure
-        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         if (
             false === file_put_contents(
                 $diocesanCalendarFile,
@@ -447,7 +447,7 @@ final class RegionalDataHandler extends AbstractHandler
         );
 
         // Use raw payload for json_encode to preserve schema-compliant structure
-        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         if (
             false === file_put_contents(
                 $nationalCalendarFile,
@@ -536,7 +536,7 @@ final class RegionalDataHandler extends AbstractHandler
         );
 
         // Use raw payload for json_encode to preserve schema-compliant structure
-        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         if (
             false === file_put_contents(
                 $widerRegionFile,
@@ -654,7 +654,7 @@ final class RegionalDataHandler extends AbstractHandler
         }
 
         // Use raw payload for json_encode to preserve schema-compliant structure
-        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         if (
             false === file_put_contents(
                 $calendarFile,
@@ -747,7 +747,7 @@ final class RegionalDataHandler extends AbstractHandler
         }
 
         // Use raw payload for json_encode to preserve schema-compliant structure
-        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         if (
             false === file_put_contents(
                 $widerRegionFile,
@@ -838,7 +838,7 @@ final class RegionalDataHandler extends AbstractHandler
         }
 
         // Use raw payload for json_encode to preserve schema-compliant structure
-        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $calendarData = json_encode($rawPayload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         if (
             false === file_put_contents(
                 $DiocesanCalendarFile,
@@ -1095,7 +1095,7 @@ final class RegionalDataHandler extends AbstractHandler
             if (
                 false === file_put_contents(
                     $i18nFile,
-                    json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL
+                    json_encode($litCalEventsI18n, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . PHP_EOL
                 )
             ) {
                 throw new ServiceUnavailableException("Failed to write to file {$i18nFile}");
@@ -1155,7 +1155,7 @@ final class RegionalDataHandler extends AbstractHandler
                 );
             }
 
-            $i18nContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            $i18nContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             if (false === file_put_contents($i18nFile, $i18nContent . PHP_EOL)) {
                 throw new ServiceUnavailableException(
                     "Could not update {$resourceDescription} i18n resource at {$i18nFile}."
