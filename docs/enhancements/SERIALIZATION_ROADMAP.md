@@ -144,7 +144,7 @@ DTOs should still be used when:
 | National Calendar | `NationalCalendar.json`    | `NationalData`   | `extending.php?choice=national`   | PUT/PATCH/DELETE: ✅ Working (raw payload serialization) |
 | Wider Region      | `WiderRegionCalendar.json` | `WiderRegionData`| `extending.php?choice=widerRegion`| PUT/PATCH/DELETE: ✅ Working (raw payload serialization) |
 
-> **Note (2024-11):** Audit logging has been added to all write operations (PUT/PATCH/DELETE). The serialization
+> **Note (2025-11):** Audit logging has been added to all write operations (PUT/PATCH/DELETE). The serialization
 > issue has been **fixed** - handlers now use the raw payload (`\stdClass`) for `json_encode()` instead of DTOs,
 > preserving the schema-compliant JSON structure when saving to disk.
 
