@@ -143,12 +143,15 @@ class PayloadValidationTest extends TestCase
             // Diocesan invalid payloads
             'diocesan: wrapped litcal (broken serialization)'    => ['invalid_litcal_wrapped.json', LitSchema::DIOCESAN],
             'diocesan: missing metadata'                         => ['invalid_missing_metadata.json', LitSchema::DIOCESAN],
+            'diocesan: empty litcal array'                       => ['invalid_diocesan_empty_litcal.json', LitSchema::DIOCESAN],
             // National invalid payloads
             'national: wrapped litcal (broken serialization)'    => ['invalid_national_litcal_wrapped.json', LitSchema::NATIONAL],
             'national: missing metadata'                         => ['invalid_national_missing_metadata.json', LitSchema::NATIONAL],
+            'national: empty litcal array'                       => ['invalid_national_empty_litcal.json', LitSchema::NATIONAL],
             // Wider region invalid payloads
             'widerregion: wrapped litcal (broken serialization)' => ['invalid_widerregion_litcal_wrapped.json', LitSchema::WIDERREGION],
             'widerregion: missing metadata'                      => ['invalid_widerregion_missing_metadata.json', LitSchema::WIDERREGION],
+            'widerregion: empty litcal array'                    => ['invalid_widerregion_empty_litcal.json', LitSchema::WIDERREGION],
         ];
     }
 

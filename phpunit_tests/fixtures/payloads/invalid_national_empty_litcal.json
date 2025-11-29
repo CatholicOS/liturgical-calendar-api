@@ -1,0 +1,17 @@
+{
+    "litcal": [],
+    "metadata": {
+        "nation": "XX",
+        "locales": ["en_US"],
+        "wider_region": "Americas"
+    },
+    "settings": {
+        "epiphany": "SUNDAY_JAN2_JAN8",
+        "ascension": "SUNDAY",
+        "corpus_christi": "SUNDAY",
+        "eternal_high_priest": false
+    },
+    "i18n": {
+        "en_US": {}
+    }
+}
