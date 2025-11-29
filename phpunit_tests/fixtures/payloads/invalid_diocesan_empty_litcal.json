@@ -1,0 +1,13 @@
+{
+    "litcal": [],
+    "metadata": {
+        "diocese_id": "TEST_DIOCESE",
+        "diocese_name": "Test Diocese",
+        "nation": "US",
+        "locales": ["en_US"],
+        "timezone": "America/New_York"
+    },
+    "i18n": {
+        "en_US": {}
+    }
+}

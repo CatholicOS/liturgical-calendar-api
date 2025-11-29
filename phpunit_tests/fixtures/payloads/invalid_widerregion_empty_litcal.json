@@ -1,0 +1,11 @@
+{
+    "litcal": [],
+    "national_calendars": ["US", "CA"],
+    "metadata": {
+        "wider_region": "TestRegion",
+        "locales": ["en_US"]
+    },
+    "i18n": {
+        "en_US": {}
+    }
+}

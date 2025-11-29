@@ -1568,6 +1568,10 @@ final class RegionalDataHandler extends AbstractHandler
                         if (!property_exists($payload, 'i18n')) {
                             throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
                         }
+                        // A calendar must have at least one liturgical event
+                        if (empty($payload->litcal)) {
+                            throw new UnprocessableContentException('The litcal array must contain at least one liturgical event');
+                        }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = DiocesanData::fromObject($payload);  // DTO for property access
                         $key                  = $params['payload']->metadata->diocese_id;
@@ -1579,6 +1583,10 @@ final class RegionalDataHandler extends AbstractHandler
                         if (!property_exists($payload, 'i18n')) {
                             throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
                         }
+                        // A calendar must have at least one liturgical event
+                        if (empty($payload->litcal)) {
+                            throw new UnprocessableContentException('The litcal array must contain at least one liturgical event');
+                        }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = NationalData::fromObject($payload);  // DTO for property access
                         $key                  = $params['payload']->metadata->nation;
@@ -1589,6 +1597,10 @@ final class RegionalDataHandler extends AbstractHandler
                         // Schema marks i18n as optional (for stored files), but it's required for PUT/PATCH
                         if (!property_exists($payload, 'i18n')) {
                             throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
+                        }
+                        // A calendar must have at least one liturgical event
+                        if (empty($payload->litcal)) {
+                            throw new UnprocessableContentException('The litcal array must contain at least one liturgical event');
                         }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = WiderRegionData::fromObject($payload);  // DTO for property access
