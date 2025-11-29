@@ -3,7 +3,8 @@
     "metadata": {
         "nation": "XX",
         "locales": ["en_US"],
-        "wider_region": "Americas"
+        "wider_region": "Americas",
+        "missals": ["EDITIO_TYPICA_1970"]
     },
     "settings": {
         "epiphany": "SUNDAY_JAN2_JAN8",
