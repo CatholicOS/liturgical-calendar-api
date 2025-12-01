@@ -5,13 +5,14 @@
 # John R. D'Orazio <priest@johnromanodorazio.com>, 2022.
 # Weblate Admin <admin@example.com>, 2024.
 # "John R. D'Orazio" <priest@johnromanodorazio.com>, 2025.
+# OpenAI <noreply-mt-openai@weblate.org>, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-11-23 18:32+0000\n"
-"PO-Revision-Date: 2025-11-25 18:29+0000\n"
-"Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
+"PO-Revision-Date: 2025-12-01 19:37+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Latin <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/la/>\n"
 "Language: la\n"
@@ -926,23 +927,23 @@ msgstr ""
 
 #. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
 #: src/Handlers/CalendarHandler.php:2315
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s': can only be relative to "
 "liturgical event with key '%2$s' using keywords %3$s"
 msgstr ""
-"Festivitas mobilia '%1$s' creari non potest: tantum ad festivitatem cum "
-"clave '%2$s' relativa esse potest, utentem verbis clavum %3$s"
+"Non potest creare mobilem eventum liturgicum '%1$s': tantum potest referri "
+"ad eventum liturgicum cum clavem '%2$s' per verba clavis %3$s"
 
 #. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
 #: src/Handlers/CalendarHandler.php:2329
-#, fuzzy, php-format
+#, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s' relative to liturgical event "
 "with key '%2$s'"
 msgstr ""
-"Festivitas mobilia '%1$s' in comparatione cum festivitate clavigeri '%2$s' "
-"creari non potest"
+"Non potest creare mobilem eventum liturgicum '%1$s' ad eventum liturgicum "
+"cum clavem '%2$s'"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1114,7 +1115,7 @@ msgstr "Memoria Sanctæ Mariæ in Sabbato"
 #, php-format
 msgid ""
 "Could not find a %1$s property in the %2$s for the National Calendar %3$s."
-msgstr ""
+msgstr "Non inveniatur proprietas %1$s in %2$s pro Nationali Calendario %3$s."
 
 #. translators: 1: Event key, 2: Original date, 3: New date, 4: Requested calendar year
 #: src/Handlers/CalendarHandler.php:3154
@@ -1208,15 +1209,17 @@ msgid ""
 "liturgical event is greater than the number of days (%3$d) in the month "
 "(%4$d) of the liturgical event year (%5$d)."
 msgstr ""
+"Non potest creare eventum liturgicum cum clave \"%1$s\": dies (%2$d) eventus "
+"liturgici maior est quam numerus dierum (%3$d) in mense (%4$d) anni eventus "
+"liturgici (%5$d)."
 
 #: src/Handlers/CalendarHandler.php:3429
-#, fuzzy
 msgid ""
 "We should be creating a new liturgical event, however we do not seem to have "
 "the correct date information in order to proceed"
 msgstr ""
-"Novam festivitatem creare debemus, sed videtur nos non habere rectam "
-"informationem de die quo procedere"
+"Novum eventum liturgicum creare debemus, sed informationem de data rectam "
+"non habere videmur ut procedamus."
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
