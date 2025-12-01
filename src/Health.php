@@ -1221,12 +1221,16 @@ class Health implements MessageComponentInterface
     {
         $key = 'fgc_' . md5($path);
 
+        // Use futureTick to allow event loop to process other events
         if (self::$cacheEnabled && self::cacheExists($key)) {
             $deferred         = new Deferred();
             [$success, $data] = self::cacheGet($key);
             if ($success && is_string($data)) {
                 echo "Cache hit for file $path\n";
-                $deferred->resolve($data);
+                // Schedule resolution via event loop to prevent blocking
+                Loop::futureTick(function () use ($deferred, $data) {
+                    $deferred->resolve($data);
+                });
             } else {
                 $deferred->reject(new \RuntimeException("Cache fetch for file $path returned non-string data"));
             }
@@ -1271,12 +1275,15 @@ class Health implements MessageComponentInterface
         $key      = 'http_' . md5($url . serialize($options));
         $deferred = new Deferred();
 
-        // Return from cache if available
+        // Return from cache if available - use futureTick to allow event loop to process other events
         if (self::$cacheEnabled && self::cacheExists($key)) {
             echo "Cache hit for $url\n";
             [$success, $data] = self::cacheGet($key);
             if ($success && is_string($data)) {
-                $deferred->resolve($data);
+                // Schedule resolution via event loop to prevent blocking
+                Loop::futureTick(function () use ($deferred, $data) {
+                    $deferred->resolve($data);
+                });
             } else {
                 $deferred->reject(new \RuntimeException("Cache fetch for URL $url failed or returned non-string data"));
             }
