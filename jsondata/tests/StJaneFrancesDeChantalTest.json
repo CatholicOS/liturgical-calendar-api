@@ -57,37 +57,37 @@
             "year": 2012,
             "expected_value": null,
             "assert": "eventNotExists",
-            "assertion": "should not exist, December 12th is a Sunday"
+            "assertion": "should not exist, August 12th is a Sunday"
         },
         {
             "year": 2018,
             "expected_value": null,
             "assert": "eventNotExists",
-            "assertion": "should not exist, December 12th is a Sunday"
+            "assertion": "should not exist, August 12th is a Sunday"
         },
         {
             "year": 2029,
             "expected_value": null,
             "assert": "eventNotExists",
-            "assertion": "should not exist, December 12th is a Sunday"
+            "assertion": "should not exist, August 12th is a Sunday"
         },
         {
             "year": 2035,
             "expected_value": null,
             "assert": "eventNotExists",
-            "assertion": "should not exist, December 12th is a Sunday"
+            "assertion": "should not exist, August 12th is a Sunday"
         },
         {
             "year": 2040,
             "expected_value": null,
             "assert": "eventNotExists",
-            "assertion": "should not exist, December 12th is a Sunday"
+            "assertion": "should not exist, August 12th is a Sunday"
         },
         {
             "year": 2046,
             "expected_value": null,
             "assert": "eventNotExists",
-            "assertion": "should not exist, December 12th is a Sunday"
+            "assertion": "should not exist, August 12th is a Sunday"
         }
     ]
 }
