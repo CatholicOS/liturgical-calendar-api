@@ -86,9 +86,10 @@ class Health implements MessageComponentInterface
     private array $queue  = [];
     private bool $ticking = false;
 
-    private static bool $cacheEnabled   = false;
-    private static string $cacheBackend = 'none';
-    private static ?\Redis $redis       = null;
+    private static bool $cacheInitialized = false;
+    private static bool $cacheEnabled     = false;
+    private static string $cacheBackend   = 'none';
+    private static ?\Redis $redis         = null;
     //private static PromiseInterface $metadataPromise;
 
     /**
@@ -138,37 +139,42 @@ class Health implements MessageComponentInterface
             echo "New connection! ({$conn->resourceId}) and current working directory is " . getcwd() . "\n";
         }
 
-        // Try Redis first, fall back to APCu
-        if (extension_loaded('redis')) {
-            try {
-                self::$redis = new \Redis();
-                $connected   = self::$redis->connect('127.0.0.1', 6379, 2.0); // 2 second timeout
-                if ($connected) {
-                    self::$cacheEnabled = true;
-                    self::$cacheBackend = 'redis';
-                    echo "Redis connected, will use for caching\n";
-                } else {
-                    self::$redis = null;
-                    echo "Redis connection failed, trying APCu fallback\n";
-                }
-            } catch (\RedisException $e) {
-                self::$redis = null;
-                echo "Redis exception: {$e->getMessage()}, trying APCu fallback\n";
-            }
-        }
+        // Initialize cache backend only once (not on every connection)
+        if (!self::$cacheInitialized) {
+            self::$cacheInitialized = true;
 
-        // Fall back to APCu if Redis not available
-        if (self::$cacheBackend === 'none') {
-            $apcuAvailable = extension_loaded('apcu')
-                && function_exists('apcu_exists')
-                && function_exists('apcu_store')
-                && function_exists('apcu_fetch');
-            if ($apcuAvailable) {
-                self::$cacheEnabled = true;
-                self::$cacheBackend = 'apcu';
-                echo "APCu extension loaded, will use for caching\n";
-            } else {
-                echo "No cache backend available (Redis and APCu both unavailable)\n";
+            // Try Redis first, fall back to APCu
+            if (extension_loaded('redis')) {
+                try {
+                    self::$redis = new \Redis();
+                    $connected   = self::$redis->connect('127.0.0.1', 6379, 2.0); // 2 second timeout
+                    if ($connected) {
+                        self::$cacheEnabled = true;
+                        self::$cacheBackend = 'redis';
+                        echo "Redis connected, will use for caching\n";
+                    } else {
+                        self::$redis = null;
+                        echo "Redis connection failed, trying APCu fallback\n";
+                    }
+                } catch (\RedisException $e) {
+                    self::$redis = null;
+                    echo "Redis exception: {$e->getMessage()}, trying APCu fallback\n";
+                }
+            }
+
+            // Fall back to APCu if Redis not available
+            if (self::$cacheBackend === 'none') {
+                $apcuAvailable = extension_loaded('apcu')
+                    && function_exists('apcu_exists')
+                    && function_exists('apcu_store')
+                    && function_exists('apcu_fetch');
+                if ($apcuAvailable) {
+                    self::$cacheEnabled = true;
+                    self::$cacheBackend = 'apcu';
+                    echo "APCu extension loaded, will use for caching\n";
+                } else {
+                    echo "No cache backend available (Redis and APCu both unavailable)\n";
+                }
             }
         }
 
@@ -1173,6 +1179,23 @@ class Health implements MessageComponentInterface
     }
 
     /**
+     * Handle Redis connection failure by falling back to APCu if available.
+     */
+    private static function handleRedisFailure(\RedisException $e): void
+    {
+        echo "Redis connection lost: {$e->getMessage()}, falling back to APCu\n";
+        self::$redis = null;
+        if (function_exists('apcu_enabled') && apcu_enabled()) {
+            self::$cacheBackend = 'apcu';
+            echo "APCu fallback enabled\n";
+        } else {
+            self::$cacheBackend = 'none';
+            self::$cacheEnabled = false;
+            echo "No cache backend available, caching disabled\n";
+        }
+    }
+
+    /**
      * Check if a key exists in the cache.
      */
     private static function cacheExists(string $key): bool
@@ -1181,7 +1204,16 @@ class Health implements MessageComponentInterface
             return false;
         }
         if (self::$cacheBackend === 'redis' && self::$redis !== null) {
-            return (bool) self::$redis->exists($key);
+            try {
+                return (bool) self::$redis->exists($key);
+            } catch (\RedisException $e) {
+                self::handleRedisFailure($e);
+                // Retry with APCu if now available
+                if (self::$cacheBackend === 'apcu') {
+                    return apcu_exists($key);
+                }
+                return false;
+            }
         }
         if (self::$cacheBackend === 'apcu') {
             return apcu_exists($key);
@@ -1200,11 +1232,23 @@ class Health implements MessageComponentInterface
             return [false, null];
         }
         if (self::$cacheBackend === 'redis' && self::$redis !== null) {
-            $data = self::$redis->get($key);
-            if ($data === false || !is_string($data)) {
+            try {
+                $data = self::$redis->get($key);
+                if ($data === false || !is_string($data)) {
+                    return [false, null];
+                }
+                return [true, $data];
+            } catch (\RedisException $e) {
+                self::handleRedisFailure($e);
+                // Retry with APCu if now available
+                if (self::$cacheBackend === 'apcu') {
+                    $data = apcu_fetch($key, $success);
+                    if ($success && is_string($data)) {
+                        return [true, $data];
+                    }
+                }
                 return [false, null];
             }
-            return [true, $data];
         }
         if (self::$cacheBackend === 'apcu') {
             $data = apcu_fetch($key, $success);
@@ -1225,7 +1269,16 @@ class Health implements MessageComponentInterface
             return false;
         }
         if (self::$cacheBackend === 'redis' && self::$redis !== null) {
-            return self::$redis->setex($key, $ttl, $value);
+            try {
+                return self::$redis->setex($key, $ttl, $value);
+            } catch (\RedisException $e) {
+                self::handleRedisFailure($e);
+                // Retry with APCu if now available
+                if (self::$cacheBackend === 'apcu') {
+                    return apcu_store($key, $value, $ttl);
+                }
+                return false;
+            }
         }
         if (self::$cacheBackend === 'apcu') {
             return apcu_store($key, $value, $ttl);
