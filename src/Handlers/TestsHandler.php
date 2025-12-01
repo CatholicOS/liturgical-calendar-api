@@ -239,11 +239,10 @@ final class TestsHandler extends AbstractHandler
         if (false === $bytesWritten) {
             $description = 'The server did not succeed in writing to disk the Unit Test. Please try again later or contact the service administrator for support.';
             throw new ServiceUnavailableException($description);
-        } else {
-            $responseBody = json_encode(['response' => 'Unit Test ' . $this->payload->name . ' created successfully.'], JSON_THROW_ON_ERROR);
-            $response     = $response->withBody(Stream::create($responseBody));
-            return $response->withStatus(StatusCode::CREATED->value, StatusCode::CREATED->reason());
         }
+
+        $responseBody = (object) ['response' => 'Unit Test ' . $this->payload->name . ' created successfully.'];
+        return $this->encodeResponseBody($response, $responseBody, StatusCode::CREATED);
     }
 
     /**
@@ -287,11 +286,10 @@ final class TestsHandler extends AbstractHandler
         if (false === $bytesWritten) {
             $description = 'The server did not succeed in writing to disk the Unit Test. Please try again later or contact the service administrator for support.';
             throw new ServiceUnavailableException($description);
-        } else {
-            $responseBody = json_encode(['response' => 'Unit Test ' . $this->payload->name . ' updated successfully.'], JSON_THROW_ON_ERROR);
-            $response     = $response->withBody(Stream::create($responseBody));
-            return $response->withStatus(StatusCode::OK->value, StatusCode::OK->reason());
         }
+
+        $responseBody = (object) ['response' => 'Unit Test ' . $this->payload->name . ' updated successfully.'];
+        return $this->encodeResponseBody($response, $responseBody);
     }
 
     /**
