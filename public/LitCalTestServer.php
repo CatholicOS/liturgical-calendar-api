@@ -45,7 +45,7 @@ $dotenv = Dotenv::createImmutable($projectFolder, ['.env', '.env.local', '.env.d
 $dotenv->safeLoad();
 $dotenv->ifPresent(['API_PROTOCOL', 'API_HOST'])->notEmpty();
 $dotenv->ifPresent(['API_PORT'])->isInteger();
-$dotenv->ifPresent(['APP_ENV'])->notEmpty()->allowedValues(['development', 'production']);
+$dotenv->ifPresent(['APP_ENV'])->notEmpty()->allowedValues(['development', 'test', 'staging', 'production']);
 $dotenv->ifPresent(['WS_PROTOCOL', 'WS_HOST'])->notEmpty();
 $dotenv->ifPresent(['WS_PORT'])->isInteger();
 
@@ -55,7 +55,7 @@ if (!file_exists($logsFolder)) {
 }
 $logFile = $logsFolder . DIRECTORY_SEPARATOR . 'php-error-litcaltestserver.log';
 
-if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'development') {
+if (isset($_ENV['APP_ENV']) && in_array($_ENV['APP_ENV'], ['development', 'test'], true)) {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
     ini_set('log_errors', 1);
