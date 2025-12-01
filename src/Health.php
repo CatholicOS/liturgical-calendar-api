@@ -86,7 +86,9 @@ class Health implements MessageComponentInterface
     private array $queue  = [];
     private bool $ticking = false;
 
-    private static bool $cacheEnabled = false;
+    private static bool $cacheEnabled   = false;
+    private static string $cacheBackend = 'none';
+    private static ?\Redis $redis       = null;
     //private static PromiseInterface $metadataPromise;
 
     /**
@@ -136,12 +138,38 @@ class Health implements MessageComponentInterface
             echo "New connection! ({$conn->resourceId}) and current working directory is " . getcwd() . "\n";
         }
 
-        self::$cacheEnabled = ( extension_loaded('apcu') && function_exists('apcu_exists') && function_exists('apcu_store') && function_exists('apcu_fetch') );
+        // Try Redis first, fall back to APCu
+        if (extension_loaded('redis')) {
+            try {
+                self::$redis = new \Redis();
+                $connected   = self::$redis->connect('127.0.0.1', 6379, 2.0); // 2 second timeout
+                if ($connected) {
+                    self::$cacheEnabled = true;
+                    self::$cacheBackend = 'redis';
+                    echo "Redis connected, will use for caching\n";
+                } else {
+                    self::$redis = null;
+                    echo "Redis connection failed, trying APCu fallback\n";
+                }
+            } catch (\RedisException $e) {
+                self::$redis = null;
+                echo "Redis exception: {$e->getMessage()}, trying APCu fallback\n";
+            }
+        }
 
-        if (self::$cacheEnabled) {
-            echo 'APCu extension loaded, will use for caching' . "\n";
-        } else {
-            echo 'APCu extension not loaded, will not use for caching' . "\n";
+        // Fall back to APCu if Redis not available
+        if (self::$cacheBackend === 'none') {
+            $apcuAvailable = extension_loaded('apcu')
+                && function_exists('apcu_exists')
+                && function_exists('apcu_store')
+                && function_exists('apcu_fetch');
+            if ($apcuAvailable) {
+                self::$cacheEnabled = true;
+                self::$cacheBackend = 'apcu';
+                echo "APCu extension loaded, will use for caching\n";
+            } else {
+                echo "No cache backend available (Redis and APCu both unavailable)\n";
+            }
         }
 
         Router::getApiPaths();
@@ -1080,26 +1108,134 @@ class Health implements MessageComponentInterface
     }
 
     /**
+     * Check if a key exists in the cache.
+     */
+    private static function cacheExists(string $key): bool
+    {
+        if (!self::$cacheEnabled) {
+            return false;
+        }
+        if (self::$cacheBackend === 'redis' && self::$redis !== null) {
+            return (bool) self::$redis->exists($key);
+        }
+        if (self::$cacheBackend === 'apcu') {
+            return apcu_exists($key);
+        }
+        return false;
+    }
+
+    /**
+     * Get a value from the cache.
+     *
+     * @return array{0: bool, 1: string|null} [success, data]
+     */
+    private static function cacheGet(string $key): array
+    {
+        if (!self::$cacheEnabled) {
+            return [false, null];
+        }
+        if (self::$cacheBackend === 'redis' && self::$redis !== null) {
+            $data = self::$redis->get($key);
+            if ($data === false || !is_string($data)) {
+                return [false, null];
+            }
+            return [true, $data];
+        }
+        if (self::$cacheBackend === 'apcu') {
+            $data = apcu_fetch($key, $success);
+            if ($success && is_string($data)) {
+                return [true, $data];
+            }
+            return [false, null];
+        }
+        return [false, null];
+    }
+
+    /**
+     * Store a value in the cache.
+     */
+    private static function cacheSet(string $key, string $value, int $ttl): bool
+    {
+        if (!self::$cacheEnabled) {
+            return false;
+        }
+        if (self::$cacheBackend === 'redis' && self::$redis !== null) {
+            return self::$redis->setex($key, $ttl, $value);
+        }
+        if (self::$cacheBackend === 'apcu') {
+            return apcu_store($key, $value, $ttl);
+        }
+        return false;
+    }
+
+    /**
+     * Get cache memory info string for logging.
+     */
+    private static function cacheInfo(): string
+    {
+        if (!self::$cacheEnabled) {
+            return 'Cache disabled';
+        }
+        if (self::$cacheBackend === 'redis' && self::$redis !== null) {
+            try {
+                $info = self::$redis->info('memory');
+                if (is_array($info) && isset($info['used_memory'], $info['maxmemory'])) {
+                    $usedRaw = $info['used_memory'];
+                    $maxRaw  = $info['maxmemory'];
+                    $used    = is_numeric($usedRaw) ? (int) $usedRaw : 0;
+                    $max     = is_numeric($maxRaw) ? (int) $maxRaw : 0;
+                    if ($max > 0) {
+                        $percent = ( $used / $max ) * 100;
+                        return 'Redis used: ' . round($used / 1024 / 1024, 2) . ' MB of ' .
+                            round($max / 1024 / 1024, 2) . ' MB (' . round($percent, 2) . '%)';
+                    }
+                    return 'Redis used: ' . round($used / 1024 / 1024, 2) . ' MB (no maxmemory limit)';
+                }
+            } catch (\RedisException $e) {
+                return 'Redis info error: ' . $e->getMessage();
+            }
+            return 'Redis info unavailable';
+        }
+        if (self::$cacheBackend === 'apcu') {
+            /** @var array{seg_size:int,avail_mem:int}|false $info */
+            $info = apcu_sma_info(true);
+            if (false !== $info) {
+                $total = isset($info['seg_size']) ? (int) $info['seg_size'] : 0;
+                $free  = isset($info['avail_mem']) ? (int) $info['avail_mem'] : 0;
+                if ($total > 0) {
+                    $used    = $total - $free;
+                    $percent = ( $used / $total ) * 100;
+                    return 'APCu used: ' . round($used / 1024 / 1024, 2) . ' MB of ' .
+                        round($total / 1024 / 1024, 2) . ' MB (' . round($percent, 2) . '%)';
+                }
+            }
+            return 'APCu info unavailable';
+        }
+        return 'No cache backend';
+    }
+
+    /**
      * @return PromiseInterface<string>
      */
     private function cachedFileGetContents(string $path, int $ttl = 300): PromiseInterface
     {
         $key = 'fgc_' . md5($path);
 
-        if (self::$cacheEnabled) {
-            if (apcu_exists($key)) {
-                $deferred = new Deferred();
-                $data     = apcu_fetch($key, $success);
-                if ($success && is_string($data)) {
-                    echo "Cache hit for file $path\n";
-                    $deferred->resolve($data);
-                } else {
-                    $deferred->reject(new \RuntimeException("Cache fetch for file $path returned non-string data"));
-                }
-                /** @var PromiseInterface<string> $deferredPromise */
-                $deferredPromise = $deferred->promise();
-                return $deferredPromise;
+        if (self::$cacheEnabled && self::cacheExists($key)) {
+            $deferred         = new Deferred();
+            [$success, $data] = self::cacheGet($key);
+            if ($success && is_string($data)) {
+                echo "Cache hit for file $path\n";
+                $deferred->resolve($data);
+            } else {
+                $deferred->reject(new \RuntimeException("Cache fetch for file $path returned non-string data"));
             }
+            /** @var PromiseInterface<string> $deferredPromise */
+            $deferredPromise = $deferred->promise();
+            return $deferredPromise;
+        }
+
+        if (self::$cacheEnabled) {
             echo "Cache miss for file $path, reading from filesystem\n";
         }
 
@@ -1111,23 +1247,9 @@ class Health implements MessageComponentInterface
                 $data = (string) $data;          // force fresh string
                 if (self::$cacheEnabled) {
                     echo "Read file $path, caching contents\n";
-                    $stored = apcu_store($key, $data, $ttl);
+                    $stored = self::cacheSet($key, $data, $ttl);
                     echo ( $stored ? "Stored file in cache\n" : "Failed to store file in cache\n" );
-                    /** @var array{seg_size:int,avail_mem:int} $info */
-                    $info = apcu_sma_info(true);
-                    if (false !== $info) {
-                        $total = isset($info['seg_size']) ? (int) $info['seg_size'] : 0;
-                        $free  = isset($info['avail_mem']) ? (int) $info['avail_mem'] : 0;
-                        if ($total > 0) { // avoid division by zero
-                            $used    = $total - $free;
-                            $percent = ( $used / $total ) * 100;
-
-                            echo 'APCu used: ' . round($used / 1024 / 1024, 2) . ' MB of ' .
-                                round($total / 1024 / 1024, 2) . ' MB (' .
-                                round($percent, 2) . "%)\n";
-                        }
-                    }
-                    //var_dump(apcu_exists($key), apcu_fetch($key));
+                    echo self::cacheInfo() . "\n";
                 }
                 return $data; // resolved promise
             },
@@ -1150,20 +1272,21 @@ class Health implements MessageComponentInterface
         $deferred = new Deferred();
 
         // Return from cache if available
-        if (self::$cacheEnabled) {
-            if (apcu_exists($key)) {
-                echo "Cache hit for $url\n";
-                $data = apcu_fetch($key, $success);
-                if ($success && is_string($data)) {
-                    $deferred->resolve($data);
-                } else {
-                    $deferred->reject(new \RuntimeException("Cache fetch for URL $url failed or returned non-string data"));
-                }
-
-                /** @var PromiseInterface<string> $deferredPromise */
-                $deferredPromise = $deferred->promise();
-                return $deferredPromise;
+        if (self::$cacheEnabled && self::cacheExists($key)) {
+            echo "Cache hit for $url\n";
+            [$success, $data] = self::cacheGet($key);
+            if ($success && is_string($data)) {
+                $deferred->resolve($data);
+            } else {
+                $deferred->reject(new \RuntimeException("Cache fetch for URL $url failed or returned non-string data"));
             }
+
+            /** @var PromiseInterface<string> $deferredPromise */
+            $deferredPromise = $deferred->promise();
+            return $deferredPromise;
+        }
+
+        if (self::$cacheEnabled) {
             echo "Cache miss for $url, making HTTP request\n";
         }
 
@@ -1188,22 +1311,9 @@ class Health implements MessageComponentInterface
             }
 
             if (self::$cacheEnabled) {
-                $stored = apcu_store($key, $body, $ttl);
+                $stored = self::cacheSet($key, $body, $ttl);
                 echo ( $stored ? "Stored response body in cache\n" : "Failed to store response body in cache\n" );
-                /** @var array{seg_size:int,avail_mem:int} $info */
-                $info = apcu_sma_info(true);
-                if (false !== $info) {
-                    $total = isset($info['seg_size']) ? (int) $info['seg_size'] : 0;
-                    $free  = isset($info['avail_mem']) ? (int) $info['avail_mem'] : 0;
-                    if ($total > 0) { // avoid division by zero
-                        $used    = $total - $free;
-                        $percent = ( $used / $total ) * 100;
-
-                        echo 'APCu used: ' . round($used / 1024 / 1024, 2) . ' MB of ' .
-                            round($total / 1024 / 1024, 2) . ' MB (' .
-                            round($percent, 2) . "%)\n";
-                    }
-                }
+                echo self::cacheInfo() . "\n";
             }
             --$this->inFlight;
             $deferred->resolve($body);
