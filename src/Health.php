@@ -116,10 +116,12 @@ class Health implements MessageComponentInterface
             'curl'            => [ CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2_0 ]
         ]);
 
-        if (Router::isLocalhost() || ( isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'development' )) {
+        if (isset($_ENV['WS_MAX_CONCURRENCY']) && is_numeric($_ENV['WS_MAX_CONCURRENCY'])) {
+            $this->maxConcurrency = (int) $_ENV['WS_MAX_CONCURRENCY'];
+        } elseif (Router::isLocalhost() || ( isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'development' )) {
             $this->maxConcurrency = 4;
         } else {
-            $this->maxConcurrency = 50;
+            $this->maxConcurrency = 10; // Conservative default for production
         }
     }
 
