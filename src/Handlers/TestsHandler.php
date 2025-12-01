@@ -199,12 +199,11 @@ final class TestsHandler extends AbstractHandler
         }
 
         // Validate incoming data against unit test schema
-        $schemaFile     = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
-        $schemaContents = Utilities::rawContentsFromFile($schemaFile);
-        $jsonSchema     = json_decode($schemaContents, null, 512, JSON_THROW_ON_ERROR);
+        // Pass file path directly so Schema::import() can resolve relative $ref paths
+        $schemaFile = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
 
         try {
-            $schema = Schema::import($jsonSchema);
+            $schema = Schema::import($schemaFile);
             $schema->in($this->payload);
         } catch (InvalidValue | \Exception $e) {
             $description = 'The Unit Test you are attempting to create was incorrectly validated against schema ' . $schemaFile . ': ' . $e->getMessage();
@@ -253,12 +252,11 @@ final class TestsHandler extends AbstractHandler
         }
 
         // Validate incoming data against unit test schema
-        $schemaFile     = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
-        $schemaContents = Utilities::rawContentsFromFile($schemaFile);
-        $jsonSchema     = json_decode($schemaContents, null, 512, JSON_THROW_ON_ERROR);
+        // Pass file path directly so Schema::import() can resolve relative $ref paths
+        $schemaFile = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
 
         try {
-            $schema = Schema::import($jsonSchema);
+            $schema = Schema::import($schemaFile);
             $schema->in($this->payload);
         } catch (InvalidValue | \Exception $e) {
             $description = 'The Unit Test you are attempting to update was incorrectly validated against schema ' . $schemaFile . ': ' . $e->getMessage();
