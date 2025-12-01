@@ -90,6 +90,28 @@ final class TestsHandler extends AbstractHandler
     }
 
     /**
+     * Validates the payload against the LitCalTest JSON schema.
+     *
+     * Uses the schema file path directly so Schema::import() can resolve
+     * relative $ref paths (e.g., ./CommonDef.json#/definitions/EventKey).
+     *
+     * @param string $operation The operation being performed ('create' or 'update')
+     * @throws ValidationException If the payload fails schema validation
+     */
+    private function validatePayloadAgainstTestSchema(string $operation): void
+    {
+        $schemaFile = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
+
+        try {
+            $schema = Schema::import($schemaFile);
+            $schema->in($this->payload);
+        } catch (InvalidValue | \Exception $e) {
+            $description = "The Unit Test you are attempting to {$operation} was incorrectly validated against schema {$schemaFile}: {$e->getMessage()}";
+            throw new ValidationException($description);
+        }
+    }
+
+    /**
      * Handles GET requests for tests.
      *
      * If no path parts are provided, this method returns an index of all tests.
@@ -198,19 +220,7 @@ final class TestsHandler extends AbstractHandler
             throw new ValidationException($description);
         }
 
-        // Validate incoming data against unit test schema
-        // Pass file path directly so Schema::import() can resolve relative $ref paths
-        $schemaFile = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
-
-        try {
-            $schema = Schema::import($schemaFile);
-            $schema->in($this->payload);
-        } catch (InvalidValue | \Exception $e) {
-            $description = 'The Unit Test you are attempting to create was incorrectly validated against schema ' . $schemaFile . ': ' . $e->getMessage();
-            throw new ValidationException($description);
-        }
-
-        // Sanitize data to avoid any possibility of script injection
+        $this->validatePayloadAgainstTestSchema('create');
         self::sanitizeObjectValues($this->payload);
 
         if (false === property_exists($this->payload, 'name') || false === is_string($this->payload->name)) {
@@ -253,19 +263,7 @@ final class TestsHandler extends AbstractHandler
             throw new ValidationException($description);
         }
 
-        // Validate incoming data against unit test schema
-        // Pass file path directly so Schema::import() can resolve relative $ref paths
-        $schemaFile = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
-
-        try {
-            $schema = Schema::import($schemaFile);
-            $schema->in($this->payload);
-        } catch (InvalidValue | \Exception $e) {
-            $description = 'The Unit Test you are attempting to update was incorrectly validated against schema ' . $schemaFile . ': ' . $e->getMessage();
-            throw new ValidationException($description);
-        }
-
-        // Sanitize data to avoid any possibility of script injection
+        $this->validatePayloadAgainstTestSchema('update');
         self::sanitizeObjectValues($this->payload);
 
         if (false === property_exists($this->payload, 'name') || false === is_string($this->payload->name)) {
