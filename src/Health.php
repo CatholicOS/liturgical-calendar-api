@@ -183,13 +183,14 @@ class Health implements MessageComponentInterface
                 ]
             ];
 
-            /** @var PromiseInterface<string> $metadataPromise */
+            /** @var PromiseInterface<array{data: string, fromCache: bool}> $metadataPromise */
             $metadataPromise = $this->cachedGet(Route::CALENDARS->path(), $opts);
             //self::$metadataPromise = $metadataPromise;
 
             $metadataPromise->then(
-                function (string $rawData) {
-                    $rawData = (string) $rawData; // force fresh string
+                function (array $result) {
+                    /** @var array{data: string, fromCache: bool} $result */
+                    $rawData = $result['data'];
                     echo 'Fetched metadata: got ' . strlen($rawData) . " bytes\n";
 
                     $metadataObj = json_decode($rawData);
@@ -665,45 +666,64 @@ class Health implements MessageComponentInterface
             if (str_starts_with($dataPath, 'http://') || str_starts_with($dataPath, 'https://')) {
                 // $dataPath is an API path in this case
                 echo 'Retrieving data from URL ' . $dataPath . "\n";
-                /** @var PromiseInterface<string> $promise */
-                $promise = $this->cachedGet($dataPath);
+                /** @var PromiseInterface<array{data: string, fromCache: bool}> $httpPromise */
+                $httpPromise = $this->cachedGet($dataPath);
+                $httpPromise->then(
+                    function (array $result) use ($to, $validation, $dataPath, $schema, $pathForSchema) {
+                        /** @var array{data: string, fromCache: bool} $result */
+                        $data = $result['data'];
+                        echo 'Fetched data for ' . $dataPath . ': got ' . strlen($data) . " bytes\n";
+                        $this->processValidationData($data, $to, $validation, $dataPath, $schema, $pathForSchema);
+                    },
+                    function (\Throwable $e) use ($to, $validation, $dataPath) {
+                        $this->handleValidationDataError($e, $to, $validation, $dataPath);
+                    }
+                );
             } else {
                 // $dataPath is probably a source file in the filesystem in this case
                 echo 'Reading data from file ' . $dataPath . "\n";
                 /** @var PromiseInterface<string> $promise */
                 $promise = $this->cachedFileGetContents($dataPath);
+                $promise->then(
+                    function (string $data) use ($to, $validation, $dataPath, $schema, $pathForSchema) {
+                        echo 'Fetched data for ' . $dataPath . ': got ' . strlen($data) . " bytes\n";
+                        $this->processValidationData($data, $to, $validation, $dataPath, $schema, $pathForSchema);
+                    },
+                    function (\Throwable $e) use ($to, $validation, $dataPath) {
+                        $this->handleValidationDataError($e, $to, $validation, $dataPath);
+                    }
+                );
             }
-
-            $promise->then(
-                function (string $data) use ($to, $validation, $dataPath, $schema, $pathForSchema) {
-                    $data = (string) $data; // force fresh string
-                    echo 'Fetched data for ' . $dataPath . ': got ' . strlen($data) . " bytes\n";
-                    $this->processValidationData($data, $to, $validation, $dataPath, $schema, $pathForSchema);
-                },
-                function (\Throwable $e) use ($to, $validation, $dataPath) {
-                    $validate = (string) $validation->validate;
-                    $category = (string) $validation->category;
-                    echo 'Error reading data: could not read data from ' . $dataPath . ': ' . $e->getMessage() . "\n";
-                    $message          = new \stdClass();
-                    $message->type    = 'error';
-                    $message->text    = "Data file $dataPath is not readable: " . $e->getMessage();
-                    $message->classes = ".$validate.file-exists";
-                    $this->sendMessage($to, $message);
-
-                    $message          = new \stdClass();
-                    $message->type    = 'error';
-                    $message->text    = "Could not decode the Data file $dataPath as JSON because it is not readable";
-                    $message->classes = ".$validate.json-valid";
-                    $this->sendMessage($to, $message);
-
-                    $message          = new \stdClass();
-                    $message->type    = 'error';
-                    $message->text    = "Unable to verify schema for dataPath {$dataPath} and category {$category} since Data file $dataPath does not exist or is not readable";
-                    $message->classes = ".$validate.schema-valid";
-                    $this->sendMessage($to, $message);
-                }
-            );
         }
+    }
+
+    /**
+     * Handle errors when reading validation data.
+     *
+     * @param ExecuteValidationSourceFolder|ExecuteValidationSourceFile|ExecuteValidationResource $validation The validation object.
+     */
+    private function handleValidationDataError(\Throwable $e, ConnectionInterface $to, \stdClass $validation, string $dataPath): void
+    {
+        $validate = (string) $validation->validate;
+        $category = (string) $validation->category;
+        echo 'Error reading data: could not read data from ' . $dataPath . ': ' . $e->getMessage() . "\n";
+        $message          = new \stdClass();
+        $message->type    = 'error';
+        $message->text    = "Data file $dataPath is not readable: " . $e->getMessage();
+        $message->classes = ".$validate.file-exists";
+        $this->sendMessage($to, $message);
+
+        $message          = new \stdClass();
+        $message->type    = 'error';
+        $message->text    = "Could not decode the Data file $dataPath as JSON because it is not readable";
+        $message->classes = ".$validate.json-valid";
+        $this->sendMessage($to, $message);
+
+        $message          = new \stdClass();
+        $message->type    = 'error';
+        $message->text    = "Unable to verify schema for dataPath {$dataPath} and category {$category} since Data file $dataPath does not exist or is not readable";
+        $message->classes = ".$validate.schema-valid";
+        $this->sendMessage($to, $message);
     }
 
     /**
