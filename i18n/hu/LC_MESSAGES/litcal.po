@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-11-23 18:32+0000\n"
 "PO-Revision-Date: 2025-12-01 19:37+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Hungarian <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/hu/>\n"
 "Language: hu\n"
@@ -979,7 +979,8 @@ msgid ""
 "The %1$s '%2$s' has been lowered to the rank of %3$s since the year %4$d, "
 "applicable to the year %5$d (%6$s)."
 msgstr ""
-"A %1$s '%2$s' rangját leminősítették %4$d-ban, %5$d évére (%6$s) vonatkozóan."
+"A %1$s '%2$s' rangját leminősítették %3$s-ban, %4$d évére, tehát az évre "
+"vonatkozik %5$d (%6$s) vonatkozóan."
 
 #. translators:
 #.  1. Name of the liturgical event
@@ -1207,7 +1208,7 @@ msgid ""
 "the correct date information in order to proceed"
 msgstr ""
 "Létre kellene hoznunk egy új liturgikus eseményt, azonban úgy tűnik, "
-"nincsenek meg a megfelelő dátumadataink ahhoz, hogy folytassuk."
+"nincsenek meg a megfelelő dátumadataink ahhoz, hogy folytassuk"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1360,7 +1361,7 @@ msgstr "Misszálékat találtunk a %1$s régióhoz: %2$s."
 #: src/Handlers/CalendarHandler.php:3772
 #, php-format
 msgid "Found a sanctorale data file for %s"
-msgstr "Találtunk egy szentektári fájlt %s-ra vonatkozóan."
+msgstr "Találtunk egy szentektári fájlt %s-ra vonatkozóan"
 
 #. translators:
 #.  1. LiturgicalEvent grade
@@ -1378,13 +1379,13 @@ msgid ""
 "superseded by the %5$s '%6$s' in the year %7$d"
 msgstr ""
 "A %1$s '%2$s' (%3$s), amelyet hozzáadtak a nemzeti naptárhoz a %4$s-ban, "
-"átveszi a %5$s '%6$s' %7$d-ban."
+"átveszi a %5$s '%6$s' %7$d-ban"
 
 #. translators: Name of the Roman Missal
 #: src/Handlers/CalendarHandler.php:3822
 #, php-format
 msgid "Could not find a sanctorale data file for %s"
-msgstr "Nem találtunk szentektári fájlt %s-hez."
+msgstr "Nem találtunk szentektári fájlt %s-hez"
 
 #. translators: 1. LiturgicalEvent grade, 2. LiturgicalEvent name, 3. New liturgical event name, 4: Requested calendar year, 5. Old date, 6. New date
 #: src/Handlers/CalendarHandler.php:3914
