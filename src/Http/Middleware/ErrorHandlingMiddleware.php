@@ -115,6 +115,19 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
                 ->getBody()
                 ->write($responseBody);
 
+            // For auth endpoints that use credentials, return specific origin (not wildcard)
+            // This is required for CORS when credentials: 'include' is used
+            $path           = $request->getUri()->getPath();
+            $origin         = $request->getHeaderLine('Origin');
+            $isAuthEndpoint = str_starts_with($path, '/auth/') || $path === '/auth';
+
+            if ($isAuthEndpoint && $origin !== '') {
+                return $response
+                    ->withHeader('Content-Type', 'application/problem+json')
+                    ->withHeader('Access-Control-Allow-Origin', $origin)
+                    ->withHeader('Access-Control-Allow-Credentials', 'true');
+            }
+
             return $response
                 ->withHeader('Content-Type', 'application/problem+json')
                 ->withHeader('Access-Control-Allow-Origin', '*');
