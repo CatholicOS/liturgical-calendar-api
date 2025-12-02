@@ -2,9 +2,9 @@
 
 This document outlines the implementation plan for adding authentication, authorization, and API key management to the Liturgical Calendar API and Frontend.
 
-## Current Implementation Status (2025-11-27)
+## Current Implementation Status (2025-12-02)
 
-**Status:** ✅ Phase 0 Complete + HttpOnly Cookie Authentication - JWT authentication with secure cookie support
+**Status:** ✅ Phase 0 Complete + Phase 2.5 Support - JWT authentication with full cookie-only authentication support
 
 **Related Issue:** [#262 - Implement JWT authentication for PUT/PATCH/DELETE requests](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/262)
 
@@ -482,6 +482,51 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 - **No refresh token rotation** - Refresh tokens don't expire on use
 
 These limitations are acceptable for the initial implementation to protect against unauthorized modifications. Future phases will address them.
+
+### Phase 2.5 Support: Full Cookie-Only Authentication (2025-12-02)
+
+The API backend fully supports Phase 2.5 (Full Cookie-Only Authentication) from the Frontend Authentication Roadmap.
+This allows frontends to use HttpOnly cookies exclusively, without needing to store tokens in localStorage/sessionStorage.
+
+**Backend Support Already Implemented:**
+
+1. **RefreshHandler** (`src/Handlers/Auth/RefreshHandler.php`)
+   - ✅ Reads refresh token from HttpOnly cookie first (lines 124-128)
+   - ✅ Falls back to request body for backwards compatibility (lines 130-134)
+   - ✅ No request body required when refresh token cookie is present
+
+2. **JwtAuthMiddleware** (`src/Http/Middleware/JwtAuthMiddleware.php`)
+   - ✅ Reads access token from HttpOnly cookie first (lines 62-64)
+   - ✅ Falls back to Authorization header for backwards compatibility (lines 67-78)
+   - ✅ Automatic token validation from cookies
+
+3. **CookieHelper** (`src/Http/CookieHelper.php`)
+   - ✅ `setAccessTokenCookie()` - Sets HttpOnly access token cookie
+   - ✅ `setRefreshTokenCookie()` - Sets HttpOnly refresh token cookie (path restricted to `/auth`)
+   - ✅ `clearAuthCookies()` - Clears both token cookies on logout
+   - ✅ `getAccessToken()` / `getRefreshToken()` - Reads tokens from cookie array
+
+4. **MeHandler** (`src/Handlers/Auth/MeHandler.php`)
+   - ✅ `GET /auth/me` endpoint for checking authentication state
+   - ✅ Essential for cookie-based auth since JavaScript cannot read HttpOnly cookies
+   - ✅ Returns `{ authenticated, username, roles, exp }` from token
+
+**Frontend Migration (Phase 2.5):**
+
+When frontends migrate to full cookie-only authentication:
+
+- No need to store tokens in localStorage/sessionStorage
+- Requests use `credentials: 'include'` to send HttpOnly cookies automatically
+- No Authorization header needed (cookies are automatic)
+- Auth state checked via `/auth/me` endpoint instead of parsing localStorage token
+
+**Backwards Compatibility:**
+
+The API maintains full backwards compatibility:
+
+- Authorization header still works for clients not using cookies
+- Request body refresh tokens still accepted alongside cookie-based refresh
+- Both authentication methods can coexist during migration
 
 #### Authentication Logging
 
