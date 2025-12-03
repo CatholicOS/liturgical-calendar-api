@@ -66,6 +66,8 @@ final class RegionalDataHandler extends AbstractHandler
     public function __construct(array $requestPathParams = [])
     {
         parent::__construct($requestPathParams);
+        // Allow credentials for cross-origin cookie requests (required for authenticated PUT/PATCH/DELETE)
+        $this->allowCredentials = true;
         /** @var \stdClass&object{litcal_metadata:MetadataCalendarsObject} $metadataObj */
         $metadataObj             = Utilities::jsonUrlToObject(Route::CALENDARS->path());
         $this->CalendarsMetadata = MetadataCalendars::fromObject($metadataObj->litcal_metadata);
