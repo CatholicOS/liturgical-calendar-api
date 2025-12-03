@@ -95,10 +95,8 @@ class Router
         // This is used for both handler-level CORS and error response CORS
         $allowedOriginsEnv = isset($_ENV['CORS_ALLOWED_ORIGINS']) && is_string($_ENV['CORS_ALLOWED_ORIGINS'])
             ? $_ENV['CORS_ALLOWED_ORIGINS']
-            : '*';
-        $allowedOrigins    = $allowedOriginsEnv === '*'
-            ? ['*']
-            : array_filter(array_map('trim', explode(',', $allowedOriginsEnv)));
+            : null;
+        $allowedOrigins    = Utilities::parseCorsAllowedOrigins($allowedOriginsEnv);
 
         // The very first response that will need to be submitted by the API,
         // is the response to pre-flight requests.
