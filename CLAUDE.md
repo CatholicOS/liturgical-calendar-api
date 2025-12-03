@@ -84,6 +84,13 @@ The API supports full cookie-only authentication where:
 - `RefreshHandler` reads refresh token from cookie, no request body needed
 - Frontend uses `credentials: 'include'` to send cookies automatically
 
+**CORS Configuration:**
+
+- `CORS_ALLOWED_ORIGINS` - Comma-separated list of allowed origins for credentialed CORS requests
+  - Default: `*` (all origins allowed - not recommended for production with cookies)
+  - Example: `CORS_ALLOWED_ORIGINS=https://example.com,https://admin.example.com`
+  - Auth endpoint errors only reflect validated origins (security measure)
+
 See [Authentication Roadmap](docs/enhancements/AUTHENTICATION_ROADMAP.md) for implementation details.
 
 ### Testing

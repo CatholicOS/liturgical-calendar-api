@@ -387,7 +387,16 @@ class Router
         }
 
         $pipeline = new MiddlewarePipeline($this->handler);
-        $pipeline->pipe(new ErrorHandlingMiddleware($this->psr17Factory, self::$debug)); // outermost middleware
+
+        // Parse allowed origins from environment (comma-separated list, or '*' for all)
+        $allowedOriginsEnv = isset($_ENV['CORS_ALLOWED_ORIGINS']) && is_string($_ENV['CORS_ALLOWED_ORIGINS'])
+            ? $_ENV['CORS_ALLOWED_ORIGINS']
+            : '*';
+        $allowedOrigins    = $allowedOriginsEnv === '*'
+            ? ['*']
+            : array_filter(array_map('trim', explode(',', $allowedOriginsEnv)));
+
+        $pipeline->pipe(new ErrorHandlingMiddleware($this->psr17Factory, self::$debug, $allowedOrigins)); // outermost middleware
         $pipeline->pipe(new LoggingMiddleware(self::$debug));
 
         // Apply JWT authentication middleware for protected routes

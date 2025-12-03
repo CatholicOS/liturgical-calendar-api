@@ -24,17 +24,46 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
     private ?ServerRequestInterface $currentRequest = null;
 
     /**
+     * List of allowed origins for CORS.
+     * If ['*'] (default), all origins are allowed for non-credentialed requests.
+     * For credentialed requests (cookies), specific origins must be listed.
+     *
+     * @var string[]
+     */
+    private array $allowedOrigins;
+
+    /**
+     * Optional callable to validate origins dynamically.
+     * When set, takes precedence over the $allowedOrigins array.
+     * Signature: fn(string $origin): bool
+     *
+     * This allows for future extensibility where applications can define
+     * their own allowed origins (e.g., per-API-key origin restrictions).
+     *
+     * @var callable(string): bool|null
+     */
+    private $originValidator;
+
+    /**
      * Constructor for the ErrorHandlingMiddleware.
      *
      * @param ResponseFactoryInterface $responseFactory The PSR-7 response factory.
      * @param bool $debug Whether to enable debug level logging.
+     * @param string[] $allowedOrigins List of allowed origins for CORS (default: ['*']).
+     * @param callable(string): bool|null $originValidator Optional callable to validate origins dynamically.
      *
      * @throws \RuntimeException If unable to open php://stderr for writing.
      */
-    public function __construct(ResponseFactoryInterface $responseFactory, bool $debug = false)
-    {
+    public function __construct(
+        ResponseFactoryInterface $responseFactory,
+        bool $debug = false,
+        array $allowedOrigins = ['*'],
+        ?callable $originValidator = null
+    ) {
         $this->responseFactory = $responseFactory;
         $this->debug           = $debug;
+        $this->allowedOrigins  = $allowedOrigins;
+        $this->originValidator = $originValidator;
         $debugLogger           = LoggerFactory::create('api', null, 30, $debug, true, true);
         $this->debugLogger     = $debugLogger;
         $errorLogger           = LoggerFactory::create('api-error', null, 30, $debug, true, true);
@@ -54,6 +83,35 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
 
         // Escalate PHP warnings/notices to exceptions
         set_error_handler([$this, 'handlePhpWarning']);
+    }
+
+    /**
+     * Check if an origin is allowed for CORS.
+     *
+     * First checks the custom originValidator callable if set.
+     * Falls back to checking the allowedOrigins array.
+     *
+     * @param string $origin The origin to validate.
+     * @return bool True if the origin is allowed, false otherwise.
+     */
+    private function isAllowedOrigin(string $origin): bool
+    {
+        if ($origin === '') {
+            return false;
+        }
+
+        // Use custom validator if provided
+        if ($this->originValidator !== null) {
+            return ( $this->originValidator )($origin);
+        }
+
+        // Check if wildcard is allowed (allows all origins)
+        if (count($this->allowedOrigins) === 1 && $this->allowedOrigins[0] === '*') {
+            return true;
+        }
+
+        // Check against explicit list
+        return in_array($origin, $this->allowedOrigins, true);
     }
 
     /**
@@ -115,22 +173,29 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
                 ->getBody()
                 ->write($responseBody);
 
-            // For auth endpoints that use credentials, return specific origin (not wildcard)
-            // This is required for CORS when credentials: 'include' is used
+            // Handle CORS headers for error responses
             $path           = $request->getUri()->getPath();
             $origin         = $request->getHeaderLine('Origin');
             $isAuthEndpoint = str_starts_with($path, '/auth/') || $path === '/auth';
 
+            $response = $response->withHeader('Content-Type', 'application/problem+json');
+
+            // For auth endpoints that use credentials, validate origin before reflecting
+            // This is required for CORS when credentials: 'include' is used
             if ($isAuthEndpoint && $origin !== '') {
-                return $response
-                    ->withHeader('Content-Type', 'application/problem+json')
-                    ->withHeader('Access-Control-Allow-Origin', $origin)
-                    ->withHeader('Access-Control-Allow-Credentials', 'true');
+                // Only reflect the origin if it passes validation
+                if ($this->isAllowedOrigin($origin)) {
+                    return $response
+                        ->withHeader('Access-Control-Allow-Origin', $origin)
+                        ->withHeader('Access-Control-Allow-Credentials', 'true');
+                }
+                // Origin not allowed - don't add CORS headers (browser will block the request)
+                // This prevents unauthorized origins from receiving credentialed responses
+                return $response;
             }
 
-            return $response
-                ->withHeader('Content-Type', 'application/problem+json')
-                ->withHeader('Access-Control-Allow-Origin', '*');
+            // For non-auth endpoints or requests without Origin header, use wildcard
+            return $response->withHeader('Access-Control-Allow-Origin', '*');
         }
     }
 
