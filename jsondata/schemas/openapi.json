@@ -893,7 +893,7 @@
         ],
         "summary": "Authenticate user and obtain JWT tokens",
         "operationId": "authLogin",
-        "description": "Authenticate with username and password to obtain access and refresh tokens. The access token should be included in the Authorization header for protected endpoints.",
+        "description": "Authenticate with username and password to obtain access and refresh tokens. Tokens are returned in the response body AND set as HttpOnly cookies (litcal_access_token, litcal_refresh_token). Browser clients should use the cookie-based authentication (preferred for XSS protection), while server-to-server clients can use the Bearer token in the Authorization header.",
         "requestBody": {
           "required": true,
           "content": {
@@ -906,7 +906,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK: Authentication successful, tokens returned",
+            "description": "OK: Authentication successful. Tokens returned in response body and set as HttpOnly cookies.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4307,14 +4307,15 @@
       },
       "LoginResponse": {
         "type": "object",
+        "description": "Authentication response containing JWT tokens. Note: These tokens are also set as HttpOnly cookies (litcal_access_token, litcal_refresh_token) for browser-based clients. Browser clients should rely on cookies for authentication rather than storing tokens in localStorage/sessionStorage.",
         "properties": {
           "access_token": {
             "type": "string",
-            "description": "JWT access token valid for 1 hour (configurable via JWT_EXPIRY)"
+            "description": "JWT access token valid for 1 hour (configurable via JWT_EXPIRY). Also set as HttpOnly cookie 'litcal_access_token'."
           },
           "refresh_token": {
             "type": "string",
-            "description": "JWT refresh token valid for 7 days (configurable via JWT_REFRESH_EXPIRY)"
+            "description": "JWT refresh token valid for 7 days (configurable via JWT_REFRESH_EXPIRY). Also set as HttpOnly cookie 'litcal_refresh_token'."
           },
           "token_type": {
             "type": "string",
@@ -5173,7 +5174,13 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "JWT access token obtained from /auth/login or /auth/refresh endpoint. Include in Authorization header as: `Authorization: Bearer <token>`"
+        "description": "JWT access token obtained from /auth/login or /auth/refresh endpoint. Include in Authorization header as: `Authorization: Bearer <token>`. This method is suitable for server-to-server communication or non-browser clients."
+      },
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "litcal_access_token",
+        "description": "HttpOnly cookie containing JWT access token, automatically set by /auth/login endpoint. This is the preferred authentication method for browser-based clients as it protects tokens from XSS attacks. Requires `credentials: 'include'` in fetch requests for cross-origin scenarios."
       }
     }
   }
