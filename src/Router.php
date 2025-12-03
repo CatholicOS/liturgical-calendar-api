@@ -91,6 +91,15 @@ class Router
         $requestPathParts = explode('/', $pathParams);
         $route            = array_shift($requestPathParts);
 
+        // Parse allowed origins from environment (comma-separated list, or '*' for all)
+        // This is used for both handler-level CORS and error response CORS
+        $allowedOriginsEnv = isset($_ENV['CORS_ALLOWED_ORIGINS']) && is_string($_ENV['CORS_ALLOWED_ORIGINS'])
+            ? $_ENV['CORS_ALLOWED_ORIGINS']
+            : '*';
+        $allowedOrigins    = $allowedOriginsEnv === '*'
+            ? ['*']
+            : array_filter(array_map('trim', explode(',', $allowedOriginsEnv)));
+
         // The very first response that will need to be submitted by the API,
         // is the response to pre-flight requests.
         // However the preflight response headers will depend on whether the endpoint sets allowed Request Methods,
@@ -194,7 +203,7 @@ class Router
                     in_array($this->request->getMethod(), [ RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value ], true)
                     && false === Router::isLocalhost()
                 ) {
-                    $missalsHandler->setAllowedOriginsFromFile('allowedOrigins.txt');
+                    $missalsHandler->setAllowedOrigins($allowedOrigins);
                 }
                 $this->handler = $missalsHandler;
                 break;
@@ -228,7 +237,7 @@ class Router
                     in_array($this->request->getMethod(), [ RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value ], true)
                     && false === Router::isLocalhost()
                 ) {
-                    $decreesHandler->setAllowedOriginsFromFile('allowedOrigins.txt');
+                    $decreesHandler->setAllowedOrigins($allowedOrigins);
                 }
                 $this->handler = $decreesHandler;
                 break;
@@ -387,15 +396,6 @@ class Router
         }
 
         $pipeline = new MiddlewarePipeline($this->handler);
-
-        // Parse allowed origins from environment (comma-separated list, or '*' for all)
-        $allowedOriginsEnv = isset($_ENV['CORS_ALLOWED_ORIGINS']) && is_string($_ENV['CORS_ALLOWED_ORIGINS'])
-            ? $_ENV['CORS_ALLOWED_ORIGINS']
-            : '*';
-        $allowedOrigins    = $allowedOriginsEnv === '*'
-            ? ['*']
-            : array_filter(array_map('trim', explode(',', $allowedOriginsEnv)));
-
         $pipeline->pipe(new ErrorHandlingMiddleware($this->psr17Factory, self::$debug, $allowedOrigins)); // outermost middleware
         $pipeline->pipe(new LoggingMiddleware(self::$debug));
 

@@ -67,6 +67,7 @@ $dotenv->ifPresent(['API_PROTOCOL', 'API_HOST', 'API_BASE_PATH'])->notEmpty();
 $dotenv->ifPresent(['API_PROTOCOL'])->allowedValues(['http', 'https']);
 $dotenv->ifPresent(['API_PORT'])->isInteger();
 $dotenv->ifPresent(['APP_ENV'])->notEmpty()->allowedValues(['development', 'test', 'staging', 'production']);
+$dotenv->ifPresent(['CORS_ALLOWED_ORIGINS'])->notEmpty();
 
 $logsFolder = $projectFolder . DIRECTORY_SEPARATOR . 'logs';
 if (!file_exists($logsFolder)) {

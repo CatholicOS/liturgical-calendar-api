@@ -80,59 +80,6 @@ abstract class AbstractHandler implements RequestHandlerInterface
     }
 
     /**
-     * @param string $originsFile The path to the file that defines the allowed origins.
-     */
-    public function setAllowedOriginsFromFile(string $originsFile): static
-    {
-        if (!file_exists($originsFile)) {
-            $projectFolder = __DIR__;
-            $level         = 0;
-            while (true) {
-                if (file_exists($projectFolder . DIRECTORY_SEPARATOR . $originsFile)) {
-                    $originsFile = $projectFolder . DIRECTORY_SEPARATOR . $originsFile;
-                    break;
-                }
-
-                // Don't look more than 4 levels up
-                if ($level > 4) {
-                    $originsFile = '';
-                    break;
-                }
-
-                $parentDir = dirname($projectFolder);
-                if ($parentDir === $projectFolder) { // reached the system root!
-                    $originsFile = '';
-                    break;
-                }
-
-                $projectFolder = $parentDir;
-                ++$level;
-            }
-        }
-
-        if ('' === $originsFile) {
-            throw new \RuntimeException("Allowed origins file '{$originsFile}' not found.");
-        }
-
-        $originsFileContents = file($originsFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (false === $originsFileContents) {
-            throw new \RuntimeException("Allowed origins file '{$originsFile}' could not be read.");
-        }
-
-        /** @var string[] $trimmedOriginsFileContents */
-        $trimmedOriginsFileContents = array_map(
-            function (string $v): string {
-                return trim($v);
-            },
-            $originsFileContents
-        );
-
-        $this->setAllowedOrigins($trimmedOriginsFileContents);
-
-        return $this;
-    }
-
-    /**
      * Sets the allowed referers for Cross-Origin Resource Sharing (CORS).
      *
      * This function updates the list of referers that are permitted to access
