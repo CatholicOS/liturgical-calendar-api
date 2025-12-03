@@ -335,12 +335,14 @@ abstract class AbstractHandler implements RequestHandlerInterface
      * Checks if the request Origin is allowed based on the list of allowed Origins.
      *
      * This function returns true if the request Origin is allowed, false otherwise.
+     * Note: Wildcard ('*') handling is done in setAccessControlAllowOriginHeader()
+     * before this method is called.
      *
      * @return bool True if the request Origin is allowed, false otherwise.
      */
     protected function isAllowedOrigin(string $origin): bool
     {
-        return $origin !== '' && in_array($origin, $this->allowedOrigins);
+        return $origin !== '' && in_array($origin, $this->allowedOrigins, true);
     }
 
     /**
