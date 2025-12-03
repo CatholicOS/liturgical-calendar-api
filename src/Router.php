@@ -360,6 +360,12 @@ class Router
                     AcceptHeader::JSON,
                     AcceptHeader::YAML
                 ]);
+                if (
+                    in_array($this->request->getMethod(), [ RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value ], true)
+                    && false === Router::isLocalhost()
+                ) {
+                    $regionalDataHandler->setAllowedOrigins($allowedOrigins);
+                }
                 $this->handler = $regionalDataHandler;
                 break;
             case 'tests':
