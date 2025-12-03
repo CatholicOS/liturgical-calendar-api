@@ -354,7 +354,8 @@ abstract class AbstractHandler implements RequestHandlerInterface
      */
     protected function isAllowedReferer(): bool
     {
-        return in_array($_SERVER['HTTP_REFERER'], $this->allowedReferers);
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        return $referer !== '' && in_array($referer, $this->allowedReferers, true);
     }
 
 
