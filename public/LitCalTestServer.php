@@ -48,6 +48,9 @@ $dotenv->ifPresent(['API_PORT'])->isInteger();
 $dotenv->ifPresent(['APP_ENV'])->notEmpty()->allowedValues(['development', 'test', 'staging', 'production']);
 $dotenv->ifPresent(['WS_PROTOCOL', 'WS_HOST'])->notEmpty();
 $dotenv->ifPresent(['WS_PORT'])->isInteger();
+// Redis configuration for caching (socket takes precedence over TCP)
+$dotenv->ifPresent(['REDIS_SOCKET', 'REDIS_HOST'])->notEmpty();
+$dotenv->ifPresent(['REDIS_PORT'])->isInteger();
 
 $logsFolder = $projectFolder . DIRECTORY_SEPARATOR . 'logs';
 if (!file_exists($logsFolder)) {
