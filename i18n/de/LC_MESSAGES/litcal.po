@@ -9,9 +9,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-11-23 18:32+0000\n"
-"PO-Revision-Date: 2025-11-25 14:59+0000\n"
+"PO-Revision-Date: 2025-12-04 22:22+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: German <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/de/>\n"
@@ -222,19 +222,19 @@ msgstr "Für heilige Frauen"
 #: src/Enum/LitCommon.php:256
 msgctxt "(SING_FEMM)"
 msgid "of the"
-msgstr "des"
+msgstr "der"
 
 #. translators: "From the Common [of] Virgins" (plural feminine). Latin: leave empty!
 #: src/Enum/LitCommon.php:258
 msgctxt "(PLUR_FEMM)"
 msgid "of"
-msgstr "von"
+msgstr "der"
 
 #. translators: "From the Common [of] Martyrs|Pastors|Doctors|Holy Men and Women" (plural masculine). Latin: leave empty!
 #: src/Enum/LitCommon.php:260
 msgctxt "(PLUR_MASC)"
 msgid "of"
-msgstr "von"
+msgstr "der"
 
 #. translators: "From the Common [of the] (no current cases)" (singular masculine). Latin: leave empty!
 #: src/Enum/LitCommon.php:262
@@ -277,7 +277,7 @@ msgstr ""
 #. translators: liturgical rank. Keep Capitalized
 #: src/Enum/LitGrade.php:158
 msgid "Memorial"
-msgstr "Gedächtnis"
+msgstr "Gedenktag"
 
 #. translators: liturgical rank 'MEMORIAL' in abbreviated form
 #: src/Enum/LitGrade.php:160
