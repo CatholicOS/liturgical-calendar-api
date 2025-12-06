@@ -3,6 +3,7 @@
 namespace LiturgicalCalendar\Api\Http\Middleware;
 
 use LiturgicalCalendar\Api\Http\Exception\ApiException;
+use LiturgicalCalendar\Api\Http\Exception\TooManyRequestsException;
 use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -149,10 +150,16 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
                 'detail' => $this->debug ? $e->getMessage() : 'An unexpected error occurred.',
             ];
 
+            $retryAfter = null;
             if ($e instanceof ApiException) {
                 // Let the ApiException define its structure
                 $status  = $e->getStatus();
                 $problem = $e->toArray($this->debug);
+
+                // Handle rate limiting with Retry-After header
+                if ($e instanceof TooManyRequestsException && $e->getRetryAfter() > 0) {
+                    $retryAfter = $e->getRetryAfter();
+                }
             } elseif ($this->debug) {
                 // For non-ApiExceptions in debug mode, add trace info
                 $problem['file']  = $e->getFile();
@@ -160,7 +167,13 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
                 $problem['trace'] = explode("\n", $e->getTraceAsString());
             }
 
-            $response     = $this->responseFactory->createResponse($status);
+            $response = $this->responseFactory->createResponse($status);
+
+            // Add Retry-After header for rate limiting
+            if ($retryAfter !== null) {
+                $response = $response->withHeader('Retry-After', (string) $retryAfter);
+            }
+
             $responseBody = json_encode($problem, JSON_PRETTY_PRINT | JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
             if (false === $responseBody) {
