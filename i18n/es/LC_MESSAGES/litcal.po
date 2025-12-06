@@ -11,9 +11,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-11-23 18:32+0000\n"
-"PO-Revision-Date: 2025-11-25 06:01+0000\n"
+"PO-Revision-Date: 2025-12-06 09:26+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Spanish <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/es/>\n"
@@ -224,7 +224,7 @@ msgstr "Por Mujeres Santas"
 #: src/Enum/LitCommon.php:256
 msgctxt "(SING_FEMM)"
 msgid "of the"
-msgstr "del"
+msgstr "de la"
 
 #. translators: "From the Common [of] Virgins" (plural feminine). Latin: leave empty!
 #: src/Enum/LitCommon.php:258
