@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-23 18:32+0000\n"
+"POT-Creation-Date: 2025-12-06 19:04+0000\n"
 "PO-Revision-Date: 2025-10-21 00:19+0000\n"
 "Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Portuguese (Brazil) <https://translate.johnromanodorazio.com/"
@@ -890,14 +890,24 @@ msgstr ""
 #.  7. Name of the superseding liturgical event
 #.  8. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2213
+#. translators:
+#.  1. Grade or rank of the liturgical event being created
+#.  2. Name of the liturgical event being created
+#.  3. Indication of the mobile date for the liturgical event being created
+#.  4. Year from which the liturgical event has been added
+#.  5. Source of the information
+#.  6. Grade or rank of superseding liturgical event
+#.  7. Name of superseding liturgical event
+#.  8. Requested calendar year
+#.
+#: src/Handlers/CalendarHandler.php:2213 src/Handlers/CalendarHandler.php:2650
 #, fuzzy, php-format
 msgid ""
 "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by a %6$s '%7$s' in the year %8$d."
+"superseded by the %6$s '%7$s' in the year %8$d."
 msgstr ""
 "O %1$s '%2$s', adicionado em %3$s desde o ano %4$d (%5$s), é, no entanto, "
-"suplantado por um %6$s '%7$s' no ano %8$d."
+"substituído pelo %6$s '%7$s' no ano %8$d."
 
 #. translators:
 #.  1. Name of the first coinciding Memorial
@@ -999,25 +1009,6 @@ msgid ""
 msgstr ""
 "'%1$s' foi declarado Doutor da Igreja desde o ano %2$d, aplicável ao ano "
 "%3$d (%4$s)."
-
-#. translators:
-#.  1. Grade or rank of the liturgical event being created
-#.  2. Name of the liturgical event being created
-#.  3. Indication of the mobile date for the liturgical event being created
-#.  4. Year from which the liturgical event has been added
-#.  5. Source of the information
-#.  6. Grade or rank of superseding liturgical event
-#.  7. Name of superseding liturgical event
-#.  8. Requested calendar year
-#.
-#: src/Handlers/CalendarHandler.php:2650
-#, fuzzy, php-format
-msgid ""
-"The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by the %6$s '%7$s' in the year %8$d."
-msgstr ""
-"O %1$s '%2$s', adicionado em %3$s desde o ano %4$d (%5$s), é, no entanto, "
-"substituído pelo %6$s '%7$s' no ano %8$d."
 
 #. translators:
 #.  1. Requested calendar year
@@ -1543,6 +1534,14 @@ msgstr ""
 "A Missa da Vigília para o %1$s '%2$s' coincide com o %3$s '%4$s' no ano "
 "%5$d. Devemos perguntar ao Dicastério para o Culto Divino e a Disciplina dos "
 "Sacramentos o que fazer sobre isso!"
+
+#, fuzzy
+#~ msgid ""
+#~ "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
+#~ "superseded by a %6$s '%7$s' in the year %8$d."
+#~ msgstr ""
+#~ "O %1$s '%2$s', adicionado em %3$s desde o ano %4$d (%5$s), é, no entanto, "
+#~ "suplantado por um %6$s '%7$s' no ano %8$d."
 
 #~ msgid "Unknown Season"
 #~ msgstr "Temporada Desconhecida"

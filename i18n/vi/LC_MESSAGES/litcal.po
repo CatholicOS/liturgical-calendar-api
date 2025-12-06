@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-23 18:32+0000\n"
+"POT-Creation-Date: 2025-12-06 19:04+0000\n"
 "PO-Revision-Date: 2025-10-18 13:19+0000\n"
 "Last-Translator: Mai Lê Bảo Khang <baokhang48812002@gmail.com>\n"
 "Language-Team: Vietnamese <https://translate.johnromanodorazio.com/projects/"
@@ -880,14 +880,24 @@ msgstr ""
 #.  7. Name of the superseding liturgical event
 #.  8. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2213
+#. translators:
+#.  1. Grade or rank of the liturgical event being created
+#.  2. Name of the liturgical event being created
+#.  3. Indication of the mobile date for the liturgical event being created
+#.  4. Year from which the liturgical event has been added
+#.  5. Source of the information
+#.  6. Grade or rank of superseding liturgical event
+#.  7. Name of superseding liturgical event
+#.  8. Requested calendar year
+#.
+#: src/Handlers/CalendarHandler.php:2213 src/Handlers/CalendarHandler.php:2650
 #, php-format
 msgid ""
 "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by a %6$s '%7$s' in the year %8$d."
+"superseded by the %6$s '%7$s' in the year %8$d."
 msgstr ""
-"%1$s '%2$s', được thêm vào ngày %3$s từ năm %4$d (%5$s), tuy nhiên bị thay "
-"thế bởi %6$s '%7$s' vào năm %8$d."
+"%1$s '%2$s', được thêm vào ngày %3$s kể từ năm %4$d (%5$s), tuy nhiên bị "
+"thay thế bởi %6$s '%7$s' trong năm %8$d."
 
 #. translators:
 #.  1. Name of the first coinciding Memorial
@@ -989,25 +999,6 @@ msgid ""
 msgstr ""
 "'%1$s' đã được tuyên bố là Tiến sĩ Hội Thánh từ năm %2$d, áp dụng cho năm "
 "%3$d (%4$s)."
-
-#. translators:
-#.  1. Grade or rank of the liturgical event being created
-#.  2. Name of the liturgical event being created
-#.  3. Indication of the mobile date for the liturgical event being created
-#.  4. Year from which the liturgical event has been added
-#.  5. Source of the information
-#.  6. Grade or rank of superseding liturgical event
-#.  7. Name of superseding liturgical event
-#.  8. Requested calendar year
-#.
-#: src/Handlers/CalendarHandler.php:2650
-#, php-format
-msgid ""
-"The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by the %6$s '%7$s' in the year %8$d."
-msgstr ""
-"%1$s '%2$s', được thêm vào ngày %3$s kể từ năm %4$d (%5$s), tuy nhiên bị "
-"thay thế bởi %6$s '%7$s' trong năm %8$d."
 
 #. translators:
 #.  1. Requested calendar year
@@ -1524,6 +1515,13 @@ msgid ""
 msgstr ""
 "Thánh lễ Canh thức cho %1$s '%2$s' trùng với %3$s '%4$s' vào năm %5$d. Chúng "
 "ta nên hỏi Bộ Phụng tự và Kỷ luật Bí tích làm gì với trường hợp này!"
+
+#~ msgid ""
+#~ "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
+#~ "superseded by a %6$s '%7$s' in the year %8$d."
+#~ msgstr ""
+#~ "%1$s '%2$s', được thêm vào ngày %3$s từ năm %4$d (%5$s), tuy nhiên bị "
+#~ "thay thế bởi %6$s '%7$s' vào năm %8$d."
 
 #~ msgid "pink"
 #~ msgstr "hồng"

@@ -8,9 +8,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-23 18:32+0000\n"
-"PO-Revision-Date: 2025-11-27 04:04+0000\n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
+"POT-Creation-Date: 2025-12-06 19:04+0000\n"
+"PO-Revision-Date: 2025-12-06 19:19+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Dutch <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/nl/>\n"
@@ -894,14 +894,24 @@ msgstr ""
 #.  7. Name of the superseding liturgical event
 #.  8. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2213
+#. translators:
+#.  1. Grade or rank of the liturgical event being created
+#.  2. Name of the liturgical event being created
+#.  3. Indication of the mobile date for the liturgical event being created
+#.  4. Year from which the liturgical event has been added
+#.  5. Source of the information
+#.  6. Grade or rank of superseding liturgical event
+#.  7. Name of superseding liturgical event
+#.  8. Requested calendar year
+#.
+#: src/Handlers/CalendarHandler.php:2213 src/Handlers/CalendarHandler.php:2650
 #, php-format
 msgid ""
 "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by a %6$s '%7$s' in the year %8$d."
+"superseded by the %6$s '%7$s' in the year %8$d."
 msgstr ""
-"De %1$s '%2$s', toegevoegd op %3$s vanaf het jaar %4$d (%5$s), wordt echter "
-"vervangen door een %6$s '%7$s' in het jaar %8$d."
+"De %1$s '%2$s', toegevoegd op %3$s vanaf het jaar %4$d (%5$s), wordt "
+"vervangen door het %6$s '%7$s' in het jaar %8$d."
 
 #. translators:
 #.  1. Name of the first coinciding Memorial
@@ -1004,25 +1014,6 @@ msgid ""
 msgstr ""
 "'%1$s' is tot Kerkleraar uitgeroepen vanaf het jaar %2$d, van toepassing in "
 "het jaar %3$d (%4$s)."
-
-#. translators:
-#.  1. Grade or rank of the liturgical event being created
-#.  2. Name of the liturgical event being created
-#.  3. Indication of the mobile date for the liturgical event being created
-#.  4. Year from which the liturgical event has been added
-#.  5. Source of the information
-#.  6. Grade or rank of superseding liturgical event
-#.  7. Name of superseding liturgical event
-#.  8. Requested calendar year
-#.
-#: src/Handlers/CalendarHandler.php:2650
-#, php-format
-msgid ""
-"The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by the %6$s '%7$s' in the year %8$d."
-msgstr ""
-"De %1$s '%2$s', toegevoegd op %3$s vanaf het jaar %4$d (%5$s), wordt "
-"vervangen door het %6$s '%7$s' in het jaar %8$d."
 
 #. translators:
 #.  1. Requested calendar year
@@ -1197,7 +1188,7 @@ msgid ""
 "or Solemnity '%3$s' in the year %4$d! Does something need to be done about "
 "this?"
 msgstr ""
-"Het hoogfeest van '%1$s'gewoonlijk gevierd op %2$s, valt samen met het "
+"Het hoogfeest van '%1$s', gewoonlijk gevierd op %2$s, valt samen met het "
 "Zondag of hoogfeest van '%3$s' in het jaar %4$d. Moet hier iets aan gedaan "
 "worden?"
 
@@ -1552,6 +1543,13 @@ msgstr ""
 "De Vigilie Mis voor de %1$s '%2$s' valt samen met de %3$s '%4$s' in het jaar "
 "%5$d. We moeten de Dicasterie voor de Goddelijke Eredienst en de Discipline "
 "van de Sacramenten vragen wat we hieraan moeten doen!"
+
+#~ msgid ""
+#~ "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
+#~ "superseded by a %6$s '%7$s' in the year %8$d."
+#~ msgstr ""
+#~ "De %1$s '%2$s', toegevoegd op %3$s vanaf het jaar %4$d (%5$s), wordt "
+#~ "echter vervangen door een %6$s '%7$s' in het jaar %8$d."
 
 #~ msgid "pink"
 #~ msgstr "roze"
