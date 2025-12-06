@@ -349,11 +349,21 @@ abstract class AbstractHandler implements RequestHandlerInterface
      * Checks if the request Referer is allowed based on the list of allowed Referers.
      *
      * This function returns true if the request Referer is allowed, false otherwise.
+     * Unlike isAllowedOrigin(), this method handles wildcard ('*') internally since
+     * referer validation is strict-matching-only by design (no CORS header echoing).
+     *
+     * Note: This method is currently unused but provided for future use cases
+     * where referer validation may be needed (e.g., API key restrictions).
      *
      * @return bool True if the request Referer is allowed, false otherwise.
      */
     protected function isAllowedReferer(): bool
     {
+        // If wildcard is set, all referers are allowed
+        if (count($this->allowedReferers) === 1 && $this->allowedReferers[0] === '*') {
+            return true;
+        }
+
         $referer = $_SERVER['HTTP_REFERER'] ?? '';
         return $referer !== '' && in_array($referer, $this->allowedReferers, true);
     }
