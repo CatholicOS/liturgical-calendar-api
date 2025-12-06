@@ -8,9 +8,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-12-06 19:04+0000\n"
-"PO-Revision-Date: 2025-12-06 12:42+0000\n"
+"PO-Revision-Date: 2025-12-06 19:19+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Indonesian <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/id/>\n"
@@ -1056,8 +1056,8 @@ msgid ""
 "superseded by the %4$s '%5$s' in the year %3$d."
 msgstr ""
 "Memorial opsional '%1$s' telah dipindahkan dari 12 Des. ke 12 Agt. sejak "
-"tahun 2002 (%2$s), berlaku untuk tahun %3$d. Namun, digantikan oleh %4$s "
-"'%5$s' pada tahun %3$d."
+"tahun 2002 (%2$s), berlaku untuk tahun %3$d. Namun, peringatan ini "
+"digantikan oleh %4$s '%5$s' pada tahun %3$d."
 
 #. translators: 1: LiturgicalEvent name, 2: Source of the information
 #: src/Handlers/CalendarHandler.php:2822
@@ -1441,9 +1441,9 @@ msgid ""
 "celebrated on %3$s, coincides with the Sunday or Solemnity '%4$s' in the "
 "year %5$d! Does something need to be done about this?"
 msgstr ""
-"Hari Raya '%1$s', proper untuk kalender %2$s dan biasanya dirayakan pada "
-"%3$s, bertepatan dengan Minggu atau Hari Raya '%4$s' pada tahun %5$d! Apakah "
-"ada yang perlu dilakukan tentang ini?"
+"Hari Raya '%1$s', yang khusus untuk kalender %2$s dan biasanya dirayakan "
+"pada %3$s, bertepatan dengan Minggu atau Hari Raya '%4$s' pada tahun %5$d! "
+"Apakah ada yang perlu dilakukan tentang ini?"
 
 #. translators: 1: LiturgicalEvent grade, 2: LiturgicalEvent name, 3: Name of the diocese, 4: LiturgicalEvent date, 5: Coinciding liturgical event name, 6: Requested calendar year
 #: src/Handlers/CalendarHandler.php:4326
