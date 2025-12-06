@@ -7,6 +7,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for the RateLimiter service
+ *
+ * Note: This test extends TestCase (not ApiTestCase) because it is a pure unit test
+ * that tests the RateLimiter service in isolation without requiring a running API server.
+ * ApiTestCase is reserved for integration tests that make HTTP requests to the API.
  */
 class RateLimiterTest extends TestCase
 {
@@ -171,8 +175,8 @@ class RateLimiterTest extends TestCase
         // Cleanup should remove the stale file
         $cleaned = $shortWindowLimiter->cleanup();
 
-        // The file should have been cleaned up
-        $this->assertGreaterThanOrEqual(0, $cleaned);
+        // At least one stale file (for this IP) should have been removed
+        $this->assertGreaterThanOrEqual(1, $cleaned);
     }
 
     public function testHandlesSpecialCharactersInIdentifier(): void
@@ -213,6 +217,62 @@ class RateLimiterTest extends TestCase
             // Clean up environment
             unset($_ENV['RATE_LIMIT_LOGIN_ATTEMPTS']);
             unset($_ENV['RATE_LIMIT_LOGIN_WINDOW']);
+        }
+    }
+
+    public function testFactoryRespectsStoragePath(): void
+    {
+        // Use a custom storage path
+        $customPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'litcal_factory_test_' . uniqid();
+        mkdir($customPath, 0755, true);
+
+        $_ENV['RATE_LIMIT_STORAGE_PATH'] = $customPath;
+
+        try {
+            $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
+
+            // Record an attempt and verify the file is created in the custom path
+            $limiter->recordFailedAttempt('test-ip');
+
+            $rateLimitDir = $customPath . DIRECTORY_SEPARATOR . 'litcal_rate_limits';
+            $this->assertDirectoryExists($rateLimitDir);
+
+            $files = glob($rateLimitDir . DIRECTORY_SEPARATOR . '*.json');
+            $this->assertNotEmpty($files, 'Expected rate limit file to be created in custom storage path');
+        } finally {
+            // Clean up
+            unset($_ENV['RATE_LIMIT_STORAGE_PATH']);
+            $this->removeDirectory($customPath);
+        }
+    }
+
+    public function testFactoryClampsWindowToMinimum(): void
+    {
+        // Set window below the 60-second minimum
+        $_ENV['RATE_LIMIT_LOGIN_WINDOW'] = '30';
+
+        try {
+            $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
+
+            // Should be clamped to minimum of 60 seconds
+            $this->assertEquals(60, $limiter->getWindowSeconds());
+        } finally {
+            unset($_ENV['RATE_LIMIT_LOGIN_WINDOW']);
+        }
+    }
+
+    public function testFactoryClampsAttemptsToMinimum(): void
+    {
+        // Set attempts to 0 (should be clamped to 1)
+        $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] = '0';
+
+        try {
+            $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
+
+            // Should be clamped to minimum of 1
+            $this->assertEquals(1, $limiter->getMaxAttempts());
+        } finally {
+            unset($_ENV['RATE_LIMIT_LOGIN_ATTEMPTS']);
         }
     }
 }
