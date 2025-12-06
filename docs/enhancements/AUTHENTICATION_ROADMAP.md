@@ -2,9 +2,9 @@
 
 This document outlines the implementation plan for adding authentication, authorization, and API key management to the Liturgical Calendar API and Frontend.
 
-## Current Implementation Status (2025-12-02)
+## Current Implementation Status (2025-12-06)
 
-**Status:** ✅ Phase 0 Complete + Phase 2.5 Support - JWT authentication with full cookie-only authentication support
+**Status:** ✅ Phase 0 Complete + Phase 2.5 Support + Production Security - JWT authentication with cookie-only auth and production-ready security features
 
 **Related Issue:** [#262 - Implement JWT authentication for PUT/PATCH/DELETE requests](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/262)
 
@@ -465,12 +465,13 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 - ✅ **Backwards compatibility** - Also accepts Authorization header for clients not using cookies
 - ✅ **Authentication logging** - All login attempts (success/failure) and logouts logged to dedicated `auth.log` file
 
-**Recommended for Production (Not Yet Implemented):**
+**Recommended for Production (Implemented 2025-12-06):**
 
-- ⚠️ **HTTPS enforcement** - Configure reverse proxy to require HTTPS
-- ⚠️ **Strong JWT secret** - Use minimum 32 characters, generate locally before deployment with `php -r "echo bin2hex(random_bytes(32));"`
-- ⚠️ **Rate limiting** - Implement brute-force protection on `/auth/login` endpoint
-- ⚠️ **Token expiry monitoring** - Consider implementing token refresh alerts
+- ✅ **Rate limiting** - Brute-force protection on `/auth/login` endpoint (5 attempts per 15 minutes, configurable)
+- ✅ **HTTPS enforcement** - `HttpsEnforcementMiddleware` requires HTTPS for auth endpoints in staging/production
+- ✅ **Strong JWT secret** - `JwtServiceFactory` detects and rejects placeholder secrets in staging/production
+- ✅ **Production security documentation** - See `docs/PRODUCTION_SECURITY.md`
+- ⚠️ **Token expiry monitoring** - Consider implementing token refresh alerts (future enhancement)
 
 #### Known Limitations (To Be Addressed in Future Phases)
 
