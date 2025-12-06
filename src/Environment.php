@@ -13,16 +13,28 @@ namespace LiturgicalCalendar\Api;
 class Environment
 {
     /**
+     * Get the current environment name.
+     *
+     * Centralizes APP_ENV normalization (lowercase, trimmed) to avoid
+     * subtle drift between environment check methods.
+     *
+     * @return string The environment name (lowercase, trimmed).
+     */
+    public static function getName(): string
+    {
+        $appEnv = $_ENV['APP_ENV'] ?? 'development';
+
+        return is_string($appEnv) ? strtolower(trim($appEnv)) : 'development';
+    }
+
+    /**
      * Check if the current environment is a production-like environment.
      *
      * @return bool True if APP_ENV is 'staging' or 'production'.
      */
     public static function isProduction(): bool
     {
-        $appEnv    = $_ENV['APP_ENV'] ?? 'development';
-        $appEnvStr = is_string($appEnv) ? trim($appEnv) : 'development';
-
-        return in_array(strtolower($appEnvStr), ['staging', 'production'], true);
+        return in_array(self::getName(), ['staging', 'production'], true);
     }
 
     /**
@@ -32,21 +44,6 @@ class Environment
      */
     public static function isDevelopment(): bool
     {
-        $appEnv    = $_ENV['APP_ENV'] ?? 'development';
-        $appEnvStr = is_string($appEnv) ? trim($appEnv) : 'development';
-
-        return in_array(strtolower($appEnvStr), ['development', 'test'], true);
-    }
-
-    /**
-     * Get the current environment name.
-     *
-     * @return string The environment name (lowercase, trimmed).
-     */
-    public static function getName(): string
-    {
-        $appEnv = $_ENV['APP_ENV'] ?? 'development';
-
-        return is_string($appEnv) ? strtolower(trim($appEnv)) : 'development';
+        return in_array(self::getName(), ['development', 'test'], true);
     }
 }

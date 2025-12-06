@@ -193,50 +193,98 @@ class RateLimiterTest extends TestCase
         $this->assertEquals(2, $this->rateLimiter->getRemainingAttempts($ipv6));
     }
 
+    /**
+     * Helper to save current RATE_LIMIT_* env values
+     *
+     * @return array{attempts: mixed, window: mixed, storage: mixed}
+     */
+    private function saveEnvValues(): array
+    {
+        return [
+            'attempts' => $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] ?? null,
+            'window'   => $_ENV['RATE_LIMIT_LOGIN_WINDOW'] ?? null,
+            'storage'  => $_ENV['RATE_LIMIT_STORAGE_PATH'] ?? null,
+        ];
+    }
+
+    /**
+     * Helper to restore RATE_LIMIT_* env values
+     *
+     * @param array{attempts: mixed, window: mixed, storage: mixed} $saved
+     */
+    private function restoreEnvValues(array $saved): void
+    {
+        if ($saved['attempts'] === null) {
+            unset($_ENV['RATE_LIMIT_LOGIN_ATTEMPTS']);
+        } else {
+            $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] = $saved['attempts'];
+        }
+
+        if ($saved['window'] === null) {
+            unset($_ENV['RATE_LIMIT_LOGIN_WINDOW']);
+        } else {
+            $_ENV['RATE_LIMIT_LOGIN_WINDOW'] = $saved['window'];
+        }
+
+        if ($saved['storage'] === null) {
+            unset($_ENV['RATE_LIMIT_STORAGE_PATH']);
+        } else {
+            $_ENV['RATE_LIMIT_STORAGE_PATH'] = $saved['storage'];
+        }
+    }
+
     public function testFactoryCreatesFromEnv(): void
     {
-        // Ensure clean environment for testing defaults
-        unset($_ENV['RATE_LIMIT_LOGIN_ATTEMPTS']);
-        unset($_ENV['RATE_LIMIT_LOGIN_WINDOW']);
-        unset($_ENV['RATE_LIMIT_STORAGE_PATH']);
+        $saved = $this->saveEnvValues();
 
-        // Test that the factory can create an instance
-        $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
+        try {
+            // Ensure clean environment for testing defaults
+            unset($_ENV['RATE_LIMIT_LOGIN_ATTEMPTS']);
+            unset($_ENV['RATE_LIMIT_LOGIN_WINDOW']);
+            unset($_ENV['RATE_LIMIT_STORAGE_PATH']);
 
-        $this->assertInstanceOf(RateLimiter::class, $limiter);
+            // Test that the factory can create an instance
+            $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
 
-        // Default values
-        $this->assertEquals(5, $limiter->getMaxAttempts());
-        $this->assertEquals(900, $limiter->getWindowSeconds());
+            $this->assertInstanceOf(RateLimiter::class, $limiter);
+
+            // Default values
+            $this->assertEquals(5, $limiter->getMaxAttempts());
+            $this->assertEquals(900, $limiter->getWindowSeconds());
+        } finally {
+            $this->restoreEnvValues($saved);
+        }
     }
 
     public function testFactoryRespectsEnvVariables(): void
     {
-        // Set environment variables
-        $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] = '10';
-        $_ENV['RATE_LIMIT_LOGIN_WINDOW']   = '300';
+        $saved = $this->saveEnvValues();
 
         try {
+            // Set environment variables
+            $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] = '10';
+            $_ENV['RATE_LIMIT_LOGIN_WINDOW']   = '300';
+
             $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
 
             $this->assertEquals(10, $limiter->getMaxAttempts());
             $this->assertEquals(300, $limiter->getWindowSeconds());
         } finally {
-            // Clean up environment
-            unset($_ENV['RATE_LIMIT_LOGIN_ATTEMPTS']);
-            unset($_ENV['RATE_LIMIT_LOGIN_WINDOW']);
+            $this->restoreEnvValues($saved);
         }
     }
 
     public function testFactoryRespectsStoragePath(): void
     {
+        $saved = $this->saveEnvValues();
+
         // Use a custom storage path
         $customPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'litcal_factory_test_' . uniqid();
         mkdir($customPath, 0755, true);
 
-        $_ENV['RATE_LIMIT_STORAGE_PATH'] = $customPath;
-
         try {
+            $_ENV['RATE_LIMIT_STORAGE_PATH'] = $customPath;
+
             $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
 
             // Record an attempt and verify the file is created in the custom path
@@ -248,39 +296,42 @@ class RateLimiterTest extends TestCase
             $files = glob($rateLimitDir . DIRECTORY_SEPARATOR . '*.json');
             $this->assertNotEmpty($files, 'Expected rate limit file to be created in custom storage path');
         } finally {
-            // Clean up
-            unset($_ENV['RATE_LIMIT_STORAGE_PATH']);
+            $this->restoreEnvValues($saved);
             $this->removeDirectory($customPath);
         }
     }
 
     public function testFactoryClampsWindowToMinimum(): void
     {
-        // Set window below the 60-second minimum
-        $_ENV['RATE_LIMIT_LOGIN_WINDOW'] = '30';
+        $saved = $this->saveEnvValues();
 
         try {
+            // Set window below the 60-second minimum
+            $_ENV['RATE_LIMIT_LOGIN_WINDOW'] = '30';
+
             $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
 
             // Should be clamped to minimum of 60 seconds
             $this->assertEquals(60, $limiter->getWindowSeconds());
         } finally {
-            unset($_ENV['RATE_LIMIT_LOGIN_WINDOW']);
+            $this->restoreEnvValues($saved);
         }
     }
 
     public function testFactoryClampsAttemptsToMinimum(): void
     {
-        // Set attempts to 0 (should be clamped to 1)
-        $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] = '0';
+        $saved = $this->saveEnvValues();
 
         try {
+            // Set attempts to 0 (should be clamped to 1)
+            $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] = '0';
+
             $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
 
             // Should be clamped to minimum of 1
             $this->assertEquals(1, $limiter->getMaxAttempts());
         } finally {
-            unset($_ENV['RATE_LIMIT_LOGIN_ATTEMPTS']);
+            $this->restoreEnvValues($saved);
         }
     }
 }

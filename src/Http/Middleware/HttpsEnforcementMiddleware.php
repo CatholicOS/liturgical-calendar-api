@@ -3,7 +3,6 @@
 namespace LiturgicalCalendar\Api\Http\Middleware;
 
 use LiturgicalCalendar\Api\Environment;
-use LiturgicalCalendar\Api\Http\CookieHelper;
 use LiturgicalCalendar\Api\Http\Exception\ForbiddenException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -49,6 +48,55 @@ class HttpsEnforcementMiddleware implements MiddlewareInterface
     }
 
     /**
+     * Check if the request was made over a secure connection.
+     *
+     * Derives HTTPS-ness from the PSR-7 request rather than SAPI globals
+     * for better decoupling and testability.
+     *
+     * Checks:
+     * 1. URI scheme from the request
+     * 2. X-Forwarded-Proto header (for reverse proxy scenarios)
+     * 3. Server params (HTTPS, REQUEST_SCHEME, SERVER_PORT)
+     *
+     * @param ServerRequestInterface $request The incoming request.
+     * @return bool True if the request is over HTTPS.
+     */
+    private static function isSecureRequest(ServerRequestInterface $request): bool
+    {
+        // Check URI scheme directly
+        if ($request->getUri()->getScheme() === 'https') {
+            return true;
+        }
+
+        // Check X-Forwarded-Proto header (reverse proxy)
+        $forwardedProto = $request->getHeaderLine('X-Forwarded-Proto');
+        if (strtolower($forwardedProto) === 'https') {
+            return true;
+        }
+
+        // Check server params as fallback
+        /** @var array<string, mixed> $serverParams */
+        $serverParams = $request->getServerParams();
+
+        if (isset($serverParams['HTTPS']) && $serverParams['HTTPS'] !== 'off') {
+            return true;
+        }
+
+        if (isset($serverParams['REQUEST_SCHEME']) && $serverParams['REQUEST_SCHEME'] === 'https') {
+            return true;
+        }
+
+        if (isset($serverParams['SERVER_PORT'])) {
+            $port = $serverParams['SERVER_PORT'];
+            if (( is_string($port) || is_int($port) ) && (string) $port === '443') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Process the request, enforcing HTTPS in production environments.
      *
      * @param ServerRequestInterface $request The incoming request.
@@ -63,8 +111,8 @@ class HttpsEnforcementMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        // Check if request is secure using CookieHelper's detection logic
-        if (!CookieHelper::isSecure()) {
+        // Check if request is secure using PSR-7 request data
+        if (!self::isSecureRequest($request)) {
             throw new ForbiddenException(
                 'HTTPS is required for authentication endpoints in production. ' .
                 'Please use a secure connection.'
