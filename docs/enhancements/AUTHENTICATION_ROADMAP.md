@@ -491,13 +491,11 @@ This allows frontends to use HttpOnly cookies exclusively, without needing to st
 **Backend Support Already Implemented:**
 
 1. **RefreshHandler** (`src/Handlers/Auth/RefreshHandler.php`)
-   - ✅ Reads refresh token from HttpOnly cookie first (lines 124-128)
-   - ✅ Falls back to request body for backwards compatibility (lines 130-134)
+   - ✅ Reads refresh token from HttpOnly cookie first, falling back to request body
    - ✅ No request body required when refresh token cookie is present
 
 2. **JwtAuthMiddleware** (`src/Http/Middleware/JwtAuthMiddleware.php`)
-   - ✅ Reads access token from HttpOnly cookie first (lines 62-64)
-   - ✅ Falls back to Authorization header for backwards compatibility (lines 67-78)
+   - ✅ Reads access token from HttpOnly cookie first, falling back to Authorization header
    - ✅ Automatic token validation from cookies
 
 3. **CookieHelper** (`src/Http/CookieHelper.php`)
