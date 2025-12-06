@@ -79,7 +79,7 @@ class JwtServiceFactory
     private static function isProductionEnvironment(): bool
     {
         $appEnv    = $_ENV['APP_ENV'] ?? 'development';
-        $appEnvStr = is_string($appEnv) ? $appEnv : 'development';
+        $appEnvStr = is_string($appEnv) ? trim($appEnv) : 'development';
 
         return in_array(strtolower($appEnvStr), ['staging', 'production'], true);
     }

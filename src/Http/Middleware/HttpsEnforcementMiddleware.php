@@ -37,7 +37,7 @@ class HttpsEnforcementMiddleware implements MiddlewareInterface
     {
         // Check environment
         $appEnv       = $_ENV['APP_ENV'] ?? 'development';
-        $appEnvStr    = is_string($appEnv) ? $appEnv : 'development';
+        $appEnvStr    = is_string($appEnv) ? trim($appEnv) : 'development';
         $isProduction = in_array(strtolower($appEnvStr), ['staging', 'production'], true);
 
         if (!$isProduction) {
@@ -46,7 +46,7 @@ class HttpsEnforcementMiddleware implements MiddlewareInterface
 
         // Check if enforcement is explicitly disabled
         $enforcement    = $_ENV['HTTPS_ENFORCEMENT'] ?? 'true';
-        $enforcementStr = is_string($enforcement) ? $enforcement : 'true';
+        $enforcementStr = is_string($enforcement) ? trim($enforcement) : 'true';
 
         return strtolower($enforcementStr) !== 'false';
     }
