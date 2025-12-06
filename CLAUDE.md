@@ -79,7 +79,7 @@ composer stop
 
 The API supports full cookie-only authentication where:
 
-- Tokens are stored in HttpOnly cookies (not accessible to JavaScript, XSS-proof)
+- Tokens are stored in HttpOnly cookies (not accessible to JavaScript, mitigating token theft via XSS)
 - `JwtAuthMiddleware` reads token from cookie first, falls back to Authorization header
 - `RefreshHandler` reads refresh token from cookie, no request body needed
 - Frontend uses `credentials: 'include'` to send cookies automatically
