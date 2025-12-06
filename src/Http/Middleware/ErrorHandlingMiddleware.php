@@ -174,15 +174,16 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
                 ->write($responseBody);
 
             // Handle CORS headers for error responses
-            $path           = $request->getUri()->getPath();
-            $origin         = $request->getHeaderLine('Origin');
-            $isAuthEndpoint = str_starts_with($path, '/auth/') || $path === '/auth';
+            $origin = $request->getHeaderLine('Origin');
 
             $response = $response->withHeader('Content-Type', 'application/problem+json');
 
-            // For auth endpoints that use credentials, validate origin before reflecting
-            // This is required for CORS when credentials: 'include' is used
-            if ($isAuthEndpoint && $origin !== '') {
+            // When an Origin header is present, the request may be credentialed (cookies).
+            // For credentialed requests, browsers require:
+            // 1. Access-Control-Allow-Origin to be a specific origin (not *)
+            // 2. Access-Control-Allow-Credentials: true
+            // This applies to all endpoints since the frontend uses credentials: 'include' globally.
+            if ($origin !== '') {
                 // Only reflect the origin if it passes validation
                 if ($this->isAllowedOrigin($origin)) {
                     return $response
@@ -194,7 +195,7 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
                 return $response;
             }
 
-            // For non-auth endpoints or requests without Origin header, use wildcard
+            // For requests without Origin header (e.g., same-origin, curl), use wildcard
             return $response->withHeader('Access-Control-Allow-Origin', '*');
         }
     }

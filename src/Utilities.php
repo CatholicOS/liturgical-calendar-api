@@ -754,8 +754,12 @@ class Utilities
             return ['*'];
         }
 
-        // Parse comma-separated list, trim whitespace, filter empty values
-        $origins = array_filter(array_map('trim', explode(',', $envValue)));
+        // Parse comma-separated list, trim whitespace, filter empty strings only
+        // Using explicit callback to avoid filtering falsy values like "0"
+        $origins = array_filter(
+            array_map('trim', explode(',', $envValue)),
+            static fn(string $origin): bool => $origin !== ''
+        );
 
         // Handle empty result (e.g., whitespace-only value)
         if (count($origins) === 0) {
