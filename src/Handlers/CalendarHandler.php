@@ -2210,7 +2210,7 @@ final class CalendarHandler extends AbstractHandler
              * 7. Name of the superseding liturgical event
              * 8. Requested calendar year
              */
-            _('The %1$s \'%2$s\', added on %3$s since the year %4$d (%5$s), is however superseded by a %6$s \'%7$s\' in the year %8$d.'),
+            _('The %1$s \'%2$s\', added on %3$s since the year %4$d (%5$s), is however superseded by the %6$s \'%7$s\' in the year %8$d.'),
             $liturgicalEvent->grade->i18n($this->CalendarParams->Locale),
             $liturgicalEvent->name,
             $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
