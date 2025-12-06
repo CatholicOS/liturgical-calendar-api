@@ -920,6 +920,9 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized401"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests429"
           }
         }
       }
@@ -5121,6 +5124,45 @@
               "title": "I'm a teapot",
               "status": 418,
               "detail": "The server refuses to brew coffee because it is, permanently, a teapot"
+            }
+          }
+        }
+      },
+      "TooManyRequests429": {
+        "description": "429 Too Many Requests. The user has sent too many requests in a given amount of time (rate limiting). The response includes a Retry-After header indicating how long to wait before retrying.",
+        "headers": {
+          "Retry-After": {
+            "description": "Number of seconds to wait before retrying the request",
+            "schema": {
+              "type": "integer",
+              "example": 847
+            }
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "./Problem.json"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "retryAfter": {
+                      "type": "integer",
+                      "description": "Number of seconds to wait before retrying the request"
+                    }
+                  }
+                }
+              ]
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429",
+              "title": "Too Many Requests",
+              "status": 429,
+              "detail": "Too many login attempts. Please try again later.",
+              "retryAfter": 847
             }
           }
         }
