@@ -149,11 +149,29 @@ class Health implements MessageComponentInterface
             if (extension_loaded('redis')) {
                 try {
                     self::$redis = new \Redis();
-                    $connected   = self::$redis->connect('127.0.0.1', 6379, 2.0); // 2 second timeout
+                    // Support Unix socket (REDIS_SOCKET) or TCP connection (REDIS_HOST/REDIS_PORT)
+                    $redisSocket = isset($_ENV['REDIS_SOCKET']) && is_string($_ENV['REDIS_SOCKET'])
+                        ? $_ENV['REDIS_SOCKET']
+                        : null;
+                    if ($redisSocket !== null && $redisSocket !== '') {
+                        // Unix socket connection
+                        $connected      = self::$redis->connect($redisSocket, 0, 2.0); // 2 second timeout
+                        $connectionInfo = "socket: {$redisSocket}";
+                    } else {
+                        // TCP connection with configurable host/port
+                        $redisHost      = isset($_ENV['REDIS_HOST']) && is_string($_ENV['REDIS_HOST'])
+                            ? $_ENV['REDIS_HOST']
+                            : '127.0.0.1';
+                        $redisPort      = isset($_ENV['REDIS_PORT']) && is_numeric($_ENV['REDIS_PORT'])
+                            ? (int) $_ENV['REDIS_PORT']
+                            : 6379;
+                        $connected      = self::$redis->connect($redisHost, $redisPort, 2.0); // 2 second timeout
+                        $connectionInfo = "{$redisHost}:{$redisPort}";
+                    }
                     if ($connected) {
                         self::$cacheEnabled = true;
                         self::$cacheBackend = 'redis';
-                        echo "Redis connected, will use for caching\n";
+                        echo "Redis connected ({$connectionInfo}), will use for caching\n";
                     } else {
                         self::$redis = null;
                         echo "Redis connection failed, trying APCu fallback\n";
