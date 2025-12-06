@@ -2,6 +2,8 @@
 
 namespace LiturgicalCalendar\Api\Services;
 
+use LiturgicalCalendar\Api\Environment;
+
 /**
  * Factory for creating JwtService instances from environment variables.
  *
@@ -50,6 +52,9 @@ class JwtServiceFactory
         'dev-secret',
         'dev_secret',
         'devsecret',
+        'jwt',
+        'dummy',
+        'sample',
     ];
 
     /**
@@ -69,19 +74,6 @@ class JwtServiceFactory
         }
 
         return false;
-    }
-
-    /**
-     * Check if the current environment is a production-like environment.
-     *
-     * @return bool True if APP_ENV is 'staging' or 'production'.
-     */
-    private static function isProductionEnvironment(): bool
-    {
-        $appEnv    = $_ENV['APP_ENV'] ?? 'development';
-        $appEnvStr = is_string($appEnv) ? trim($appEnv) : 'development';
-
-        return in_array(strtolower($appEnvStr), ['staging', 'production'], true);
     }
 
     /**
@@ -110,7 +102,7 @@ class JwtServiceFactory
         }
 
         // In production environments, reject placeholder secrets
-        if (self::isProductionEnvironment() && self::isPlaceholderSecret($secret)) {
+        if (Environment::isProduction() && self::isPlaceholderSecret($secret)) {
             throw new \RuntimeException(
                 'JWT_SECRET appears to be a placeholder value. ' .
                 'In staging/production environments, you must use a secure random secret. ' .

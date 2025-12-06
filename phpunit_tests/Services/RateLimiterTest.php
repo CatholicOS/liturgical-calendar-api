@@ -159,6 +159,9 @@ class RateLimiterTest extends TestCase
         $this->assertEquals(60, $this->rateLimiter->getWindowSeconds());
     }
 
+    /**
+     * @group slow
+     */
     public function testCleanupRemovesStaleFiles(): void
     {
         $ip = '192.168.1.20';
@@ -192,6 +195,11 @@ class RateLimiterTest extends TestCase
 
     public function testFactoryCreatesFromEnv(): void
     {
+        // Ensure clean environment for testing defaults
+        unset($_ENV['RATE_LIMIT_LOGIN_ATTEMPTS']);
+        unset($_ENV['RATE_LIMIT_LOGIN_WINDOW']);
+        unset($_ENV['RATE_LIMIT_STORAGE_PATH']);
+
         // Test that the factory can create an instance
         $limiter = \LiturgicalCalendar\Api\Services\RateLimiterFactory::fromEnv();
 

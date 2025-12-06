@@ -2,6 +2,7 @@
 
 namespace LiturgicalCalendar\Api\Http\Middleware;
 
+use LiturgicalCalendar\Api\Environment;
 use LiturgicalCalendar\Api\Http\CookieHelper;
 use LiturgicalCalendar\Api\Http\Exception\ForbiddenException;
 use Psr\Http\Message\ServerRequestInterface;
@@ -35,12 +36,8 @@ class HttpsEnforcementMiddleware implements MiddlewareInterface
      */
     private static function isEnforcementEnabled(): bool
     {
-        // Check environment
-        $appEnv       = $_ENV['APP_ENV'] ?? 'development';
-        $appEnvStr    = is_string($appEnv) ? trim($appEnv) : 'development';
-        $isProduction = in_array(strtolower($appEnvStr), ['staging', 'production'], true);
-
-        if (!$isProduction) {
+        // Only enforce in production environments
+        if (!Environment::isProduction()) {
             return false;
         }
 
