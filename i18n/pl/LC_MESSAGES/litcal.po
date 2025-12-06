@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
-"POT-Creation-Date: 2025-11-23 18:32+0000\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-06 19:04+0000\n"
 "PO-Revision-Date: 2025-12-06 12:42+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Polish <https://translate.johnromanodorazio.com/projects/"
@@ -17,8 +17,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && "
-"(n%100<10 || n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2;\n"
 "X-Generator: Weblate 5.13.3\n"
 
 #. translators: context = liturgical color
@@ -816,7 +816,8 @@ msgstr ""
 msgid ""
 "The %1$s '%2$s' has been added on %3$s since the year %4$d (%5$s), "
 "applicable to the year %6$d."
-msgstr "%1$s '%2$s' zostało dodane %3$s od roku %4$d (%5$s), dotyczy roku %6$d."
+msgstr ""
+"%1$s '%2$s' zostało dodane %3$s od roku %4$d (%5$s), dotyczy roku %6$d."
 
 #: src/Handlers/CalendarHandler.php:1947 src/Handlers/CalendarHandler.php:2137
 msgid ""
@@ -884,11 +885,21 @@ msgstr ""
 #.  7. Name of the superseding liturgical event
 #.  8. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2213
+#. translators:
+#.  1. Grade or rank of the liturgical event being created
+#.  2. Name of the liturgical event being created
+#.  3. Indication of the mobile date for the liturgical event being created
+#.  4. Year from which the liturgical event has been added
+#.  5. Source of the information
+#.  6. Grade or rank of superseding liturgical event
+#.  7. Name of superseding liturgical event
+#.  8. Requested calendar year
+#.
+#: src/Handlers/CalendarHandler.php:2213 src/Handlers/CalendarHandler.php:2650
 #, php-format
 msgid ""
 "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by a %6$s '%7$s' in the year %8$d."
+"superseded by the %6$s '%7$s' in the year %8$d."
 msgstr ""
 "%1$s '%2$s', dodane %3$s od roku %4$d (%5$s), jest jednak zastąpione przez "
 "%6$s '%7$s' w roku %8$d."
@@ -996,25 +1007,6 @@ msgstr ""
 "%3$d (%4$s)."
 
 #. translators:
-#.  1. Grade or rank of the liturgical event being created
-#.  2. Name of the liturgical event being created
-#.  3. Indication of the mobile date for the liturgical event being created
-#.  4. Year from which the liturgical event has been added
-#.  5. Source of the information
-#.  6. Grade or rank of superseding liturgical event
-#.  7. Name of superseding liturgical event
-#.  8. Requested calendar year
-#.
-#: src/Handlers/CalendarHandler.php:2650
-#, php-format
-msgid ""
-"The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by the %6$s '%7$s' in the year %8$d."
-msgstr ""
-"%1$s '%2$s', dodane %3$s od roku %4$d (%5$s), jest jednak zastąpione przez "
-"%6$s '%7$s' w roku %8$d."
-
-#. translators:
 #.  1. Requested calendar year
 #.  2. Grade or rank of suppressed liturgical event
 #.  3. Name of suppressed liturgical event
@@ -1030,8 +1022,8 @@ msgid ""
 "In the year %1$d, the %2$s '%3$s' has been suppressed by the %4$s '%5$s', "
 "added on %6$s since the year %7$d (%8$s)."
 msgstr ""
-"W roku %1$d, %2$s '%3$s' został zniesiony przez %4$s '%5$s', dodany dnia %6$"
-"s od roku %7$d (%8$s)."
+"W roku %1$d, %2$s '%3$s' został zniesiony przez %4$s '%5$s', dodany dnia "
+"%6$s od roku %7$d (%8$s)."
 
 #. translators: 1: LiturgicalEvent name, 2: Source of the information, 3: Requested calendar year
 #: src/Handlers/CalendarHandler.php:2749
@@ -1195,8 +1187,8 @@ msgid ""
 "(%4$d) of the liturgical event year (%5$d)."
 msgstr ""
 "Nie można utworzyć wydarzenia liturgicznego z kluczem \"%1$s\": dzień (%2$d) "
-"wydarzenia liturgicznego jest większy niż liczba dni (%3$d) w miesiącu (%4$d)"
-" roku liturgicznego (%5$d)."
+"wydarzenia liturgicznego jest większy niż liczba dni (%3$d) w miesiącu "
+"(%4$d) roku liturgicznego (%5$d)."
 
 #: src/Handlers/CalendarHandler.php:3429
 msgid ""
@@ -1252,8 +1244,8 @@ msgid ""
 "national calendar '%3$s' since the year %4$d, but could not be applied to "
 "the year %5$d because the celebration was not found."
 msgstr ""
-"Nazwa obchodów '%1$s' została zmieniona na '%2$s' w kalendarzu narodowym '%3$"
-"s' od roku %4$d, ale nie mogła być zastosowana w roku %5$d, ponieważ nie "
+"Nazwa obchodów '%1$s' została zmieniona na '%2$s' w kalendarzu narodowym "
+"'%3$s' od roku %4$d, ale nie mogła być zastosowana w roku %5$d, ponieważ nie "
 "znaleziono obchodów."
 
 #. translators:
@@ -1446,8 +1438,8 @@ msgid ""
 "celebrated on %3$s, coincides with the Sunday or Solemnity '%4$s' in the "
 "year %5$d! Does something need to be done about this?"
 msgstr ""
-"Uroczystość '%1$s', właściwa dla kalendarza %2$s i zazwyczaj obchodzona %3$"
-"s, zbiega się z niedzielą lub uroczystością '%4$s' w roku %5$d! Czy coś "
+"Uroczystość '%1$s', właściwa dla kalendarza %2$s i zazwyczaj obchodzona "
+"%3$s, zbiega się z niedzielą lub uroczystością '%4$s' w roku %5$d! Czy coś "
 "należy z tym zrobić?"
 
 #. translators: 1: LiturgicalEvent grade, 2: LiturgicalEvent name, 3: Name of the diocese, 4: LiturgicalEvent date, 5: Coinciding liturgical event name, 6: Requested calendar year
@@ -1533,6 +1525,13 @@ msgstr ""
 "Msza Wigilii dla %1$s '%2$s' pokrywa się z %3$s '%4$s' w roku %5$d. "
 "Powinniśmy zapytać Dykasterię ds. Kultu Bożego i Dyscypliny Sakramentów, co "
 "z tym zrobić!"
+
+#~ msgid ""
+#~ "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
+#~ "superseded by a %6$s '%7$s' in the year %8$d."
+#~ msgstr ""
+#~ "%1$s '%2$s', dodane %3$s od roku %4$d (%5$s), jest jednak zastąpione "
+#~ "przez %6$s '%7$s' w roku %8$d."
 
 #~ msgid "pink"
 #~ msgstr "różowy"

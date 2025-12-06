@@ -8,8 +8,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
-"POT-Creation-Date: 2025-11-23 18:32+0000\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-06 19:04+0000\n"
 "PO-Revision-Date: 2025-12-06 12:42+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Indonesian <https://translate.johnromanodorazio.com/projects/"
@@ -886,14 +886,24 @@ msgstr ""
 #.  7. Name of the superseding liturgical event
 #.  8. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2213
+#. translators:
+#.  1. Grade or rank of the liturgical event being created
+#.  2. Name of the liturgical event being created
+#.  3. Indication of the mobile date for the liturgical event being created
+#.  4. Year from which the liturgical event has been added
+#.  5. Source of the information
+#.  6. Grade or rank of superseding liturgical event
+#.  7. Name of superseding liturgical event
+#.  8. Requested calendar year
+#.
+#: src/Handlers/CalendarHandler.php:2213 src/Handlers/CalendarHandler.php:2650
 #, php-format
 msgid ""
 "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by a %6$s '%7$s' in the year %8$d."
+"superseded by the %6$s '%7$s' in the year %8$d."
 msgstr ""
-"%1$s '%2$s', ditambahkan pada %3$s sejak tahun %4$d (%5$s), akan tetapi "
-"digantikan oleh %6$s '%7$s' di tahun %8$d."
+"%1$s '%2$s', yang ditambahkan pada %3$s sejak tahun %4$d (%5$s), namun telah "
+"digantikan oleh %6$s '%7$s' pada tahun %8$d."
 
 #. translators:
 #.  1. Name of the first coinciding Memorial
@@ -997,25 +1007,6 @@ msgstr ""
 "untuk tahun %3$d (%4$s)."
 
 #. translators:
-#.  1. Grade or rank of the liturgical event being created
-#.  2. Name of the liturgical event being created
-#.  3. Indication of the mobile date for the liturgical event being created
-#.  4. Year from which the liturgical event has been added
-#.  5. Source of the information
-#.  6. Grade or rank of superseding liturgical event
-#.  7. Name of superseding liturgical event
-#.  8. Requested calendar year
-#.
-#: src/Handlers/CalendarHandler.php:2650
-#, php-format
-msgid ""
-"The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by the %6$s '%7$s' in the year %8$d."
-msgstr ""
-"%1$s '%2$s', yang ditambahkan pada %3$s sejak tahun %4$d (%5$s), namun telah "
-"digantikan oleh %6$s '%7$s' pada tahun %8$d."
-
-#. translators:
 #.  1. Requested calendar year
 #.  2. Grade or rank of suppressed liturgical event
 #.  3. Name of suppressed liturgical event
@@ -1065,8 +1056,8 @@ msgid ""
 "superseded by the %4$s '%5$s' in the year %3$d."
 msgstr ""
 "Memorial opsional '%1$s' telah dipindahkan dari 12 Des. ke 12 Agt. sejak "
-"tahun 2002 (%2$s), berlaku untuk tahun %3$d. Namun, digantikan oleh %4$s '%5$"
-"s' pada tahun %3$d."
+"tahun 2002 (%2$s), berlaku untuk tahun %3$d. Namun, digantikan oleh %4$s "
+"'%5$s' pada tahun %3$d."
 
 #. translators: 1: LiturgicalEvent name, 2: Source of the information
 #: src/Handlers/CalendarHandler.php:2822
@@ -1176,8 +1167,8 @@ msgid ""
 "The Feast '%1$s', usually celebrated on %2$s, coincides with another Feast "
 "'%3$s' in the year %4$d! Does something need to be done about this?"
 msgstr ""
-"Pesta '%1$s', biasanya dirayakan pada %2$s, bertepatan dengan Pesta lain '%3$"
-"s' pada tahun %4$d! Apakah ada yang perlu dilakukan tentang ini?"
+"Pesta '%1$s', biasanya dirayakan pada %2$s, bertepatan dengan Pesta lain "
+"'%3$s' pada tahun %4$d! Apakah ada yang perlu dilakukan tentang ini?"
 
 #. translators: 1. LiturgicalEvent name, 2. LiturgicalEvent date, 3. Coinciding liturgical event name, 4. Requested calendar year
 #: src/Handlers/CalendarHandler.php:3364
@@ -1256,9 +1247,9 @@ msgid ""
 "national calendar '%3$s' since the year %4$d, but could not be applied to "
 "the year %5$d because the celebration was not found."
 msgstr ""
-"Nama perayaan '%1$s' telah diubah menjadi '%2$s' dalam kalender nasional '%3$"
-"s' sejak tahun %4$d, tetapi tidak dapat diterapkan pada tahun %5$d karena "
-"perayaannya tidak ditemukan."
+"Nama perayaan '%1$s' telah diubah menjadi '%2$s' dalam kalender nasional "
+"'%3$s' sejak tahun %4$d, tetapi tidak dapat diterapkan pada tahun %5$d "
+"karena perayaannya tidak ditemukan."
 
 #. translators:
 #.  1. Original liturgical grade
@@ -1275,8 +1266,8 @@ msgid ""
 "The grade of the %1$s '%2$s' has been changed to '%3$s' in the national "
 "calendar '%4$s' since the year %5$d (%6$s), applicable to the year %7$d."
 msgstr ""
-"Tingkat %1$s '%2$s' telah diubah menjadi '%3$s' dalam kalender nasional '%4$"
-"s' sejak tahun %5$d (%6$s), berlaku untuk tahun %7$d."
+"Tingkat %1$s '%2$s' telah diubah menjadi '%3$s' dalam kalender nasional "
+"'%4$s' sejak tahun %5$d (%6$s), berlaku untuk tahun %7$d."
 
 #. translators:
 #.  1. Event key of the liturgical event
@@ -1293,8 +1284,8 @@ msgid ""
 "applied to the year %6$d because the celebration was not found."
 msgstr ""
 "Tingkat perayaan '%1$s' telah diubah menjadi '%2$s' dalam kalender nasional "
-"'%3$s' sejak tahun %4$d (%5$s), tetapi tidak dapat diterapkan pada tahun %6$"
-"d karena perayaan tersebut tidak ditemukan."
+"'%3$s' sejak tahun %4$d (%5$s), tetapi tidak dapat diterapkan pada tahun "
+"%6$d karena perayaan tersebut tidak ditemukan."
 
 #. translators:
 #.  1. Liturgical grade
@@ -1428,9 +1419,9 @@ msgid ""
 "property can only express relativity to the liturgical event with key '%2$s' "
 "using keywords %3$s."
 msgstr ""
-"Tidak dapat membuat acara liturgi bergerak '%1$s': properti "
-"`strtotime.relative_time` hanya dapat mengekspresikan relativitas terhadap "
-"acara liturgi dengan kunci '%2$s' menggunakan kata kunci %3$s."
+"Tidak dapat membuat acara liturgi bergerak '%1$s': properti `strtotime."
+"relative_time` hanya dapat mengekspresikan relativitas terhadap acara "
+"liturgi dengan kunci '%2$s' menggunakan kata kunci %3$s."
 
 #. translators: Do not translate 'strtotime'! 1. Name of the mobile liturgical event being created
 #: src/Handlers/CalendarHandler.php:4221
@@ -1450,8 +1441,8 @@ msgid ""
 "celebrated on %3$s, coincides with the Sunday or Solemnity '%4$s' in the "
 "year %5$d! Does something need to be done about this?"
 msgstr ""
-"Hari Raya '%1$s', proper untuk kalender %2$s dan biasanya dirayakan pada %3$"
-"s, bertepatan dengan Minggu atau Hari Raya '%4$s' pada tahun %5$d! Apakah "
+"Hari Raya '%1$s', proper untuk kalender %2$s dan biasanya dirayakan pada "
+"%3$s, bertepatan dengan Minggu atau Hari Raya '%4$s' pada tahun %5$d! Apakah "
 "ada yang perlu dilakukan tentang ini?"
 
 #. translators: 1: LiturgicalEvent grade, 2: LiturgicalEvent name, 3: Name of the diocese, 4: LiturgicalEvent date, 5: Coinciding liturgical event name, 6: Requested calendar year
@@ -1537,6 +1528,13 @@ msgstr ""
 "Misa Vigili untuk %1$s '%2$s' bertepatan dengan %3$s '%4$s' pada tahun %5$d. "
 "Kita harus bertanya kepada Dikasteri Ibadah Ilahi dan Tata Tertib Sakramen "
 "mengenai apa yang harus dilakukan mengenai hal ini!"
+
+#~ msgid ""
+#~ "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
+#~ "superseded by a %6$s '%7$s' in the year %8$d."
+#~ msgstr ""
+#~ "%1$s '%2$s', ditambahkan pada %3$s sejak tahun %4$d (%5$s), akan tetapi "
+#~ "digantikan oleh %6$s '%7$s' di tahun %8$d."
 
 #~ msgid "pink"
 #~ msgstr "merah muda"
