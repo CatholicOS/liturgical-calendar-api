@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-23 18:32+0000\n"
+"POT-Creation-Date: 2025-12-06 19:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -857,11 +857,21 @@ msgstr ""
 #.  7. Name of the superseding liturgical event
 #.  8. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2213
+#. translators:
+#.  1. Grade or rank of the liturgical event being created
+#.  2. Name of the liturgical event being created
+#.  3. Indication of the mobile date for the liturgical event being created
+#.  4. Year from which the liturgical event has been added
+#.  5. Source of the information
+#.  6. Grade or rank of superseding liturgical event
+#.  7. Name of superseding liturgical event
+#.  8. Requested calendar year
+#.
+#: src/Handlers/CalendarHandler.php:2213 src/Handlers/CalendarHandler.php:2650
 #, php-format
 msgid ""
 "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by a %6$s '%7$s' in the year %8$d."
+"superseded by the %6$s '%7$s' in the year %8$d."
 msgstr ""
 
 #. translators:
@@ -949,23 +959,6 @@ msgstr ""
 msgid ""
 "'%1$s' has been declared a Doctor of the Church since the year %2$d, "
 "applicable to the year %3$d (%4$s)."
-msgstr ""
-
-#. translators:
-#.  1. Grade or rank of the liturgical event being created
-#.  2. Name of the liturgical event being created
-#.  3. Indication of the mobile date for the liturgical event being created
-#.  4. Year from which the liturgical event has been added
-#.  5. Source of the information
-#.  6. Grade or rank of superseding liturgical event
-#.  7. Name of superseding liturgical event
-#.  8. Requested calendar year
-#.
-#: src/Handlers/CalendarHandler.php:2650
-#, php-format
-msgid ""
-"The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by the %6$s '%7$s' in the year %8$d."
 msgstr ""
 
 #. translators:
