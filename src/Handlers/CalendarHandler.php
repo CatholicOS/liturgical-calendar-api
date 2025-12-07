@@ -114,7 +114,12 @@ final class CalendarHandler extends AbstractHandler
     private string $BaptismLordFmt;
     private string $BaptismLordMod;
 
-    public const API_VERSION                  = '5.6';
+    public const API_VERSION = '5.6';
+
+    /**
+     * Path to the cache directory. Initialized by handle() before any cache operations.
+     * Must be set before calling ensureCachePathExists() or prepareResponseBody().
+     */
     private string $CachePath                 = '';
     private string $CacheFile                 = '';
     private string $CacheDuration             = '';
@@ -547,6 +552,130 @@ final class CalendarHandler extends AbstractHandler
     }
 
     /**
+     * Format a date according to the current locale.
+     *
+     * Handles Latin (using LatinUtils::LATIN_MONTHS), English (F jS format),
+     * and other locales (using dayAndMonth IntlDateFormatter).
+     *
+     * @param DateTime $date The date to format
+     * @return string The formatted date string
+     */
+    private function formatLocalizedDate(DateTime $date): string
+    {
+        $locale = LitLocale::$PRIMARY_LANGUAGE;
+        if ($locale === LitLocale::LATIN_PRIMARY_LANGUAGE) {
+            return $date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $date->format('n')];
+        }
+        if ($locale === 'en') {
+            return $date->format('F jS');
+        }
+        $formatted = $this->dayAndMonth->format($date->format('U'));
+        return $formatted !== false ? $formatted : $date->format('j/n');
+    }
+
+    /**
+     * Get the localized date identifier for Christmas weekday naming.
+     *
+     * Returns different formats based on locale, tailored for use in Christmas weekday names:
+     * - Latin: Day of the week (e.g., "Feria II") from LatinUtils::LATIN_DAYOFTHEWEEK
+     * - Italian: Day and month (e.g., "3 gennaio") using dayAndMonth formatter
+     * - Other locales: Day of the week using dayOfTheWeek formatter
+     *
+     * Note: This is specifically designed for formatChristmasWeekdayName() usage,
+     * where Italian uses day+month format ("Feria propria del 3 gennaio").
+     *
+     * @param DateTime $dateTime The date to format
+     * @return string The localized date identifier for Christmas weekday naming
+     */
+    private function getLocalizedDayOfTheWeek(DateTime $dateTime): string
+    {
+        $locale = LitLocale::$PRIMARY_LANGUAGE;
+        if ($locale === LitLocale::LATIN_PRIMARY_LANGUAGE) {
+            return LatinUtils::LATIN_DAYOFTHEWEEK[$dateTime->format('w')];
+        }
+        if ($locale === 'it') {
+            $formatted = $this->dayAndMonth->format($dateTime->format('U'));
+            return Utilities::ucfirst($formatted !== false ? $formatted : $dateTime->format('l'));
+        }
+        $formatted = $this->dayOfTheWeek->format($dateTime->format('U'));
+        return Utilities::ucfirst($formatted !== false ? $formatted : $dateTime->format('l'));
+    }
+
+    /**
+     * Format the name of a Christmas weekday according to the current locale.
+     *
+     * Handles Latin ("X temporis Nativitatis"), Italian ("Feria propria del X"),
+     * and other locales using gettext translation.
+     *
+     * @param string $dateIdentifier The localized date identifier from getLocalizedDayOfTheWeek().
+     *                               For Latin/other locales: day of week. For Italian: day+month.
+     * @return string The formatted Christmas weekday name
+     */
+    private function formatChristmasWeekdayName(string $dateIdentifier): string
+    {
+        $locale = LitLocale::$PRIMARY_LANGUAGE;
+        return $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
+            ? sprintf('%s temporis Nativitatis', $dateIdentifier)
+            : ( $locale === 'it'
+                ? sprintf('Feria propria del %s', $dateIdentifier)
+                : sprintf(
+                    /**translators: Christmas weekday name pattern */
+                    _('%s - Christmas Weekday'),
+                    $dateIdentifier
+                )
+            );
+    }
+
+    /**
+     * Ensure the cache directory exists and is writable.
+     *
+     * Creates the cache directory if it doesn't exist.
+     *
+     * Note: $this->CachePath must be initialized by handle() before calling this method.
+     * This is used by both getGithubReleaseInfo() and prepareResponseBody().
+     *
+     * @throws ServiceUnavailableException If the cache directory cannot be created
+     * @return void
+     */
+    private function ensureCachePathExists(): void
+    {
+        // Normalize and validate the cache path
+        $cachePath = rtrim($this->CachePath, DIRECTORY_SEPARATOR);
+        if ($cachePath === '') {
+            throw new ServiceUnavailableException('Cache path has not been initialized.');
+        }
+
+        if (false === realpath($cachePath)) {
+            // Walk up from the target directory to find the nearest existing ancestor
+            $existingAncestor = dirname($cachePath);
+            while ($existingAncestor !== '' && $existingAncestor !== '.' && false === is_dir($existingAncestor)) {
+                $existingAncestor = dirname($existingAncestor);
+            }
+            // Fall back to current directory if we walked all the way up
+            if ($existingAncestor === '' || false === is_dir($existingAncestor)) {
+                $existingAncestor = '.';
+            }
+
+            if (false === is_writable($existingAncestor)) {
+                $description = sprintf(
+                    'The cache folder %s does not exist, but we cannot create it because the parent folder %s is not writable.',
+                    $cachePath,
+                    $existingAncestor
+                );
+                throw new ServiceUnavailableException($description);
+            }
+
+            if (false === mkdir($cachePath, 0755, true) && false === is_dir($cachePath)) {
+                $description = sprintf(
+                    'Could not create cache folder: %s. Please ensure the path is writable.',
+                    $cachePath
+                );
+                throw new ServiceUnavailableException($description);
+            }
+        }
+    }
+
+    /**
      * Validate whether the year requested is earlier than 1970
      *
      * 1970 is the year in which the Prima Editio Typica of the Roman Missal was published
@@ -837,23 +966,8 @@ final class CalendarHandler extends AbstractHandler
             $dateTime = DateTime::fromFormat($i . '-1-' . $this->CalendarParams->Year);
             if (false === self::dateIsSunday($dateTime) && $this->Cal->notInSolemnitiesFeastsOrMemorials($dateTime)) {
                 $nth++;
-                $locale       = LitLocale::$PRIMARY_LANGUAGE;
-                $dayOfTheWeek = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? LatinUtils::LATIN_DAYOFTHEWEEK[$dateTime->format('w')]
-                    : ( $locale === 'it'
-                        ? Utilities::ucfirst($this->dayAndMonth->format($dateTime->format('U')))
-                        : Utilities::ucfirst($this->dayOfTheWeek->format($dateTime->format('U')))
-                    );
-                $name         = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? sprintf('%s temporis Nativitatis', $dayOfTheWeek)
-                    : ( $locale === 'it'
-                        ? sprintf('Feria propria del %s', $dayOfTheWeek)
-                        : sprintf(
-                            /**translators: days before Epiphany (not useful in Italian!) */
-                            _('%s - Christmas Weekday'),
-                            $dayOfTheWeek
-                        )
-                    );
+                $dayOfTheWeek  = $this->getLocalizedDayOfTheWeek($dateTime);
+                $name          = $this->formatChristmasWeekdayName($dayOfTheWeek);
                 $dayOfTheMonth = $dateTime->format('j');
                 $event_key     = 'ChristmasWeekdayJan' . $dayOfTheMonth;
                 $litEvent      = new LiturgicalEvent(
@@ -894,27 +1008,12 @@ final class CalendarHandler extends AbstractHandler
             $nth++;
             $dateTime = DateTime::fromFormat($i . '-1-' . $this->CalendarParams->Year);
             if ($this->Cal->notInSolemnitiesFeastsOrMemorials($dateTime)) {
-                $locale         = LitLocale::$PRIMARY_LANGUAGE;
-                $dayOfTheWeek   = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? LatinUtils::LATIN_DAYOFTHEWEEK[$dateTime->format('w')]
-                    : ( $locale === 'it'
-                        ? Utilities::ucfirst($this->dayAndMonth->format($dateTime->format('U')))
-                        : Utilities::ucfirst($this->dayOfTheWeek->format($dateTime->format('U')))
-                    );
+                $dayOfTheWeek   = $this->getLocalizedDayOfTheWeek($dateTime);
                 $dayOfTheWeekEn = $this->dayOfTheWeekEnglish->format($dateTime->format('U'));
-                $name           = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? sprintf('%s temporis Nativitatis', $dayOfTheWeek)
-                    : ( $locale === 'it'
-                        ? sprintf('Feria propria del %s', $dayOfTheWeek)
-                        : sprintf(
-                            /**translators: days after Epiphany when Epiphany falls on Jan 6 (not useful in Italian!) */
-                            _('%s - Christmas Weekday'),
-                            $dayOfTheWeek
-                        )
-                    );
-                $dayOfTheMonth = $dateTime->format('j');
-                $event_key     = $this->CalendarParams->Epiphany === Epiphany::SUNDAY_JAN2_JAN8 ? 'DayAfterEpiphany' . $dayOfTheWeekEn : 'DayAfterEpiphanyJan' . $dayOfTheMonth;
-                $litEvent      = new LiturgicalEvent(
+                $name           = $this->formatChristmasWeekdayName($dayOfTheWeek);
+                $dayOfTheMonth  = $dateTime->format('j');
+                $event_key      = $this->CalendarParams->Epiphany === Epiphany::SUNDAY_JAN2_JAN8 ? 'DayAfterEpiphany' . $dayOfTheWeekEn : 'DayAfterEpiphanyJan' . $dayOfTheMonth;
+                $litEvent       = new LiturgicalEvent(
                     $name,
                     $dateTime,
                     LitColor::WHITE,
@@ -1216,7 +1315,6 @@ final class CalendarHandler extends AbstractHandler
                  * http://www.cultodivino.va/content/cultodivino/it/rivista-notitiae/indici-annate/2006/475-476.html
                  * https://www.cultodivino.va/content/dam/cultodivino/rivista-notitiae/2000/notitiae-42-(2006)/Notitiae-475-476-2006.pdf
                  */
-                $locale  = LitLocale::$PRIMARY_LANGUAGE;
                 $PalmSun = $this->Cal->getLiturgicalEvent('PalmSun');
                 $Easter  = $this->Cal->getLiturgicalEvent('Easter');
                 $Easter2 = $this->Cal->getLiturgicalEvent('Easter2');
@@ -1242,12 +1340,7 @@ final class CalendarHandler extends AbstractHandler
                         $coincidingSolemnity->name,
                         $this->CalendarParams->Year,
                         _('the Saturday preceding Palm Sunday'),
-                        $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                            ? ( $tempLiturgicalEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $tempLiturgicalEvent->date->format('n')] )
-                            : ( $locale === 'en'
-                                ? $tempLiturgicalEvent->date->format('F jS')
-                                : $this->dayAndMonth->format($tempLiturgicalEvent->date->format('U'))
-                            ),
+                        $this->formatLocalizedDate($tempLiturgicalEvent->date),
                         '<a href="https://www.cultodivino.va/content/dam/cultodivino/rivista-notitiae/2000/notitiae-42-(2006)/Notitiae-475-476-2006.pdf" target="_blank">'
                             . _('Decree of the Dicastery for Divine Worship and the Discipline of the Sacraments')
                         . '</a>'
@@ -1267,12 +1360,7 @@ final class CalendarHandler extends AbstractHandler
                         $coincidingSolemnity->name,
                         $this->CalendarParams->Year,
                         _('the Monday following the Second Sunday of Easter'),
-                        $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                            ? ( $tempLiturgicalEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $tempLiturgicalEvent->date->format('n')] )
-                            : ( $locale === 'en'
-                                ? $tempLiturgicalEvent->date->format('F jS')
-                                : $this->dayAndMonth->format($tempLiturgicalEvent->date->format('U'))
-                            ),
+                        $this->formatLocalizedDate($tempLiturgicalEvent->date),
                         '<a href="https://www.cultodivino.va/content/dam/cultodivino/rivista-notitiae/2000/notitiae-42-(2006)/Notitiae-475-476-2006.pdf" target="_blank">'
                             . _('Decree of the Dicastery for Divine Worship and the Discipline of the Sacraments')
                         . '</a>'
@@ -1323,12 +1411,7 @@ final class CalendarHandler extends AbstractHandler
                             $coincidingSolemnity->name,
                             $this->CalendarParams->Year,
                             _('the following Monday'),
-                            $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                                ? ( $tempLiturgicalEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $tempLiturgicalEvent->date->format('n')] )
-                                : ( $locale === 'en'
-                                        ? $tempLiturgicalEvent->date->format('F jS')
-                                        : $this->dayAndMonth->format($tempLiturgicalEvent->date->format('U'))
-                            ),
+                            $this->formatLocalizedDate($tempLiturgicalEvent->date),
                             '<a href="https://www.cultodivino.va/content/dam/cultodivino/rivista-notitiae/1990/notitiae-26-(1990)/Notitiae-284-285-1990.pdf" target="_blank">' . _('Decree of the Dicastery for Divine Worship and the Discipline of the Sacraments') . '</a>'
                         );
                     }
@@ -1453,7 +1536,6 @@ final class CalendarHandler extends AbstractHandler
         }
 
         //Holy Family is celebrated the Sunday after Christmas, unless Christmas falls on a Sunday, in which case it is celebrated Dec. 30
-        $locale    = LitLocale::$PRIMARY_LANGUAGE;
         $Christmas = $this->Cal->getLiturgicalEvent('Christmas');
         if (null === $Christmas) {
             throw new ServiceUnavailableException('Christmas was not found among the LiturgicalEvents');
@@ -1469,12 +1551,7 @@ final class CalendarHandler extends AbstractHandler
                 $Christmas->name,
                 $this->CalendarParams->Year,
                 $HolyFamily->name,
-                $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? ( $HolyFamily->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $HolyFamily->date->format('n')] )
-                    : ( $locale === 'en'
-                        ? $HolyFamily->date->format('F jS')
-                        : $this->dayAndMonth->format($HolyFamily->date->format('U'))
-                    )
+                $this->formatLocalizedDate($HolyFamily->date)
             );
         } else {
             $this->PropriumDeTempore['HolyFamily']->setDate(DateTime::fromFormat('25-12-' . $this->CalendarParams->Year)->modify('next Sunday'));
@@ -1884,8 +1961,6 @@ final class CalendarHandler extends AbstractHandler
      */
     private function addMissalMemorialMessage(PropriumDeSanctisEvent $propriumDeSanctisEvent): void
     {
-        $locale = LitLocale::$PRIMARY_LANGUAGE;
-
         /**translators:
          * 1. Grade or rank of the liturgical event
          * 2. Name of the liturgical event
@@ -1899,12 +1974,7 @@ final class CalendarHandler extends AbstractHandler
             $message,
             $propriumDeSanctisEvent->grade->i18n($this->CalendarParams->Locale, false),
             $propriumDeSanctisEvent->name,
-            $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                ? ( $propriumDeSanctisEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $propriumDeSanctisEvent->date->format('n')] )
-                : ( $locale === 'en'
-                    ? $propriumDeSanctisEvent->date->format('F jS')
-                    : $this->dayAndMonth->format($propriumDeSanctisEvent->date->format('U'))
-                ),
+            $this->formatLocalizedDate($propriumDeSanctisEvent->date),
             $propriumDeSanctisEvent->since_year,
             $propriumDeSanctisEvent->decree,
             $this->CalendarParams->Year
@@ -2158,7 +2228,6 @@ final class CalendarHandler extends AbstractHandler
          * 9. Requested calendar year
          */
         $message          = _('The %1$s \'%2$s\', added in the %3$s of the Roman Missal since the year %4$d (%5$s) and usually celebrated on %6$s, is suppressed by the %7$s \'%8$s\' in the year %9$d.');
-        $locale           = LitLocale::$PRIMARY_LANGUAGE;
         $grade_str        = $potentialEvent->grade->i18n($this->CalendarParams->Locale, false);
         $this->Messages[] = sprintf(
             $message,
@@ -2167,12 +2236,7 @@ final class CalendarHandler extends AbstractHandler
             RomanMissal::getName($missal),
             $year,
             $decree,
-            $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                ? ( $potentialEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $potentialEvent->date->format('n')] )
-                : ( $locale === 'en'
-                    ? $potentialEvent->date->format('F jS')
-                    : $this->dayAndMonth->format($potentialEvent->date->format('U'))
-                ),
+            $this->formatLocalizedDate($potentialEvent->date),
             $coincidingLiturgicalEvent->grade_lcl,
             $coincidingLiturgicalEvent->event->name,
             $this->CalendarParams->Year
@@ -2198,7 +2262,6 @@ final class CalendarHandler extends AbstractHandler
         /** @var DecreeItemCreateNewFixed $liturgicalEvent */
         $liturgicalEvent           = $decreeItem->liturgical_event;
         $coincidingLiturgicalEvent = $this->Cal->determineSundaySolemnityOrFeast($liturgicalEvent->date, $liturgicalEvent->event_key);
-        $locale                    = LitLocale::$PRIMARY_LANGUAGE;
         $this->Messages[]          = sprintf(
             /**translators:
              * 1. Grade or rank of the liturgical event
@@ -2213,12 +2276,7 @@ final class CalendarHandler extends AbstractHandler
             _('The %1$s \'%2$s\', added on %3$s since the year %4$d (%5$s), is however superseded by the %6$s \'%7$s\' in the year %8$d.'),
             $liturgicalEvent->grade->i18n($this->CalendarParams->Locale),
             $liturgicalEvent->name,
-            $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                ? ( $liturgicalEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $liturgicalEvent->date->format('n')] )
-                : ( $locale === 'en'
-                    ? $liturgicalEvent->date->format('F jS')
-                    : $this->dayAndMonth->format($liturgicalEvent->date->format('U'))
-                ),
+            $this->formatLocalizedDate($liturgicalEvent->date),
             $decreeItem->metadata->since_year,
             $decreeItem->metadata->getUrl(),
             $coincidingLiturgicalEvent->grade_lcl,
@@ -2347,8 +2405,6 @@ final class CalendarHandler extends AbstractHandler
         $date            = DateTime::fromFormat("{$liturgicalEvent->day}-{$liturgicalEvent->month}-{$this->CalendarParams->Year}");
         $liturgicalEvent->setDate($date);
 
-        $locale = LitLocale::$PRIMARY_LANGUAGE;
-
         if ($liturgicalEvent->grade === LitGrade::MEMORIAL_OPT) {
             if ($this->Cal->notInSolemnitiesFeastsOrMemorials($date)) {
                 $litEvent = LiturgicalEvent::fromObject($liturgicalEvent);
@@ -2366,11 +2422,7 @@ final class CalendarHandler extends AbstractHandler
                     _('The %1$s \'%2$s\' has been added on %3$s since the year %4$d (%5$s), applicable to the year %6$d.'),
                     $liturgicalEvent->grade->i18n($this->CalendarParams->Locale, false),
                     $liturgicalEvent->name,
-                    $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                        ? ( $date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $date->format('n')] )
-                        : ( $locale === 'en' ? $date->format('F jS') :
-                            $this->dayAndMonth->format($date->format('U'))
-                        ),
+                    $this->formatLocalizedDate($date),
                     $decreeItem->metadata->since_year,
                     $decreeItem->metadata->getUrl(),
                     $this->CalendarParams->Year
@@ -3135,20 +3187,8 @@ final class CalendarHandler extends AbstractHandler
                 $newDate      = $rule->then->apply($currentDate);
 
                 // Add a message about the rule application
-                $locale          = LitLocale::$PRIMARY_LANGUAGE;
-                $previousDateStr = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? ( $previousDate->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $previousDate->format('n')] )
-                    : ( $locale === 'en'
-                        ? $previousDate->format('F jS')
-                        : $this->dayAndMonth->format($previousDate->format('U'))
-                    );
-                $newDateStr      = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? ( $newDate->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $newDate->format('n')] )
-                    : ( $locale === 'en'
-                        ? $newDate->format('F jS')
-                        : $this->dayAndMonth->format($newDate->format('U'))
-                    );
-
+                $previousDateStr  = $this->formatLocalizedDate($previousDate);
+                $newDateStr       = $this->formatLocalizedDate($newDate);
                 $this->Messages[] = sprintf(
                     /**translators: 1: Event key, 2: Original date, 3: New date, 4: Requested calendar year */
                     _('The liturgical event \'%1$s\' has been moved from %2$s to %3$s due to conditional rules in the year %4$d.'),
@@ -3434,6 +3474,11 @@ final class CalendarHandler extends AbstractHandler
             && is_string($liturgicalEvent->strtotime)
             && $liturgicalEvent->strtotime !== '';
 
+        $formattedDateStr = $this->formatLocalizedDate($liturgicalEvent->date);
+        $dateStr          = ( $liturgicalEvent instanceof LitCalItemCreateNewMobile ) && $hasStrToTime
+            ? '<i>' . $liturgicalEvent->strtotime . '</i>'
+            : $formattedDateStr;
+
         if ($this->liturgicalEventCanBeCreated($liturgicalEvent)) {
             if ($this->liturgicalEventDoesNotCoincide($liturgicalEvent)) {
                 $newLitEvent = LiturgicalEvent::fromObject($liturgicalEvent);
@@ -3454,21 +3499,11 @@ final class CalendarHandler extends AbstractHandler
                 $infoSource = RomanMissal::getName($litEvent->metadata->missal) . ' #createNewRegionalOrNationalLiturgicalEvent';
             }
 
-            $locale           = LitLocale::$PRIMARY_LANGUAGE;
-            $formattedDateStr = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                ? ( $liturgicalEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $liturgicalEvent->date->format('n')] )
-                : ( $locale === 'en'
-                    ? $liturgicalEvent->date->format('F jS')
-                    : $this->dayAndMonth->format($liturgicalEvent->date->format('U'))
-                );
-            $dateStr          = ( $liturgicalEvent instanceof LitCalItemCreateNewMobile ) && $hasStrToTime
-                ? '<i>' . $liturgicalEvent->strtotime . '</i>'
-                : $formattedDateStr;
             $this->Messages[] = sprintf(
                 /**translators:
                  * 1. Grade or rank of the liturgical event
                  * 2. Name of the liturgical event
-                 * 3. Day and month of the liturgical event
+                 * 3. Date of the liturgical event (day/month for fixed events, or mobile date expression for mobile events)
                  * 4. Year from which the liturgical event has been added
                  * 5. Source of the information
                  * 6. Requested calendar year
@@ -3482,22 +3517,11 @@ final class CalendarHandler extends AbstractHandler
                 $this->CalendarParams->Year
             );
         } else {
-            $locale           = LitLocale::$PRIMARY_LANGUAGE;
-            $formattedDateStr = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                ? ( $liturgicalEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $liturgicalEvent->date->format('n')] )
-                : ( $locale === 'en'
-                    ? $liturgicalEvent->date->format('F jS')
-                    : $this->dayAndMonth->format($liturgicalEvent->date->format('U'))
-                );
-            $dateStr          = ( $liturgicalEvent instanceof LitCalItemCreateNewMobile ) && $hasStrToTime
-                ? '<i>' . $liturgicalEvent->strtotime . '</i>'
-                : $formattedDateStr;
-
             $this->Messages[] = sprintf(
                 /**translators:
                  * 1. Grade or rank of the liturgical event
                  * 2. Name of the liturgical event
-                 * 3. Day and month of the liturgical event
+                 * 3. Date of the liturgical event (day/month for fixed events, or mobile date expression for mobile events)
                  * 4. Requested calendar year
                  */
                 _('The %1$s \'%2$s\' was not added to the calendar on %3$s because it conflicts with an existing liturgical event in the year %4$d.'),
@@ -3852,25 +3876,14 @@ final class CalendarHandler extends AbstractHandler
     private function moveLiturgicalEventDate(string $event_key, DateTime $newDate, string $inFavorOf, $missal): void
     {
         $litEvent   = $this->Cal->getLiturgicalEvent($event_key);
-        $locale     = LitLocale::$PRIMARY_LANGUAGE;
-        $newDateStr = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-            ? ( $newDate->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $newDate->format('n')] )
-            : ( $locale === 'en'
-                ? $newDate->format('F jS')
-                : $this->dayAndMonth->format($newDate->format('U'))
-            );
+        $newDateStr = $this->formatLocalizedDate($newDate);
 
         if (!$this->Cal->inSolemnitiesFeastsOrMemorials($newDate)) {
             $oldDateStr = '';
             // If the liturgical event exists, we can simply move it to the new date
             // If it does not exist, we should recreate it on the new date
             if ($litEvent !== null) {
-                $oldDateStr = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? ( $litEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $litEvent->date->format('n')] )
-                    : ( $locale === 'en'
-                        ? $litEvent->date->format('F jS')
-                        : $this->dayAndMonth->format($litEvent->date->format('U'))
-                    );
+                $oldDateStr = $this->formatLocalizedDate($litEvent->date);
                 $this->Cal->moveLiturgicalEventDate($event_key, $newDate);
             } else {
                 // If it was suppressed on the original date because of a higher ranking celebration,
@@ -3895,12 +3908,7 @@ final class CalendarHandler extends AbstractHandler
                         $this->Cal->addLiturgicalEvent($event_key, $suppressedEvent);
                         // if it was suppressed previously (which it should have been), we should remove from the suppressed events collection
                         $this->Cal->reinstateEvent($event_key);
-                        $oldDateStr = in_array($locale, [LitLocale::LATIN, LitLocale::LATIN_PRIMARY_LANGUAGE], true)
-                            ? ( $oldDate->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $oldDate->format('n')] )
-                            : ( $locale === 'en'
-                                ? $oldDate->format('F jS')
-                                : $this->dayAndMonth->format($oldDate->format('U'))
-                            );
+                        $oldDateStr = $this->formatLocalizedDate($oldDate);
                     } else {
                         throw new ServiceUnavailableException("This is strange, {$event_key} is not suppressed? Where is it?");
                     }
@@ -3924,13 +3932,7 @@ final class CalendarHandler extends AbstractHandler
             }
         } else {
             if ($litEvent !== null) {
-                $oldDateStr = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? ( $litEvent->date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $litEvent->date->format('n')] )
-                    : ( $locale === 'en'
-                        ? $litEvent->date->format('F jS')
-                        : $this->dayAndMonth->format($litEvent->date->format('U'))
-                    );
-
+                $oldDateStr                = $this->formatLocalizedDate($litEvent->date);
                 $coincidingLiturgicalEvent = $this->Cal->determineSundaySolemnityOrFeast($newDate, $event_key);
                 //If the new date is already covered by a Solemnity, Feast or Memorial, then we can't move the celebration, so we simply suppress it
                 $this->Messages[] = sprintf(
@@ -4364,25 +4366,7 @@ final class CalendarHandler extends AbstractHandler
         } else {
             // We always create a cache of the Github Release, even for localhost development,
             // to avoid sending too many requests
-            if (false === realpath($this->CachePath)) {
-                $cwd = getcwd() ?: './';
-                if (false === is_writable($cwd)) {
-                    $description = sprintf(
-                        'The cache folder %s does not exist, but we cannot create it because the parent folder %s is not writable.',
-                        dirname($this->CachePath),
-                        $cwd
-                    );
-                    throw new ServiceUnavailableException($description);
-                }
-
-                if (false === mkdir($this->CachePath, 0755, true)) {
-                    $description = sprintf(
-                        'Could not create cache folder: %s. Please ensure the path is writable.',
-                        $this->CachePath
-                    );
-                    throw new ServiceUnavailableException($description);
-                }
-            }
+            $this->ensureCachePathExists();
 
             $GithubReleasesAPI = 'https://api.github.com/repos/Liturgical-Calendar/LiturgicalCalendarAPI/releases/latest';
 
@@ -4487,25 +4471,7 @@ final class CalendarHandler extends AbstractHandler
 
         // Ensure cache folder exists, except for localhost
         if (false === Router::isLocalhost()) {
-            if (false === realpath($this->CachePath)) {
-                $cwd = getcwd() ?: './';
-                if (false === is_writable($cwd)) {
-                    $description = sprintf(
-                        'The cache folder %s does not exist, but we cannot create it because the parent folder %s is not writable.',
-                        dirname($this->CachePath),
-                        $cwd
-                    );
-                    throw new ServiceUnavailableException($description);
-                }
-
-                if (false === mkdir($this->CachePath, 0755, true)) {
-                    $message = sprintf(
-                        'Could not create cache folder: %s.',
-                        $this->CachePath
-                    );
-                    throw new ServiceUnavailableException($message);
-                }
-            }
+            $this->ensureCachePathExists();
         }
 
         $responseBody = null;
