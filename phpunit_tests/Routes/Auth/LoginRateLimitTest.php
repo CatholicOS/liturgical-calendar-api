@@ -74,6 +74,41 @@ class LoginRateLimitTest extends ApiTestCase
     }
 
     /**
+     * Exhaust the rate limit by making failed login attempts up to the configured maximum.
+     *
+     * @return \Psr\Http\Message\ResponseInterface The rate-limited (429) response after exceeding the limit.
+     */
+    private function exhaustRateLimit(): \Psr\Http\Message\ResponseInterface
+    {
+        $maxAttempts = (int) ( $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] ?? 5 );
+
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            self::$http->post('/auth/login', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept'       => 'application/json'
+                ],
+                'json'    => [
+                    'username' => 'admin',
+                    'password' => 'wrong-' . uniqid()
+                ]
+            ]);
+        }
+
+        // Return the rate-limited response
+        return self::$http->post('/auth/login', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Accept'       => 'application/json'
+            ],
+            'json'    => [
+                'username' => 'admin',
+                'password' => 'wrong-final'
+            ]
+        ]);
+    }
+
+    /**
      * Test that login fails with invalid credentials.
      *
      * This is a basic test to ensure the login endpoint returns 401 for wrong passwords.
@@ -165,34 +200,7 @@ class LoginRateLimitTest extends ApiTestCase
      */
     public function testRateLimitResponseFormat(): void
     {
-        // Get the configured rate limit (default is 5)
-        $maxAttempts = (int) ( $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] ?? 5 );
-
-        // Exhaust rate limit
-        for ($i = 0; $i < $maxAttempts; $i++) {
-            self::$http->post('/auth/login', [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'Accept'       => 'application/json'
-                ],
-                'json'    => [
-                    'username' => 'admin',
-                    'password' => 'wrong-password-format-test-' . $i
-                ]
-            ]);
-        }
-
-        // Get rate limited response
-        $response = self::$http->post('/auth/login', [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Accept'       => 'application/json'
-            ],
-            'json'    => [
-                'username' => 'admin',
-                'password' => 'wrong-password-format-final'
-            ]
-        ]);
+        $response = $this->exhaustRateLimit();
 
         $this->assertEquals(429, $response->getStatusCode());
 
@@ -288,34 +296,7 @@ class LoginRateLimitTest extends ApiTestCase
      */
     public function testRateLimitResponseContentType(): void
     {
-        // Get the configured rate limit (default is 5)
-        $maxAttempts = (int) ( $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] ?? 5 );
-
-        // Exhaust rate limit
-        for ($i = 0; $i < $maxAttempts; $i++) {
-            self::$http->post('/auth/login', [
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'Accept'       => 'application/json'
-                ],
-                'json'    => [
-                    'username' => 'admin',
-                    'password' => 'wrong-password-content-type-' . $i
-                ]
-            ]);
-        }
-
-        // Get rate limited response
-        $response = self::$http->post('/auth/login', [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Accept'       => 'application/json'
-            ],
-            'json'    => [
-                'username' => 'admin',
-                'password' => 'wrong-password-content-type-final'
-            ]
-        ]);
+        $response = $this->exhaustRateLimit();
 
         $this->assertEquals(429, $response->getStatusCode());
 
