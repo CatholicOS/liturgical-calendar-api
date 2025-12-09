@@ -4334,6 +4334,11 @@
             "type": "string",
             "format": "password",
             "description": "Password for authentication"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, the refresh token cookie persists beyond the browser session (with Max-Age/Expires). When false (default), the refresh token is stored as a session cookie that is deleted when the browser closes."
           }
         },
         "required": [

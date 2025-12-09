@@ -29,6 +29,7 @@ use Psr\Http\Message\ServerRequestInterface;
  * Accepts:
  * - username (string)
  * - password (string)
+ * - remember_me (boolean, optional) - When true, refresh token cookie persists beyond browser session
  *
  * Returns:
  * - access_token (string) - JWT access token
@@ -151,13 +152,17 @@ final class LoginHandler extends AbstractHandler
         // Parse request body (required=true handles Content-Type and empty body validation)
         $parsedBodyParams = $this->parseBodyParams($request, true);
 
-        // Extract username and password
-        $username = $parsedBodyParams['username'] ?? null;
-        $password = $parsedBodyParams['password'] ?? null;
+        // Extract username, password, and remember_me option
+        $username   = $parsedBodyParams['username'] ?? null;
+        $password   = $parsedBodyParams['password'] ?? null;
+        $rememberMe = $parsedBodyParams['remember_me'] ?? false;
 
         if (!is_string($username) || !is_string($password) || trim($username) === '' || trim($password) === '') {
             throw new ValidationException('Username and password are required and must be non-empty strings');
         }
+
+        // Ensure remember_me is a boolean
+        $rememberMe = filter_var($rememberMe, FILTER_VALIDATE_BOOLEAN);
 
         // Authenticate user
         $user = User::authenticate($username, $password);
@@ -192,8 +197,10 @@ final class LoginHandler extends AbstractHandler
         ]);
 
         // Set HttpOnly cookies for secure token storage
+        // Access token: persistent cookie with short TTL (e.g., 15-60 min), refreshed automatically
+        // Refresh token: session cookie (deleted on browser close) unless remember_me=true
         $response = CookieHelper::setAccessTokenCookie($response, $token, $jwtService->getExpiry());
-        $response = CookieHelper::setRefreshTokenCookie($response, $refreshToken, $jwtService->getRefreshExpiry());
+        $response = CookieHelper::setRefreshTokenCookie($response, $refreshToken, $jwtService->getRefreshExpiry(), $rememberMe);
 
         // Prepare response data (tokens still included for backwards compatibility)
         $responseData = [
