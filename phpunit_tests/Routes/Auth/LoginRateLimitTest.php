@@ -21,15 +21,23 @@ class LoginRateLimitTest extends ApiTestCase
      * Clear rate limit state before each test.
      *
      * This ensures that rate limit state doesn't carry over from previous tests.
-     * We attempt to clear files directly first (works when test process shares
-     * filesystem with API), then fall back to successful login approach for
-     * environments where the API runs in a container with different filesystem.
      */
     protected function setUp(): void
     {
         parent::setUp();
+        $this->resetRateLimitState();
+    }
 
-        // Try to clear rate limit files directly (works in local dev)
+    /**
+     * Reset rate limit state by clearing files and attempting successful login.
+     *
+     * We attempt to clear files directly first (works when test process shares
+     * filesystem with API), then fall back to successful login approach for
+     * environments where the API runs in a container with different filesystem.
+     */
+    private function resetRateLimitState(): void
+    {
+        // Clear rate limit files directly (works in local dev)
         $this->clearRateLimitFiles();
 
         // Also attempt a successful login as a fallback for containerized environments
@@ -313,26 +321,10 @@ class LoginRateLimitTest extends ApiTestCase
      * Clean up rate limit data after each test.
      *
      * This ensures that rate limit state doesn't carry over to other test classes.
-     * We clear files directly first (essential when tests end in rate-limited state),
-     * then attempt a successful login as a fallback for containerized environments.
      */
     protected function tearDown(): void
     {
-        // Clear rate limit files directly first (essential when rate-limited)
-        $this->clearRateLimitFiles();
-
-        // Also attempt a successful login as a fallback for containerized environments
-        self::$http->post('/auth/login', [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Accept'       => 'application/json'
-            ],
-            'json'    => [
-                'username' => $_ENV['ADMIN_USERNAME'] ?? 'admin',
-                'password' => $_ENV['ADMIN_PASSWORD'] ?? 'password'
-            ]
-        ]);
-
+        $this->resetRateLimitState();
         parent::tearDown();
     }
 }
