@@ -197,8 +197,8 @@ final class LoginHandler extends AbstractHandler
         ]);
 
         // Set HttpOnly cookies for secure token storage
-        // Access token always has Max-Age set (short-lived, refreshed automatically)
-        // Refresh token is a session cookie unless "remember me" is checked
+        // Access token: persistent cookie with short TTL (e.g., 15-60 min), refreshed automatically
+        // Refresh token: session cookie (deleted on browser close) unless remember_me=true
         $response = CookieHelper::setAccessTokenCookie($response, $token, $jwtService->getExpiry());
         $response = CookieHelper::setRefreshTokenCookie($response, $refreshToken, $jwtService->getRefreshExpiry(), $rememberMe);
 
