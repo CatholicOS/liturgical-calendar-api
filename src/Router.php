@@ -411,7 +411,7 @@ class Router
 
         // Apply JWT authentication middleware for protected routes
         if (
-            $route === 'data'
+            in_array($route, ['data', 'tests'], true)
             && in_array($this->request->getMethod(), [RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value], true)
         ) {
             $pipeline->pipe(new JwtAuthMiddleware());
