@@ -310,13 +310,18 @@ class LoginRateLimitTest extends ApiTestCase
     }
 
     /**
-     * Clean up rate limit data after each test by making a successful login.
+     * Clean up rate limit data after each test.
      *
-     * This ensures that rate limit state doesn't carry over between tests.
+     * This ensures that rate limit state doesn't carry over to other test classes.
+     * We clear files directly first (essential when tests end in rate-limited state),
+     * then attempt a successful login as a fallback for containerized environments.
      */
     protected function tearDown(): void
     {
-        // Make a successful login to clear any rate limiting state
+        // Clear rate limit files directly first (essential when rate-limited)
+        $this->clearRateLimitFiles();
+
+        // Also attempt a successful login as a fallback for containerized environments
         self::$http->post('/auth/login', [
             'headers' => [
                 'Content-Type' => 'application/json',
