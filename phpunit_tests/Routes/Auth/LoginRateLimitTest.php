@@ -18,22 +18,40 @@ use LiturgicalCalendar\Tests\ApiTestCase;
 class LoginRateLimitTest extends ApiTestCase
 {
     /**
-     * Clear rate limit state before each test by removing rate limit files.
+     * Clear rate limit state before each test.
      *
      * This ensures that rate limit state doesn't carry over from previous tests.
-     * We clear the files directly because if we're rate limited, we can't make
-     * a successful login to clear the rate limit (the check happens before auth).
+     * We attempt to clear files directly first (works when test process shares
+     * filesystem with API), then fall back to successful login approach for
+     * environments where the API runs in a container with different filesystem.
      */
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Clear rate limit files directly
+        // Try to clear rate limit files directly (works in local dev)
         $this->clearRateLimitFiles();
+
+        // Also attempt a successful login as a fallback for containerized environments
+        // where we may not have filesystem access to the API's rate limit storage
+        self::$http->post('/auth/login', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Accept'       => 'application/json'
+            ],
+            'json'    => [
+                'username' => $_ENV['ADMIN_USERNAME'] ?? 'admin',
+                'password' => $_ENV['ADMIN_PASSWORD'] ?? 'password'
+            ]
+        ]);
     }
 
     /**
      * Clear all rate limit files from the storage directory.
+     *
+     * This is a best-effort operation that silently fails if the directory
+     * doesn't exist or files can't be deleted (e.g., in containerized CI
+     * environments where the API has a different filesystem).
      */
     private function clearRateLimitFiles(): void
     {
@@ -51,7 +69,7 @@ class LoginRateLimitTest extends ApiTestCase
         }
 
         foreach ($files as $file) {
-            unlink($file);
+            @unlink($file);
         }
     }
 
