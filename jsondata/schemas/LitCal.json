@@ -53,6 +53,11 @@
                             "type": "string",
                             "description": "Will only appear for AJAX requests, and will only ever have a value of XMLHttpRequest",
                             "const": "XMLHttpRequest"
+                        },
+                        "Origin": {
+                            "type": "string",
+                            "description": "The Origin header is sent by the browser for CORS requests",
+                            "format": "uri"
                         }
                     },
                     "additionalProperties": false
