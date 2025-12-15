@@ -166,7 +166,7 @@ The following environment variables can be set to configure the API:
 * `API_PROTOCOL`: The protocol to use for the API (default is `http`). Example: `API_PROTOCOL=https` to use the `https` protocol.
 * `API_HOST`: The hostname or IP address to use for the API (default is `localhost`). Example: `API_HOST=mydomain.com` to use the `mydomain.com` host.
 * `API_PORT`: The port to use for the API (default is `8000`). Example: `API_PORT=8080` to use port `8080`.
-* `API_BASE_PATH`: The base path to use for the API (default is `/`). Example: `API_BASE_PATH=/api/v1/` to use the `/api/v1/` base path.
+* `API_BASE_PATH`: The base path to use for the API (empty by default for local development). Example: `API_BASE_PATH=/api/v1/` to use the `/api/v1/` base path in production.
 
 These environment variables should be set in a `.env` or `.env.local` file (the same files used by the PHP application to load environment variables).
 You can copy the `.env.example` file to `.env` or `.env.local` (or `.env.development` or `.env.production`) and edit it as needed.

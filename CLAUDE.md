@@ -45,7 +45,7 @@ composer stop
 - `API_PROTOCOL` (http|https)
 - `API_HOST` (localhost in dev)
 - `API_PORT` (8000 in dev)
-- `API_BASE_PATH` (/ in dev)
+- `API_BASE_PATH` (empty in dev, e.g. /api/dev in production)
 - `APP_ENV` (development|test|staging|production) - **Required in non-localhost environments**
   - `development` / `test`: Allow default password if `ADMIN_PASSWORD_HASH` is unset (for testing convenience)
   - `staging` / `production`: Require `ADMIN_PASSWORD_HASH` to be configured (throws exception if missing)
