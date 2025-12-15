@@ -29,14 +29,17 @@ class RateLimiter
         int $windowSeconds = 900,
         ?string $storagePath = null
     ) {
+        if ($maxAttempts <= 0 || $windowSeconds <= 0) {
+            throw new \InvalidArgumentException('maxAttempts and windowSeconds must be positive.');
+        }
         $this->maxAttempts   = $maxAttempts;
         $this->windowSeconds = $windowSeconds;
         $this->storagePath   = $storagePath ?? sys_get_temp_dir();
 
         // Ensure the rate limit directory exists
         $rateLimitDir = $this->getRateLimitDir();
-        if (!is_dir($rateLimitDir)) {
-            mkdir($rateLimitDir, 0750, true);
+        if (!is_dir($rateLimitDir) && !@mkdir($rateLimitDir, 0750, true) && !is_dir($rateLimitDir)) {
+            throw new \RuntimeException(sprintf('Failed to create rate limit directory "%s".', $rateLimitDir));
         }
     }
 
