@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-12-07 08:46+0000\n"
-"PO-Revision-Date: 2025-12-15 21:33+0000\n"
+"PO-Revision-Date: 2025-12-15 21:38+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: German <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/de/>\n"
@@ -1167,7 +1167,7 @@ msgid ""
 "The Memorial '%1$s' coincides with another Memorial '%2$s' in the year %3$d. "
 "They are both reduced in rank to optional memorials."
 msgstr ""
-"Der Gedenken '%1$s' fällt im Jahr %3$d mit einem anderen Gedenken '%2$s' "
+"Der Gedenktag '%1$s' fällt im Jahr %3$d mit einem anderen Gedenktag '%2$s' "
 "zusammen. Beide werden zu fakultativen Gedenktagen herabgestuft."
 
 #. translators: 1. LiturgicalEvent name, 2. LiturgicalEvent date, 3. Coinciding liturgical event name, 4. Requested calendar year
@@ -1209,7 +1209,7 @@ msgid ""
 "the correct date information in order to proceed"
 msgstr ""
 "Wir sollten ein neues liturgisches Ereignis schaffen, aber anscheinend haben "
-"wir nicht die richtigen Datumsinformationen, um fortzufahren."
+"wir nicht die richtigen Datumsinformationen, um fortzufahren"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
