@@ -937,9 +937,10 @@
         ],
         "summary": "Refresh access token using refresh token",
         "operationId": "authRefresh",
-        "description": "Use a valid refresh token to obtain a new access token without re-authenticating with username/password.",
+        "description": "Use a valid refresh token to obtain a new access token without re-authenticating with username/password.\n\n**Token Sources (in order of precedence):**\n1. **HttpOnly Cookie** (preferred): The refresh token is automatically read from the `litcal_refresh_token` cookie if present. Browser-based clients using cookie authentication can call this endpoint without a request body.\n2. **Request Body** (fallback): If no cookie is present, the refresh token must be provided in the JSON request body.\n\n**Usage:**\n- **Browser clients**: Use `credentials: 'include'` in fetch requests. No request body needed if cookies were set by `/auth/login`.\n- **Server/API clients**: Send the refresh token in the request body.",
         "requestBody": {
-          "required": true,
+          "required": false,
+          "description": "Optional when using cookie-based authentication. Required for clients that don't send cookies.",
           "content": {
             "application/json": {
               "schema": {
@@ -4509,15 +4510,13 @@
       },
       "RefreshRequest": {
         "type": "object",
+        "description": "Request body for token refresh. This body is optional when using cookie-based authentication, as the server will read the refresh token from the `litcal_refresh_token` HttpOnly cookie first.",
         "properties": {
           "refresh_token": {
             "type": "string",
-            "description": "Valid refresh token obtained from /auth/login"
+            "description": "Valid refresh token obtained from /auth/login. Required only if not using cookie-based authentication (i.e., if the `litcal_refresh_token` cookie is not present)."
           }
-        },
-        "required": [
-          "refresh_token"
-        ]
+        }
       },
       "RefreshResponse": {
         "type": "object",
