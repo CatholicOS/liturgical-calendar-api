@@ -11,9 +11,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-12-07 08:46+0000\n"
-"PO-Revision-Date: 2025-12-06 09:26+0000\n"
+"PO-Revision-Date: 2025-12-15 21:38+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Spanish <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/es/>\n"
@@ -1205,7 +1205,7 @@ msgid ""
 "the correct date information in order to proceed"
 msgstr ""
 "Deberíamos crear un nuevo evento litúrgico, sin embargo, parece que no "
-"tenemos la información de fecha correcta para proceder."
+"tenemos la información de fecha correcta para proceder"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
