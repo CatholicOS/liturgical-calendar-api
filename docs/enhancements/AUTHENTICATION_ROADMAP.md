@@ -458,7 +458,7 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 - ✅ **Longer-lived refresh tokens** - Default 7 days (configurable via `JWT_REFRESH_EXPIRY`)
 - ✅ **Password hashing** - Uses `password_hash()` with `PASSWORD_ARGON2ID`
 - ✅ **JWT signature verification** - All tokens validated with HS256 algorithm
-- ✅ **HttpOnly cookies** - Tokens stored in HttpOnly cookies, not accessible to JavaScript (XSS protection)
+- ✅ **HttpOnly cookies** - Tokens stored in HttpOnly cookies, inaccessible to JavaScript (XSS protection)
 - ✅ **SameSite cookie attribute** - CSRF protection via `SameSite=Lax` (access token) and `SameSite=Strict` (refresh token)
 - ✅ **Secure cookie flag** - Cookies only sent over HTTPS in production
 - ✅ **Path restriction** - Refresh token cookie only sent to `/auth` endpoints
