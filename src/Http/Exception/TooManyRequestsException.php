@@ -34,7 +34,7 @@ class TooManyRequestsException extends ApiException
             $previous
         );
 
-        $this->retryAfter = $retryAfter;
+        $this->retryAfter = max(0, $retryAfter);
     }
 
     /**
