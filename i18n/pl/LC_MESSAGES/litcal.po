@@ -7,9 +7,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-12-07 08:46+0000\n"
-"PO-Revision-Date: 2025-12-06 12:42+0000\n"
+"PO-Revision-Date: 2025-12-15 21:33+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Polish <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/pl/>\n"
@@ -17,8 +17,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && "
+"(n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Weblate 5.13.3\n"
 
 #. translators: context = liturgical color
@@ -987,8 +987,8 @@ msgid ""
 "The %1$s '%2$s' has been lowered to the rank of %3$s since the year %4$d, "
 "applicable to the year %5$d (%6$s)."
 msgstr ""
-"\"%1$s '%2$s' został obniżony do rangi %3$s od roku %4$d, obowiązującej w "
-"roku %5$d (%6$s)."
+"%1$s '%2$s' został obniżony do rangi %3$s od roku %4$d, obowiązującej w roku "
+"%5$d (%6$s)."
 
 #. translators:
 #.  1. Name of the liturgical event
