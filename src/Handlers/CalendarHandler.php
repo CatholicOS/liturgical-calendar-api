@@ -645,33 +645,43 @@ final class CalendarHandler extends AbstractHandler
             throw new ServiceUnavailableException('Cache path has not been initialized.');
         }
 
-        if (false === realpath($cachePath)) {
-            // Walk up from the target directory to find the nearest existing ancestor
-            $existingAncestor = dirname($cachePath);
-            while ($existingAncestor !== '' && $existingAncestor !== '.' && false === is_dir($existingAncestor)) {
-                $existingAncestor = dirname($existingAncestor);
+        $resolved = realpath($cachePath);
+        if ($resolved !== false) {
+            // Cache directory exists - verify it's writable and fail early if not
+            if (false === is_writable($resolved)) {
+                throw new ServiceUnavailableException(sprintf(
+                    'The cache folder %s exists but is not writable.',
+                    $resolved
+                ));
             }
-            // Fall back to current directory if we walked all the way up
-            if ($existingAncestor === '' || false === is_dir($existingAncestor)) {
-                $existingAncestor = '.';
-            }
+            return;
+        }
 
-            if (false === is_writable($existingAncestor)) {
-                $description = sprintf(
-                    'The cache folder %s does not exist, but we cannot create it because the parent folder %s is not writable.',
-                    $cachePath,
-                    $existingAncestor
-                );
-                throw new ServiceUnavailableException($description);
-            }
+        // Directory doesn't exist - walk up from the target directory to find the nearest existing ancestor
+        $existingAncestor = dirname($cachePath);
+        while ($existingAncestor !== '' && $existingAncestor !== '.' && false === is_dir($existingAncestor)) {
+            $existingAncestor = dirname($existingAncestor);
+        }
+        // Fall back to current directory if we walked all the way up
+        if ($existingAncestor === '' || false === is_dir($existingAncestor)) {
+            $existingAncestor = '.';
+        }
 
-            if (false === mkdir($cachePath, 0755, true) && false === is_dir($cachePath)) {
-                $description = sprintf(
-                    'Could not create cache folder: %s. Please ensure the path is writable.',
-                    $cachePath
-                );
-                throw new ServiceUnavailableException($description);
-            }
+        if (false === is_writable($existingAncestor)) {
+            $description = sprintf(
+                'The cache folder %s does not exist, but we cannot create it because the parent folder %s is not writable.',
+                $cachePath,
+                $existingAncestor
+            );
+            throw new ServiceUnavailableException($description);
+        }
+
+        if (false === mkdir($cachePath, 0755, true) && false === is_dir($cachePath)) {
+            $description = sprintf(
+                'Could not create cache folder: %s. Please ensure the path is writable.',
+                $cachePath
+            );
+            throw new ServiceUnavailableException($description);
         }
     }
 
