@@ -4167,7 +4167,7 @@
           "litcal_events": {
             "type": "object",
             "patternProperties": {
-              "^[A-Z](?:[A-Z]+_)*[a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$": {
+              "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?$": {
                 "type": "object",
                 "properties": {
                   "month": {
@@ -4184,7 +4184,7 @@
                   },
                   "event_key": {
                     "type": "string",
-                    "pattern": "^[A-Z](?:[A-Z]+_)*[a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$",
+                    "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?$",
                     "description": "corresponds to the `event_key` property of liturgical events in the output of the LitCal API and similar endpoints"
                   },
                   "grade": {
