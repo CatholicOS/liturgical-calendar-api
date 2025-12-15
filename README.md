@@ -176,24 +176,24 @@ docker run -p 8000:8000 -d liturgy-api:{branch}
 This typically results in a Docker image of ~1.1 GB (subject to change). Unfortunately this cannot be reduced by means of an alpine image,
 if we want to install system locales in order for `gettext` to work properly with all supported languages.
 
-## Configuration
+# Configuration
 
 Environment variables should be set in a `.env` or `.env.local` file.
 You can copy the `.env.example` file to `.env` or `.env.local` (or `.env.development`, `.env.test`, `.env.staging`, `.env.production`) and edit it as needed.
 The defaults are suitable for development and testing, but may need to be overridden for staging or production environments.
 
-### General Settings
+## General Settings
 
 * `APP_ENV`: Application environment (**required in non-localhost environments**). Must be one of: `development`, `test`, `staging`, `production`
 
-### API Server Configuration
+## API Server Configuration
 
 * `API_PROTOCOL`: The protocol to use for the API (default: `http`). Example: `API_PROTOCOL=https`
 * `API_HOST`: The hostname or IP address to use for the API (default: `localhost`). Example: `API_HOST=mydomain.com`
 * `API_PORT`: The port to use for the API (default: `8000`). Example: `API_PORT=8080`
 * `API_BASE_PATH`: The base path to use for the API (empty by default for local development). Example: `API_BASE_PATH=/api/v1/` for production
 
-### JWT Authentication Configuration
+## JWT Authentication Configuration
 
 The API supports JWT authentication for protected write operations. Configure the following environment variables:
 
@@ -214,13 +214,13 @@ The API implements fail-closed authentication that requires `APP_ENV` to be expl
 
 This ensures that production environments cannot accidentally use weak default credentials.
 
-### CORS Configuration
+## CORS Configuration
 
 * `CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins for credentialed CORS requests (auth endpoints).
   Use `*` to allow all origins (not recommended for production with cookie-based auth).
   Example: `CORS_ALLOWED_ORIGINS=https://example.com,https://admin.example.com`
 
-### Example Production Configuration
+## Example Production Configuration
 
 ```bash
 APP_ENV=production
@@ -237,7 +237,7 @@ ADMIN_USERNAME=admin
 CORS_ALLOWED_ORIGINS=https://mydomain.com,https://admin.mydomain.com
 ```
 
-### Authentication Endpoints and Protected Routes
+## Authentication Endpoints and Protected Routes
 
 **Protected Routes** (require JWT authentication via HttpOnly cookie or `Authorization: Bearer <token>` header):
 
