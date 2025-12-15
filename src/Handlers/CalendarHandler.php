@@ -114,7 +114,7 @@ final class CalendarHandler extends AbstractHandler
     private string $BaptismLordFmt;
     private string $BaptismLordMod;
 
-    public const API_VERSION = '5.6';
+    public const API_VERSION = '5.7';
 
     /**
      * Path to the cache directory. Initialized by handle() before any cache operations.
