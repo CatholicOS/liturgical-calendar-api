@@ -42,7 +42,7 @@ class LoginRateLimitTest extends ApiTestCase
 
         // Also attempt a successful login as a fallback for containerized environments
         // where we may not have filesystem access to the API's rate limit storage
-        self::$http->post('/auth/login', [
+        $response = self::$http->post('/auth/login', [
             'headers' => [
                 'Content-Type' => 'application/json',
                 'Accept'       => 'application/json'
@@ -52,6 +52,13 @@ class LoginRateLimitTest extends ApiTestCase
                 'password' => $_ENV['ADMIN_PASSWORD'] ?? 'password'
             ]
         ]);
+
+        if ($response->getStatusCode() !== 200) {
+            $this->fail(
+                'Admin login in resetRateLimitState() failed with status ' .
+                $response->getStatusCode() . '. Check ADMIN_USERNAME/ADMIN_PASSWORD configuration.'
+            );
+        }
     }
 
     /**
