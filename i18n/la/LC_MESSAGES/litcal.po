@@ -9,10 +9,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-12-07 08:46+0000\n"
-"PO-Revision-Date: 2025-12-01 19:37+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2025-12-15 21:38+0000\n"
+"Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Latin <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/la/>\n"
 "Language: la\n"
@@ -1209,7 +1209,7 @@ msgid ""
 "the correct date information in order to proceed"
 msgstr ""
 "Novum eventum liturgicum creare debemus, sed informationem de data rectam "
-"non habere videmur ut procedamus."
+"non habere videmur ut procedamus"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
