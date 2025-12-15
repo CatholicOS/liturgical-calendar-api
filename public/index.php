@@ -51,7 +51,7 @@ use LiturgicalCalendar\Api\Router;
 use Dotenv\Dotenv;
 use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 
-$dotenv = Dotenv::createImmutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.staging', '.env.production'], false);
+$dotenv = Dotenv::createImmutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.test', '.env.staging', '.env.production'], false);
 
 if (Router::isLocalhost()) {
     // In development environment if no .env file is present we don't want to throw an error
