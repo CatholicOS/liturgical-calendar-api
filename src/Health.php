@@ -455,8 +455,13 @@ class Health implements MessageComponentInterface
                             );
                             break;
                         case 'diocesan-calendar':
-                            $dioceseMetadata = $this->findDioceseMetadata($matches[2]);
-                            $dataPath        = strtr(
+                            try {
+                                $dioceseMetadata = $this->findDioceseMetadata($matches[2]);
+                            } catch (\RuntimeException | NotFoundException $e) {
+                                $this->handleDioceseMetadataError($e, $to, $validation, $matches[2]);
+                                return;
+                            }
+                            $dataPath = strtr(
                                 JsonData::DIOCESAN_CALENDAR_I18N_FOLDER->path(),
                                 [
                                     '{diocese}' => $matches[2],
@@ -495,8 +500,13 @@ class Health implements MessageComponentInterface
                                 );
                                 break;
                             case 'diocesan-calendar':
-                                $dioceseMetadata = $this->findDioceseMetadata($matches[2]);
-                                $dataPath        = strtr(
+                                try {
+                                    $dioceseMetadata = $this->findDioceseMetadata($matches[2]);
+                                } catch (\RuntimeException | NotFoundException $e) {
+                                    $this->handleDioceseMetadataError($e, $to, $validation, $matches[2]);
+                                    return;
+                                }
+                                $dataPath = strtr(
                                     JsonData::DIOCESAN_CALENDAR_FILE->path(),
                                     [
                                         '{diocese}'      => $matches[2],
@@ -657,11 +667,16 @@ class Health implements MessageComponentInterface
             // If the 'sourceFolder' property is not set, then we are validating a single source file or API path
             $matches = null;
             if (preg_match('/^diocesan-calendar-([a-z]{6}_[a-z]{2})$/', $pathForSchema, $matches)) {
-                $dioceseId       = $matches[1];
-                $dioceseMetadata = $this->findDioceseMetadata($dioceseId);
-                $nation          = $dioceseMetadata->nation;
-                $dioceseName     = $dioceseMetadata->diocese;
-                $dataPath        = strtr(JsonData::DIOCESAN_CALENDAR_FILE->path(), [
+                $dioceseId = $matches[1];
+                try {
+                    $dioceseMetadata = $this->findDioceseMetadata($dioceseId);
+                } catch (\RuntimeException | NotFoundException $e) {
+                    $this->handleDioceseMetadataError($e, $to, $validation, $dioceseId);
+                    return;
+                }
+                $nation      = $dioceseMetadata->nation;
+                $dioceseName = $dioceseMetadata->diocese;
+                $dataPath    = strtr(JsonData::DIOCESAN_CALENDAR_FILE->path(), [
                     '{nation}'       => $nation,
                     '{diocese}'      => $dioceseId,
                     '{diocese_name}' => $dioceseName
@@ -738,6 +753,47 @@ class Health implements MessageComponentInterface
         $message->type    = 'error';
         $message->text    = "Unable to verify schema for dataPath {$dataPath} and category {$category} since Data file $dataPath does not exist or is not readable";
         $message->classes = ".$validate.schema-valid";
+        $this->sendMessage($to, $message);
+    }
+
+    /**
+     * Handle diocese metadata lookup errors.
+     *
+     * Sends a structured WebSocket error message to indicate that the caller
+     * should abort further processing.
+     *
+     * @param \RuntimeException|NotFoundException $e The exception that was thrown.
+     * @param ConnectionInterface $to The WebSocket connection to send the error to.
+     * @param ExecuteValidationSourceFolder|ExecuteValidationSourceFile|ExecuteValidationResource $validation The validation object.
+     * @param string $calendarId The diocese calendar ID that failed to resolve.
+     * @return void
+     */
+    private function handleDioceseMetadataError(
+        \RuntimeException|NotFoundException $e,
+        ConnectionInterface $to,
+        \stdClass $validation,
+        string $calendarId
+    ): void {
+        $validate = (string) $validation->validate;
+
+        $message       = new \stdClass();
+        $message->type = 'error';
+
+        // Check NotFoundException first since it extends RuntimeException via ApiException
+        if ($e instanceof NotFoundException) {
+            $message->error_code = 'unknown_diocese';
+            $message->text       = "Unknown diocese calendar ID: {$calendarId}. Please verify the calendar ID is correct.";
+            $message->hint       = 'invalid_input';
+            echo "Diocese metadata error (NotFoundException) for {$calendarId}: " . $e->getMessage() . "\n";
+        } else {
+            // Generic RuntimeException (e.g., metadata not loaded yet)
+            $message->error_code = 'metadata_loading';
+            $message->text       = "Metadata not loaded yet. Please retry in a moment. Calendar ID: {$calendarId}";
+            $message->hint       = 'retry';
+            echo "Diocese metadata error (RuntimeException) for {$calendarId}: " . $e->getMessage() . "\n";
+        }
+
+        $message->classes = ".$validate.diocese-metadata";
         $this->sendMessage($to, $message);
     }
 
