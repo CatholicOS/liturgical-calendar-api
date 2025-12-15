@@ -67,6 +67,18 @@ class RateLimiter
     }
 
     /**
+     * Get the lock file path for a specific identifier
+     *
+     * @param string $identifier The identifier (e.g., IP address)
+     * @return string
+     */
+    private function getLockFilePath(string $identifier): string
+    {
+        $hash = hash('sha256', $identifier);
+        return $this->getRateLimitDir() . DIRECTORY_SEPARATOR . $hash . '.lock';
+    }
+
+    /**
      * Check if an identifier is currently rate limited
      *
      * @param string $identifier The identifier to check (e.g., IP address)
@@ -91,10 +103,47 @@ class RateLimiter
     /**
      * Record a failed attempt for an identifier
      *
+     * Uses file locking to prevent race conditions when multiple processes
+     * attempt to record failed attempts for the same identifier concurrently.
+     *
      * @param string $identifier The identifier (e.g., IP address)
      * @return void
      */
     public function recordFailedAttempt(string $identifier): void
+    {
+        $lockFile   = $this->getLockFilePath($identifier);
+        $lockHandle = @fopen($lockFile, 'c');
+
+        if ($lockHandle === false) {
+            // If we can't create a lock file, fall back to non-atomic operation
+            $this->recordFailedAttemptUnsafe($identifier);
+            return;
+        }
+
+        try {
+            // Acquire exclusive lock (blocking)
+            if (flock($lockHandle, LOCK_EX)) {
+                try {
+                    $this->recordFailedAttemptUnsafe($identifier);
+                } finally {
+                    flock($lockHandle, LOCK_UN);
+                }
+            } else {
+                // If locking fails, fall back to non-atomic operation
+                $this->recordFailedAttemptUnsafe($identifier);
+            }
+        } finally {
+            fclose($lockHandle);
+        }
+    }
+
+    /**
+     * Record a failed attempt without locking (internal use)
+     *
+     * @param string $identifier The identifier (e.g., IP address)
+     * @return void
+     */
+    private function recordFailedAttemptUnsafe(string $identifier): void
     {
         $data = $this->loadData($identifier) ?? ['attempts' => []];
 
@@ -258,6 +307,10 @@ class RateLimiter
             if ($mtime !== false && $mtime < $cutoff) {
                 // File is old enough that all attempts must have expired
                 unlink($file);
+                $lockFile = str_replace('.json', '.lock', $file);
+                if (file_exists($lockFile)) {
+                    @unlink($lockFile);
+                }
                 $cleaned++;
                 continue;
             }
@@ -270,8 +323,12 @@ class RateLimiter
 
             $data = json_decode($contents, true);
             if (!is_array($data) || !isset($data['attempts']) || !is_array($data['attempts'])) {
-                // Invalid data, remove the file
+                // Invalid data, remove the file and its lock file
                 unlink($file);
+                $lockFile = str_replace('.json', '.lock', $file);
+                if (file_exists($lockFile)) {
+                    @unlink($lockFile);
+                }
                 $cleaned++;
                 continue;
             }
@@ -280,9 +337,24 @@ class RateLimiter
             $validAttempts = array_filter($data['attempts'], fn($timestamp) => $timestamp > $cutoff);
 
             if (empty($validAttempts)) {
-                // No valid attempts, remove the file
+                // No valid attempts, remove the file and its lock file
                 unlink($file);
+                $lockFile = str_replace('.json', '.lock', $file);
+                if (file_exists($lockFile)) {
+                    @unlink($lockFile);
+                }
                 $cleaned++;
+            }
+        }
+
+        // Clean up orphaned lock files (lock files without corresponding data files)
+        $lockFiles = glob($dir . DIRECTORY_SEPARATOR . '*.lock');
+        if ($lockFiles !== false) {
+            foreach ($lockFiles as $lockFile) {
+                $dataFile = str_replace('.lock', '.json', $lockFile);
+                if (!file_exists($dataFile)) {
+                    @unlink($lockFile);
+                }
             }
         }
 
