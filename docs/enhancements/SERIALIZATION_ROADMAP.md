@@ -157,7 +157,7 @@ if (!property_exists($payload, 'i18n')) {
 
 This explicit validation ensures that:
 
-1. Calendar data always has associated translations
+1. Calendar data consistently has associated translations
 2. The API fails fast with a clear error message
 3. Schema validation alone isn't relied upon for business rules
 
