@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # "John R. D'Orazio" <priest@johnromanodorazio.com>, 2024, 2025.
 # Milan Šalka <salka.milan@googlemail.com>, 2024.
+# OpenAI <noreply-mt-openai@weblate.org>, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-12-16 09:25+0000\n"
 "PO-Revision-Date: 2025-12-16 09:49+0000\n"
-"Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Slovak <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/sk/>\n"
 "Language: sk\n"
@@ -619,7 +620,7 @@ msgstr "Obdobie cez rok"
 #, php-format
 msgid ""
 "The name of the diocese could not be derived from the diocese ID \"%s\"."
-msgstr ""
+msgstr "Názov diecézy sa nedal odvodiť z ID diecézy \"%s\"."
 
 #. translators: Christmas weekday name pattern
 #: src/Handlers/CalendarHandler.php:623
@@ -689,7 +690,7 @@ msgstr "sobota pred Kvetnou nedeľou"
 msgid ""
 "Decree of the Dicastery for Divine Worship and the Discipline of the "
 "Sacraments"
-msgstr ""
+msgstr "Dekrét Dikastéria pre Boží kult a disciplínu sviatostí"
 
 #: src/Handlers/CalendarHandler.php:1372
 msgid "the Monday following the Second Sunday of Easter"
@@ -1307,6 +1308,9 @@ msgid ""
 "the national calendar '%4$s', but cannot be applied in the year %5$d simply "
 "because we could not find the data for it from the Roman Missal events."
 msgstr ""
+"Liturgická udalosť '%1$s' bola v národnom kalendári '%4$s' presunutá na %2$s "
+"od roku %3$d, ale nemôže byť aplikovaná v roku %5$d, pretože sme nenašli "
+"údaje o nej z Rímskeho misála."
 
 #. translators:
 #.  1. event_key of the liturgical event
@@ -1323,12 +1327,15 @@ msgid ""
 "since the new date %2$s seems to be a Sunday or a liturgical event of "
 "greater rank."
 msgstr ""
+"Liturgická udalosť '%1$s' bola v národnom kalendári '%4$s' presunutá na %2$s "
+"od roku %3$d, ale nemohla sa uskutočniť v roku %5$d, pretože nový dátum %2$s "
+"sa zdá byť nedeľou alebo liturgickou udalosťou vyššieho rangu."
 
 #. translators: 1. Country name, 2. List of missals
 #: src/Handlers/CalendarHandler.php:3782
 #, php-format
 msgid "Found Missals for region %1$s: %2$s."
-msgstr ""
+msgstr "Nájdené misály pre región %1$s: %2$s."
 
 #. translators: Name of the Roman Missal
 #: src/Handlers/CalendarHandler.php:3806
