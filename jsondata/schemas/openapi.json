@@ -3018,7 +3018,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^(?:[a-z_]+?_){0,1}[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
             }
           }
         ],
@@ -3096,7 +3096,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^(?:[a-z_]+?_){0,1}[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
             },
             "description": "The name of the unit test to update (without .json extension)"
           }
@@ -3180,7 +3180,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^(?:[a-z_]+?_){0,1}[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
             },
             "description": "The name of the unit test to delete (without .json extension)"
           }
@@ -3994,7 +3994,7 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^(?:[a-z_]+?_){0,1}[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
@@ -4050,7 +4050,7 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^(?:[a-z_]+?_){0,1}[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
@@ -4110,7 +4110,7 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^(?:[a-z_]+?_){0,1}[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
