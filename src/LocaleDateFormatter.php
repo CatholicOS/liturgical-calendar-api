@@ -159,16 +159,17 @@ class LocaleDateFormatter
      */
     public function formatChristmasWeekdayName(string $dateIdentifier): string
     {
-        return str_starts_with($this->locale, LitLocale::LATIN_PRIMARY_LANGUAGE)
-            ? sprintf('%s temporis Nativitatis', $dateIdentifier)
-            : ( str_starts_with($this->locale, 'it')
-                ? sprintf('Feria propria del %s', $dateIdentifier)
-                : sprintf(
-                    /**translators: Christmas weekday name pattern */
-                    _('%s - Christmas Weekday'),
-                    $dateIdentifier
-                )
-            );
+        return match (true) {
+            str_starts_with($this->locale, LitLocale::LATIN_PRIMARY_LANGUAGE)
+                => sprintf('%s temporis Nativitatis', $dateIdentifier),
+            str_starts_with($this->locale, 'it')
+                => sprintf('Feria propria del %s', $dateIdentifier),
+            default => sprintf(
+                /**translators: Christmas weekday name pattern */
+                _('%s - Christmas Weekday'),
+                $dateIdentifier
+            ),
+        };
     }
 
     /**
