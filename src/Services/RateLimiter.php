@@ -169,7 +169,11 @@ class RateLimiter
     {
         $filePath = $this->getFilePath($identifier);
         if (file_exists($filePath)) {
-            unlink($filePath);
+            @unlink($filePath);
+        }
+        $lockFile = $this->getLockFilePath($identifier);
+        if (file_exists($lockFile)) {
+            @unlink($lockFile);
         }
     }
 
