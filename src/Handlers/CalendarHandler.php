@@ -4410,7 +4410,7 @@ final class CalendarHandler extends AbstractHandler
                     if (false === $GitHubReleaseEncoded) {
                         throw new \Exception('Could not re-encode JSON object');
                     }
-                    $bytes = @file_put_contents($ghReleaseCacheFile, $GitHubReleaseEncoded, LOCK_EX);
+                    $bytes = file_put_contents($ghReleaseCacheFile, $GitHubReleaseEncoded, LOCK_EX);
                     if (false === $bytes) {
                         throw new ServiceUnavailableException(sprintf(
                             'Could not write GitHub release cache file: %s.',
