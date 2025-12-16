@@ -194,9 +194,8 @@ class RateLimiter
         }
 
         // Find the oldest attempt within the window
-        if (empty($attempts)) {
-            return 0;
-        }
+        // Note: $attempts cannot be empty here since count($attempts) >= $this->maxAttempts >= 1
+        /** @var non-empty-array<int> $attempts */
         $oldestAttempt = min($attempts);
 
         // Calculate when it will expire
