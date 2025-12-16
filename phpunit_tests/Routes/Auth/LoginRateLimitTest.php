@@ -248,6 +248,7 @@ class LoginRateLimitTest extends ApiTestCase
 
         $this->assertArrayHasKey('title', $data, 'Response should have title field');
         $this->assertArrayHasKey('detail', $data, 'Response should have detail field');
+        $this->assertArrayHasKey('type', $data, 'Response should have type field (RFC 7807)');
 
         // Check for retryAfter in body (custom field)
         $this->assertArrayHasKey('retryAfter', $data, 'Response should have retryAfter field');
