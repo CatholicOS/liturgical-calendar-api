@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-16 13:10+0000\n"
+"POT-Creation-Date: 2025-12-16 13:42+0000\n"
 "PO-Revision-Date: 2025-10-18 13:19+0000\n"
 "Last-Translator: Mai Lê Bảo Khang <baokhang48812002@gmail.com>\n"
 "Language-Team: Vietnamese <https://translate.johnromanodorazio.com/projects/"
@@ -1452,7 +1452,7 @@ msgid "Error serializing Liturgical Calendar."
 msgstr "Lỗi tuần tự hóa Lịch Phụng vụ."
 
 #. translators: Christmas weekday name pattern
-#: src/LocaleDateFormatter.php:168
+#: src/LocaleDateFormatter.php:169
 #, php-format
 msgid "%s - Christmas Weekday"
 msgstr "%s - Ngày trong tuần Giáng Sinh"

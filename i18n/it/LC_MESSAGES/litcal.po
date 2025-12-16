@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-16 13:10+0000\n"
+"POT-Creation-Date: 2025-12-16 13:42+0000\n"
 "PO-Revision-Date: 2025-12-16 09:49+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Italian <https://translate.johnromanodorazio.com/projects/"
@@ -1472,7 +1472,7 @@ msgid "Error serializing Liturgical Calendar."
 msgstr "Errore nella serializzazione del Calendario Liturgico."
 
 #. translators: Christmas weekday name pattern
-#: src/LocaleDateFormatter.php:168
+#: src/LocaleDateFormatter.php:169
 #, php-format
 msgid "%s - Christmas Weekday"
 msgstr "%s - Giorno feriale di Natale"
