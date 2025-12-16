@@ -3267,7 +3267,7 @@ final class CalendarHandler extends AbstractHandler
                         _('The %1$s \'%2$s\', usually celebrated on %3$s, was suppressed by the %4$s \'%5$s\' in the year %6$d, however being elevated to a Patronal festivity for the Calendar %7$s, it has been reinstated.'),
                         $liturgicalEvent->grade->i18n($this->CalendarParams->Locale, false),
                         $liturgicalEvent->name,
-                        $this->dayAndMonth->format($suppressedEvent->date->format('U')),
+                        $this->formatLocalizedDate($suppressedEvent->date),
                         $coincidingLiturgicalEvent->grade_lcl,
                         $coincidingLiturgicalEvent->event->name,
                         $this->CalendarParams->Year,
@@ -3287,7 +3287,7 @@ final class CalendarHandler extends AbstractHandler
                         _('The %1$s \'%2$s\', usually celebrated on %3$s, was suppressed by the %4$s \'%5$s\' in the year %6$d, and though it would be elevated to a Patronal festivity for the Calendar %7$s, it has not been reinstated.'),
                         $liturgicalEvent->grade->i18n($this->CalendarParams->Locale, false),
                         $liturgicalEvent->name,
-                        $this->dayAndMonth->format($suppressedEvent->date->format('U')),
+                        $this->formatLocalizedDate($suppressedEvent->date),
                         $coincidingLiturgicalEvent->grade_lcl,
                         $coincidingLiturgicalEvent->event->name,
                         $this->CalendarParams->Year,
@@ -3393,7 +3393,7 @@ final class CalendarHandler extends AbstractHandler
                             /**translators: 1. LiturgicalEvent name, 2. LiturgicalEvent date, 3. Coinciding liturgical event name, 4. Requested calendar year */
                             _('The Feast \'%1$s\', usually celebrated on %2$s, coincides with another Feast \'%3$s\' in the year %4$d! Does something need to be done about this?'),
                             '<b>' . $liturgicalEvent->name . '</b>',
-                            '<b>' . $this->dayAndMonth->format($liturgicalEvent->date->format('U')) . '</b>',
+                            '<b>' . $this->formatLocalizedDate($liturgicalEvent->date) . '</b>',
                             '<b>' . $value->name . '</b>',
                             $this->CalendarParams->Year
                         );
@@ -3413,7 +3413,7 @@ final class CalendarHandler extends AbstractHandler
                         /**translators: 1. LiturgicalEvent name, 2. LiturgicalEvent date, 3. Coinciding liturgical event name, 4. Requested calendar year */
                         _('The Solemnity \'%1$s\', usually celebrated on %2$s, coincides with the Sunday or Solemnity \'%3$s\' in the year %4$d! Does something need to be done about this?'),
                         '<i>' . $liturgicalEvent->name . '</i>',
-                        '<b>' . $this->dayAndMonth->format($liturgicalEvent->date->format('U')) . '</b>',
+                        '<b>' . $this->formatLocalizedDate($liturgicalEvent->date) . '</b>',
                         '<i>' . $coincidingEvent->name . '</i>',
                         $this->CalendarParams->Year
                     );
@@ -3705,8 +3705,8 @@ final class CalendarHandler extends AbstractHandler
                                         _('The %1$s \'%2$s\' has been moved from %3$s to %4$s since the year %5$d in the national calendar \'%6$s\', applicable to the year %7$d.'),
                                         $existingLitEvent->grade->i18n($this->CalendarParams->Locale, false),
                                         $existingLitEvent->name,
-                                        $this->dayAndMonth->format($existingLitEvent->date->format('U')),
-                                        $this->dayAndMonth->format($litEventNewDate->format('U')),
+                                        $this->formatLocalizedDate($existingLitEvent->date),
+                                        $this->formatLocalizedDate($litEventNewDate),
                                         $litEventItemMetadata->since_year,
                                         $this->CalendarParams->NationalCalendar,
                                         $this->CalendarParams->Year
@@ -3723,7 +3723,7 @@ final class CalendarHandler extends AbstractHandler
                                          */
                                         _('The liturgical event \'%1$s\' has been moved to %2$s since the year %3$d in the national calendar \'%4$s\', but cannot be applied in the year %5$d simply because we could not find the data for it from the Roman Missal events.'),
                                         $liturgicalEvent->name,
-                                        $this->dayAndMonth->format($litEventNewDate->format('U')),
+                                        $this->formatLocalizedDate($litEventNewDate),
                                         $litEventItemMetadata->since_year,
                                         $this->CalendarParams->NationalCalendar,
                                         $this->CalendarParams->Year
@@ -3742,7 +3742,7 @@ final class CalendarHandler extends AbstractHandler
                                      */
                                     _('The liturgical event \'%1$s\' has been moved to %2$s since the year %3$d in the national calendar \'%4$s\', but this could not take place in the year %5$d since the new date %2$s seems to be a Sunday or a liturgical event of greater rank.'),
                                     $litEventItem->liturgical_event->event_key,
-                                    $this->dayAndMonth->format($litEventNewDate->format('U')),
+                                    $this->formatLocalizedDate($litEventNewDate),
                                     $litEventItem->metadata->since_year,
                                     $this->CalendarParams->NationalCalendar,
                                     $this->CalendarParams->Year
@@ -3842,7 +3842,7 @@ final class CalendarHandler extends AbstractHandler
                                     $Nation . ': ' . _('The %1$s \'%2$s\' (%3$s), added to the national calendar in the %4$s, is superseded by the %5$s \'%6$s\' in the year %7$d'),
                                     $propriumDeSanctisEvent->grade->i18n($this->CalendarParams->Locale, false),
                                     '<i>' . $propriumDeSanctisEvent->name . '</i>',
-                                    $this->dayAndMonth->format($currentLitEventDate->format('U')),
+                                    $this->formatLocalizedDate($currentLitEventDate),
                                     RomanMissal::getName($missal),
                                     $coincidingLiturgicalEvent->grade_lcl,
                                     $coincidingLiturgicalEvent->event->name,
@@ -4313,7 +4313,7 @@ final class CalendarHandler extends AbstractHandler
                                     _('The Solemnity \'%1$s\', proper to the calendar of the %2$s and usually celebrated on %3$s, coincides with the Sunday or Solemnity \'%4$s\' in the year %5$d! Does something need to be done about this?'),
                                     '<i>' . $liturgicalEvent->name . '</i>',
                                     $this->DioceseName,
-                                    '<b>' . $this->dayAndMonth->format($currentLitEventDate->format('U')) . '</b>',
+                                    '<b>' . $this->formatLocalizedDate($currentLitEventDate) . '</b>',
                                     '<i>' . $coincidingSolemnity->name . '</i>',
                                     $this->CalendarParams->Year
                                 );
@@ -4339,7 +4339,7 @@ final class CalendarHandler extends AbstractHandler
                             $liturgicalEvent->grade->i18n($this->CalendarParams->Locale, false),
                             '<i>' . $liturgicalEvent->name . '</i>',
                             $this->DioceseName,
-                            '<b>' . $this->dayAndMonth->format($currentLitEventDate->format('U')) . '</b>',
+                            '<b>' . $this->formatLocalizedDate($currentLitEventDate) . '</b>',
                             $coincidingEvent->grade_lcl,
                             '<i>' . $coincidingEvent->event->name . '</i>',
                             $this->CalendarParams->Year
