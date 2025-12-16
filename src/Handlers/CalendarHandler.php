@@ -971,7 +971,6 @@ final class CalendarHandler extends AbstractHandler
      */
     private function calculateChristmasWeekdaysThroughEpiphany(): void
     {
-        $nth      = 0;
         $Epiphany = $this->Cal->getLiturgicalEvent('Epiphany');
         if (null === $Epiphany) {
             throw new ServiceUnavailableException('The liturgical event "Epiphany" is missing');
@@ -981,7 +980,6 @@ final class CalendarHandler extends AbstractHandler
         for ($i = 2; $i < $DayOfEpiphany; $i++) {
             $dateTime = DateTime::fromFormat($i . '-1-' . $this->CalendarParams->Year);
             if (false === self::dateIsSunday($dateTime) && $this->Cal->notInSolemnitiesFeastsOrMemorials($dateTime)) {
-                $nth++;
                 $dayOfTheWeek  = $this->getChristmasWeekdayIdentifier($dateTime);
                 $name          = $this->formatChristmasWeekdayName($dayOfTheWeek);
                 $dayOfTheMonth = $dateTime->format('j');
@@ -1019,9 +1017,7 @@ final class CalendarHandler extends AbstractHandler
 
         $DayOfEpiphany    = (int) $Epiphany->date->format('j');
         $DayOfBaptismLord = (int) $BaptismLord->date->format('j');
-        $nth              = 0;
         for ($i = $DayOfEpiphany + 1; $i < $DayOfBaptismLord; $i++) {
-            $nth++;
             $dateTime = DateTime::fromFormat($i . '-1-' . $this->CalendarParams->Year);
             if ($this->Cal->notInSolemnitiesFeastsOrMemorials($dateTime)) {
                 $dayOfTheWeek   = $this->getChristmasWeekdayIdentifier($dateTime);
