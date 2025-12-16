@@ -21,6 +21,7 @@ use LiturgicalCalendar\Api\Enum\JsonData;
 use LiturgicalCalendar\Api\Enum\RomanMissal;
 use LiturgicalCalendar\Api\Http\Enum\ReturnTypeParam;
 use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Models\Metadata\MetadataCalendars;
 use LiturgicalCalendar\Api\Models\Metadata\MetadataDiocesanCalendarItem;
 use LiturgicalCalendar\Api\Test\LitTestRunner;
@@ -149,6 +150,9 @@ class Health implements MessageComponentInterface
         if (!self::$cacheInitialized) {
             self::$cacheInitialized = true;
 
+            // Create logger for cache initialization (no HTTP processors for WebSocket context)
+            $logger = LoggerFactory::create('health', null, 30, false, true, false);
+
             // Try Redis first, fall back to APCu
             if (extension_loaded('redis')) {
                 try {
@@ -173,16 +177,48 @@ class Health implements MessageComponentInterface
                         $connectionInfo = "{$redisHost}:{$redisPort}";
                     }
                     if ($connected) {
-                        self::$cacheEnabled = true;
-                        self::$cacheBackend = 'redis';
-                        echo "Redis connected ({$connectionInfo}), will use for caching\n";
+                        // Optional authentication for production deployments
+                        $redisPassword = isset($_ENV['REDIS_PASSWORD']) && is_string($_ENV['REDIS_PASSWORD'])
+                            ? $_ENV['REDIS_PASSWORD']
+                            : null;
+                        if ($redisPassword !== null && $redisPassword !== '') {
+                            try {
+                                $authenticated = self::$redis->auth($redisPassword);
+                                if (!$authenticated) {
+                                    self::$redis = null;
+                                    echo "Redis authentication failed, trying APCu fallback\n";
+                                    $logger->warning('Redis authentication failed, trying APCu fallback');
+                                }
+                            } catch (\RedisException $e) {
+                                self::$redis = null;
+                                echo "Redis auth exception: {$e->getMessage()}, trying APCu fallback\n";
+                                $logger->warning('Redis auth exception, trying APCu fallback', ['error' => $e->getMessage()]);
+                            }
+                        }
+
+                        // Verify connection is actually usable with a ping (if still connected)
+                        if (self::$redis !== null) {
+                            try {
+                                self::$redis->ping();
+                                self::$cacheEnabled = true;
+                                self::$cacheBackend = 'redis';
+                                echo "Redis connected ({$connectionInfo}), will use for caching\n";
+                                $logger->info('Redis connected, will use for caching', ['connection' => $connectionInfo]);
+                            } catch (\RedisException $e) {
+                                self::$redis = null;
+                                echo "Redis ping failed: {$e->getMessage()}, trying APCu fallback\n";
+                                $logger->warning('Redis ping failed, trying APCu fallback', ['error' => $e->getMessage()]);
+                            }
+                        }
                     } else {
                         self::$redis = null;
                         echo "Redis connection failed, trying APCu fallback\n";
+                        $logger->warning('Redis connection failed, trying APCu fallback');
                     }
                 } catch (\RedisException $e) {
                     self::$redis = null;
                     echo "Redis exception: {$e->getMessage()}, trying APCu fallback\n";
+                    $logger->warning('Redis exception, trying APCu fallback', ['error' => $e->getMessage()]);
                 }
             }
 
@@ -196,8 +232,10 @@ class Health implements MessageComponentInterface
                     self::$cacheEnabled = true;
                     self::$cacheBackend = 'apcu';
                     echo "APCu extension loaded, will use for caching\n";
+                    $logger->info('APCu extension loaded, will use for caching');
                 } else {
                     echo "No cache backend available (Redis and APCu both unavailable)\n";
+                    $logger->warning('No cache backend available (Redis and APCu both unavailable)');
                 }
             }
         }
@@ -736,7 +774,11 @@ class Health implements MessageComponentInterface
     /**
      * Handle errors when reading validation data.
      *
+     * @param \Throwable $e The exception that occurred while reading data.
+     * @param ConnectionInterface $to The WebSocket connection to send errors to.
      * @param ExecuteValidationSourceFolder|ExecuteValidationSourceFile|ExecuteValidationResource $validation The validation object.
+     * @param string $dataPath The path to the data that failed to load.
+     * @return void
      */
     private function handleValidationDataError(\Throwable $e, ConnectionInterface $to, \stdClass $validation, string $dataPath): void
     {
@@ -1213,7 +1255,12 @@ class Health implements MessageComponentInterface
     {
         echo "Redis connection lost: {$e->getMessage()}, falling back to APCu\n";
         self::$redis = null;
-        if (function_exists('apcu_enabled') && apcu_enabled()) {
+        // Use the same comprehensive APCu check as initialization
+        $apcuAvailable = extension_loaded('apcu')
+            && function_exists('apcu_exists')
+            && function_exists('apcu_store')
+            && function_exists('apcu_fetch');
+        if ($apcuAvailable) {
             self::$cacheBackend = 'apcu';
             echo "APCu fallback enabled\n";
         } else {

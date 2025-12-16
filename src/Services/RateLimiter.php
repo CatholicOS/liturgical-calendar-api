@@ -116,6 +116,7 @@ class RateLimiter
 
         if ($lockHandle === false) {
             // If we can't create a lock file, fall back to non-atomic operation
+            // TODO: Consider logging this fallback for observability
             $this->recordFailedAttemptUnsafe($identifier);
             return;
         }
@@ -130,6 +131,7 @@ class RateLimiter
                 }
             } else {
                 // If locking fails, fall back to non-atomic operation
+                // TODO: Consider logging this fallback for observability
                 $this->recordFailedAttemptUnsafe($identifier);
             }
         } finally {
@@ -167,7 +169,11 @@ class RateLimiter
     {
         $filePath = $this->getFilePath($identifier);
         if (file_exists($filePath)) {
-            unlink($filePath);
+            @unlink($filePath);
+        }
+        $lockFile = $this->getLockFilePath($identifier);
+        if (file_exists($lockFile)) {
+            @unlink($lockFile);
         }
     }
 

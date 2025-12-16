@@ -4514,8 +4514,11 @@
         "properties": {
           "refresh_token": {
             "type": "string",
-            "description": "Valid refresh token obtained from /auth/login. Required only if not using cookie-based authentication (i.e., if the `litcal_refresh_token` cookie is not present)."
+            "description": "Valid refresh token obtained from /auth/login. Required if the `litcal_refresh_token` cookie is not present. When both cookie and body are provided, the cookie takes precedence."
           }
+        },
+        "example": {
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         }
       },
       "RefreshResponse": {

@@ -109,7 +109,7 @@ class LoginRateLimitTest extends ApiTestCase
         $maxAttempts = (int) ( $_ENV['RATE_LIMIT_LOGIN_ATTEMPTS'] ?? 5 );
 
         for ($i = 0; $i < $maxAttempts; $i++) {
-            self::$http->post('/auth/login', [
+            $response = self::$http->post('/auth/login', [
                 'headers' => [
                     'Content-Type' => 'application/json',
                     'Accept'       => 'application/json'
@@ -119,6 +119,12 @@ class LoginRateLimitTest extends ApiTestCase
                     'password' => 'wrong-' . uniqid()
                 ]
             ]);
+            // Sanity check: intermediate attempts should return 401 or 429
+            $this->assertContains(
+                $response->getStatusCode(),
+                [401, 429],
+                'Failed attempt should return 401 or 429'
+            );
         }
 
         // Return the rate-limited response
@@ -242,6 +248,7 @@ class LoginRateLimitTest extends ApiTestCase
 
         $this->assertArrayHasKey('title', $data, 'Response should have title field');
         $this->assertArrayHasKey('detail', $data, 'Response should have detail field');
+        $this->assertArrayHasKey('type', $data, 'Response should have type field (RFC 7807)');
 
         // Check for retryAfter in body (custom field)
         $this->assertArrayHasKey('retryAfter', $data, 'Response should have retryAfter field');

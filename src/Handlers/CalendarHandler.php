@@ -587,7 +587,7 @@ final class CalendarHandler extends AbstractHandler
      * @param DateTime $dateTime The date to format
      * @return string The localized date identifier for Christmas weekday naming
      */
-    private function getLocalizedDayOfTheWeek(DateTime $dateTime): string
+    private function getChristmasWeekdayIdentifier(DateTime $dateTime): string
     {
         $locale = LitLocale::$PRIMARY_LANGUAGE;
         if ($locale === LitLocale::LATIN_PRIMARY_LANGUAGE) {
@@ -607,7 +607,7 @@ final class CalendarHandler extends AbstractHandler
      * Handles Latin ("X temporis Nativitatis"), Italian ("Feria propria del X"),
      * and other locales using gettext translation.
      *
-     * @param string $dateIdentifier The localized date identifier from getLocalizedDayOfTheWeek().
+     * @param string $dateIdentifier The localized date identifier from getChristmasWeekdayIdentifier().
      *                               For Latin/other locales: day of week. For Italian: day+month.
      * @return string The formatted Christmas weekday name
      */
@@ -629,7 +629,8 @@ final class CalendarHandler extends AbstractHandler
     /**
      * Ensure the cache directory exists and is writable.
      *
-     * Creates the cache directory if it doesn't exist.
+     * Creates the cache directory if it doesn't exist and normalizes $this->CachePath
+     * to always have a trailing directory separator for consistent usage by call sites.
      *
      * Note: $this->CachePath must be initialized by handle() before calling this method.
      * This is used by both getGithubReleaseInfo() and prepareResponseBody().
@@ -654,6 +655,8 @@ final class CalendarHandler extends AbstractHandler
                     $resolved
                 ));
             }
+            // Normalize CachePath with trailing separator for consistent usage
+            $this->CachePath = $resolved . DIRECTORY_SEPARATOR;
             return;
         }
 
@@ -683,6 +686,9 @@ final class CalendarHandler extends AbstractHandler
             );
             throw new ServiceUnavailableException($description);
         }
+
+        // Normalize CachePath with trailing separator for consistent usage
+        $this->CachePath = $cachePath . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -965,7 +971,6 @@ final class CalendarHandler extends AbstractHandler
      */
     private function calculateChristmasWeekdaysThroughEpiphany(): void
     {
-        $nth      = 0;
         $Epiphany = $this->Cal->getLiturgicalEvent('Epiphany');
         if (null === $Epiphany) {
             throw new ServiceUnavailableException('The liturgical event "Epiphany" is missing');
@@ -975,8 +980,7 @@ final class CalendarHandler extends AbstractHandler
         for ($i = 2; $i < $DayOfEpiphany; $i++) {
             $dateTime = DateTime::fromFormat($i . '-1-' . $this->CalendarParams->Year);
             if (false === self::dateIsSunday($dateTime) && $this->Cal->notInSolemnitiesFeastsOrMemorials($dateTime)) {
-                $nth++;
-                $dayOfTheWeek  = $this->getLocalizedDayOfTheWeek($dateTime);
+                $dayOfTheWeek  = $this->getChristmasWeekdayIdentifier($dateTime);
                 $name          = $this->formatChristmasWeekdayName($dayOfTheWeek);
                 $dayOfTheMonth = $dateTime->format('j');
                 $event_key     = 'ChristmasWeekdayJan' . $dayOfTheMonth;
@@ -1013,12 +1017,10 @@ final class CalendarHandler extends AbstractHandler
 
         $DayOfEpiphany    = (int) $Epiphany->date->format('j');
         $DayOfBaptismLord = (int) $BaptismLord->date->format('j');
-        $nth              = 0;
         for ($i = $DayOfEpiphany + 1; $i < $DayOfBaptismLord; $i++) {
-            $nth++;
             $dateTime = DateTime::fromFormat($i . '-1-' . $this->CalendarParams->Year);
             if ($this->Cal->notInSolemnitiesFeastsOrMemorials($dateTime)) {
-                $dayOfTheWeek   = $this->getLocalizedDayOfTheWeek($dateTime);
+                $dayOfTheWeek   = $this->getChristmasWeekdayIdentifier($dateTime);
                 $dayOfTheWeekEn = $this->dayOfTheWeekEnglish->format($dateTime->format('U'));
                 $name           = $this->formatChristmasWeekdayName($dayOfTheWeek);
                 $dayOfTheMonth  = $dateTime->format('j');
@@ -3513,7 +3515,7 @@ final class CalendarHandler extends AbstractHandler
                 /**translators:
                  * 1. Grade or rank of the liturgical event
                  * 2. Name of the liturgical event
-                 * 3. Date of the liturgical event (day/month for fixed events, or mobile date expression for mobile events)
+                 * 3. Date of the liturgical event (localized date for fixed events, or mobile date expression for some mobile events)
                  * 4. Year from which the liturgical event has been added
                  * 5. Source of the information
                  * 6. Requested calendar year
@@ -3531,7 +3533,7 @@ final class CalendarHandler extends AbstractHandler
                 /**translators:
                  * 1. Grade or rank of the liturgical event
                  * 2. Name of the liturgical event
-                 * 3. Date of the liturgical event (day/month for fixed events, or mobile date expression for mobile events)
+                 * 3. Date of the liturgical event (localized date for fixed events, or mobile date expression for some mobile events)
                  * 4. Requested calendar year
                  */
                 _('The %1$s \'%2$s\' was not added to the calendar on %3$s because it conflicts with an existing liturgical event in the year %4$d.'),
@@ -4408,7 +4410,7 @@ final class CalendarHandler extends AbstractHandler
                     if (false === $GitHubReleaseEncoded) {
                         throw new \Exception('Could not re-encode JSON object');
                     }
-                    $bytes = @file_put_contents($ghReleaseCacheFile, $GitHubReleaseEncoded, LOCK_EX);
+                    $bytes = file_put_contents($ghReleaseCacheFile, $GitHubReleaseEncoded, LOCK_EX);
                     if (false === $bytes) {
                         throw new ServiceUnavailableException(sprintf(
                             'Could not write GitHub release cache file: %s.',
