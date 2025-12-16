@@ -116,7 +116,7 @@ class LocaleDateFormatter
         if (str_starts_with($this->locale, 'en')) {
             return $date->format('F jS');
         }
-        $formatted = $this->dayAndMonth->format($date->format('U'));
+        $formatted = $this->dayAndMonth->format($date);
         return $formatted !== false ? $formatted : $date->format('j/n');
     }
 
@@ -140,10 +140,10 @@ class LocaleDateFormatter
             return LatinUtils::LATIN_DAYOFTHEWEEK[$dateTime->format('w')];
         }
         if (str_starts_with($this->locale, 'it')) {
-            $formatted = $this->dayAndMonth->format($dateTime->format('U'));
+            $formatted = $this->dayAndMonth->format($dateTime);
             return Utilities::ucfirst($formatted !== false ? $formatted : $dateTime->format('l'));
         }
-        $formatted = $this->dayOfTheWeek->format($dateTime->format('U'));
+        $formatted = $this->dayOfTheWeek->format($dateTime);
         return Utilities::ucfirst($formatted !== false ? $formatted : $dateTime->format('l'));
     }
 
@@ -159,16 +159,17 @@ class LocaleDateFormatter
      */
     public function formatChristmasWeekdayName(string $dateIdentifier): string
     {
-        return str_starts_with($this->locale, LitLocale::LATIN_PRIMARY_LANGUAGE)
-            ? sprintf('%s temporis Nativitatis', $dateIdentifier)
-            : ( str_starts_with($this->locale, 'it')
-                ? sprintf('Feria propria del %s', $dateIdentifier)
-                : sprintf(
-                    /**translators: Christmas weekday name pattern */
-                    _('%s - Christmas Weekday'),
-                    $dateIdentifier
-                )
-            );
+        return match (true) {
+            str_starts_with($this->locale, LitLocale::LATIN_PRIMARY_LANGUAGE)
+                => sprintf('%s temporis Nativitatis', $dateIdentifier),
+            str_starts_with($this->locale, 'it')
+                => sprintf('Feria propria del %s', $dateIdentifier),
+            default => sprintf(
+                /**translators: Christmas weekday name pattern */
+                _('%s - Christmas Weekday'),
+                $dateIdentifier
+            ),
+        };
     }
 
     /**
