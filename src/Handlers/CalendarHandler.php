@@ -587,7 +587,7 @@ final class CalendarHandler extends AbstractHandler
      * @param DateTime $dateTime The date to format
      * @return string The localized date identifier for Christmas weekday naming
      */
-    private function getLocalizedDayOfTheWeek(DateTime $dateTime): string
+    private function getChristmasWeekdayIdentifier(DateTime $dateTime): string
     {
         $locale = LitLocale::$PRIMARY_LANGUAGE;
         if ($locale === LitLocale::LATIN_PRIMARY_LANGUAGE) {
@@ -607,7 +607,7 @@ final class CalendarHandler extends AbstractHandler
      * Handles Latin ("X temporis Nativitatis"), Italian ("Feria propria del X"),
      * and other locales using gettext translation.
      *
-     * @param string $dateIdentifier The localized date identifier from getLocalizedDayOfTheWeek().
+     * @param string $dateIdentifier The localized date identifier from getChristmasWeekdayIdentifier().
      *                               For Latin/other locales: day of week. For Italian: day+month.
      * @return string The formatted Christmas weekday name
      */
@@ -976,7 +976,7 @@ final class CalendarHandler extends AbstractHandler
             $dateTime = DateTime::fromFormat($i . '-1-' . $this->CalendarParams->Year);
             if (false === self::dateIsSunday($dateTime) && $this->Cal->notInSolemnitiesFeastsOrMemorials($dateTime)) {
                 $nth++;
-                $dayOfTheWeek  = $this->getLocalizedDayOfTheWeek($dateTime);
+                $dayOfTheWeek  = $this->getChristmasWeekdayIdentifier($dateTime);
                 $name          = $this->formatChristmasWeekdayName($dayOfTheWeek);
                 $dayOfTheMonth = $dateTime->format('j');
                 $event_key     = 'ChristmasWeekdayJan' . $dayOfTheMonth;
@@ -1018,7 +1018,7 @@ final class CalendarHandler extends AbstractHandler
             $nth++;
             $dateTime = DateTime::fromFormat($i . '-1-' . $this->CalendarParams->Year);
             if ($this->Cal->notInSolemnitiesFeastsOrMemorials($dateTime)) {
-                $dayOfTheWeek   = $this->getLocalizedDayOfTheWeek($dateTime);
+                $dayOfTheWeek   = $this->getChristmasWeekdayIdentifier($dateTime);
                 $dayOfTheWeekEn = $this->dayOfTheWeekEnglish->format($dateTime->format('U'));
                 $name           = $this->formatChristmasWeekdayName($dayOfTheWeek);
                 $dayOfTheMonth  = $dateTime->format('j');
