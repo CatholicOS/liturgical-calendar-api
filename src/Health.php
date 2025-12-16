@@ -173,15 +173,34 @@ class Health implements MessageComponentInterface
                         $connectionInfo = "{$redisHost}:{$redisPort}";
                     }
                     if ($connected) {
-                        // Verify connection is actually usable with a ping
-                        try {
-                            self::$redis->ping();
-                            self::$cacheEnabled = true;
-                            self::$cacheBackend = 'redis';
-                            echo "Redis connected ({$connectionInfo}), will use for caching\n";
-                        } catch (\RedisException $e) {
-                            self::$redis = null;
-                            echo "Redis ping failed: {$e->getMessage()}, trying APCu fallback\n";
+                        // Optional authentication for production deployments
+                        $redisPassword = isset($_ENV['REDIS_PASSWORD']) && is_string($_ENV['REDIS_PASSWORD'])
+                            ? $_ENV['REDIS_PASSWORD']
+                            : null;
+                        if ($redisPassword !== null && $redisPassword !== '') {
+                            try {
+                                $authenticated = self::$redis->auth($redisPassword);
+                                if (!$authenticated) {
+                                    self::$redis = null;
+                                    echo "Redis authentication failed, trying APCu fallback\n";
+                                }
+                            } catch (\RedisException $e) {
+                                self::$redis = null;
+                                echo "Redis auth exception: {$e->getMessage()}, trying APCu fallback\n";
+                            }
+                        }
+
+                        // Verify connection is actually usable with a ping (if still connected)
+                        if (self::$redis !== null) {
+                            try {
+                                self::$redis->ping();
+                                self::$cacheEnabled = true;
+                                self::$cacheBackend = 'redis';
+                                echo "Redis connected ({$connectionInfo}), will use for caching\n";
+                            } catch (\RedisException $e) {
+                                self::$redis = null;
+                                echo "Redis ping failed: {$e->getMessage()}, trying APCu fallback\n";
+                            }
                         }
                     } else {
                         self::$redis = null;
