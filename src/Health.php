@@ -21,6 +21,7 @@ use LiturgicalCalendar\Api\Enum\JsonData;
 use LiturgicalCalendar\Api\Enum\RomanMissal;
 use LiturgicalCalendar\Api\Http\Enum\ReturnTypeParam;
 use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Models\Metadata\MetadataCalendars;
 use LiturgicalCalendar\Api\Models\Metadata\MetadataDiocesanCalendarItem;
 use LiturgicalCalendar\Api\Test\LitTestRunner;
@@ -149,6 +150,9 @@ class Health implements MessageComponentInterface
         if (!self::$cacheInitialized) {
             self::$cacheInitialized = true;
 
+            // Create logger for cache initialization (no HTTP processors for WebSocket context)
+            $logger = LoggerFactory::create('health', null, 30, false, true, false);
+
             // Try Redis first, fall back to APCu
             if (extension_loaded('redis')) {
                 try {
@@ -183,10 +187,12 @@ class Health implements MessageComponentInterface
                                 if (!$authenticated) {
                                     self::$redis = null;
                                     echo "Redis authentication failed, trying APCu fallback\n";
+                                    $logger->warning('Redis authentication failed, trying APCu fallback');
                                 }
                             } catch (\RedisException $e) {
                                 self::$redis = null;
                                 echo "Redis auth exception: {$e->getMessage()}, trying APCu fallback\n";
+                                $logger->warning('Redis auth exception, trying APCu fallback', ['error' => $e->getMessage()]);
                             }
                         }
 
@@ -197,18 +203,22 @@ class Health implements MessageComponentInterface
                                 self::$cacheEnabled = true;
                                 self::$cacheBackend = 'redis';
                                 echo "Redis connected ({$connectionInfo}), will use for caching\n";
+                                $logger->info('Redis connected, will use for caching', ['connection' => $connectionInfo]);
                             } catch (\RedisException $e) {
                                 self::$redis = null;
                                 echo "Redis ping failed: {$e->getMessage()}, trying APCu fallback\n";
+                                $logger->warning('Redis ping failed, trying APCu fallback', ['error' => $e->getMessage()]);
                             }
                         }
                     } else {
                         self::$redis = null;
                         echo "Redis connection failed, trying APCu fallback\n";
+                        $logger->warning('Redis connection failed, trying APCu fallback');
                     }
                 } catch (\RedisException $e) {
                     self::$redis = null;
                     echo "Redis exception: {$e->getMessage()}, trying APCu fallback\n";
+                    $logger->warning('Redis exception, trying APCu fallback', ['error' => $e->getMessage()]);
                 }
             }
 
@@ -222,8 +232,10 @@ class Health implements MessageComponentInterface
                     self::$cacheEnabled = true;
                     self::$cacheBackend = 'apcu';
                     echo "APCu extension loaded, will use for caching\n";
+                    $logger->info('APCu extension loaded, will use for caching');
                 } else {
                     echo "No cache backend available (Redis and APCu both unavailable)\n";
+                    $logger->warning('No cache backend available (Redis and APCu both unavailable)');
                 }
             }
         }
