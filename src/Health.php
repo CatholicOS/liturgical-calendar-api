@@ -762,7 +762,11 @@ class Health implements MessageComponentInterface
     /**
      * Handle errors when reading validation data.
      *
+     * @param \Throwable $e The exception that occurred while reading data.
+     * @param ConnectionInterface $to The WebSocket connection to send errors to.
      * @param ExecuteValidationSourceFolder|ExecuteValidationSourceFile|ExecuteValidationResource $validation The validation object.
+     * @param string $dataPath The path to the data that failed to load.
+     * @return void
      */
     private function handleValidationDataError(\Throwable $e, ConnectionInterface $to, \stdClass $validation, string $dataPath): void
     {
