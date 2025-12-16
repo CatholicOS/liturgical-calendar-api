@@ -3515,7 +3515,7 @@ final class CalendarHandler extends AbstractHandler
                 /**translators:
                  * 1. Grade or rank of the liturgical event
                  * 2. Name of the liturgical event
-                 * 3. Date of the liturgical event (day/month for fixed events, or mobile date expression for mobile events)
+                 * 3. Date of the liturgical event (localized date for fixed events, or mobile date expression for some mobile events)
                  * 4. Year from which the liturgical event has been added
                  * 5. Source of the information
                  * 6. Requested calendar year
@@ -3533,7 +3533,7 @@ final class CalendarHandler extends AbstractHandler
                 /**translators:
                  * 1. Grade or rank of the liturgical event
                  * 2. Name of the liturgical event
-                 * 3. Date of the liturgical event (day/month for fixed events, or mobile date expression for mobile events)
+                 * 3. Date of the liturgical event (localized date for fixed events, or mobile date expression for some mobile events)
                  * 4. Requested calendar year
                  */
                 _('The %1$s \'%2$s\' was not added to the calendar on %3$s because it conflicts with an existing liturgical event in the year %4$d.'),
