@@ -562,11 +562,11 @@ final class CalendarHandler extends AbstractHandler
      */
     private function formatLocalizedDate(DateTime $date): string
     {
-        $locale = LitLocale::$PRIMARY_LANGUAGE;
-        if ($locale === LitLocale::LATIN_PRIMARY_LANGUAGE) {
+        $locale = LitLocale::$RUNTIME_LOCALE;
+        if (str_starts_with($locale, LitLocale::LATIN_PRIMARY_LANGUAGE)) {
             return $date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $date->format('n')];
         }
-        if ($locale === 'en') {
+        if (str_starts_with($locale, 'en')) {
             return $date->format('F jS');
         }
         $formatted = $this->dayAndMonth->format($date->format('U'));
@@ -589,11 +589,11 @@ final class CalendarHandler extends AbstractHandler
      */
     private function getChristmasWeekdayIdentifier(DateTime $dateTime): string
     {
-        $locale = LitLocale::$PRIMARY_LANGUAGE;
-        if ($locale === LitLocale::LATIN_PRIMARY_LANGUAGE) {
+        $locale = LitLocale::$RUNTIME_LOCALE;
+        if (str_starts_with($locale, LitLocale::LATIN_PRIMARY_LANGUAGE)) {
             return LatinUtils::LATIN_DAYOFTHEWEEK[$dateTime->format('w')];
         }
-        if ($locale === 'it') {
+        if (str_starts_with($locale, 'it')) {
             $formatted = $this->dayAndMonth->format($dateTime->format('U'));
             return Utilities::ucfirst($formatted !== false ? $formatted : $dateTime->format('l'));
         }
@@ -613,10 +613,10 @@ final class CalendarHandler extends AbstractHandler
      */
     private function formatChristmasWeekdayName(string $dateIdentifier): string
     {
-        $locale = LitLocale::$PRIMARY_LANGUAGE;
-        return $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
+        $locale = LitLocale::$RUNTIME_LOCALE;
+        return str_starts_with($locale, LitLocale::LATIN_PRIMARY_LANGUAGE)
             ? sprintf('%s temporis Nativitatis', $dateIdentifier)
-            : ( $locale === 'it'
+            : ( str_starts_with($locale, 'it')
                 ? sprintf('Feria propria del %s', $dateIdentifier)
                 : sprintf(
                     /**translators: Christmas weekday name pattern */
