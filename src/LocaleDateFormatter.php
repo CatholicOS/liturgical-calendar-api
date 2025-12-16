@@ -3,6 +3,7 @@
 namespace LiturgicalCalendar\Api;
 
 use LiturgicalCalendar\Api\Enum\LitLocale;
+use LiturgicalCalendar\Api\DateTime;
 
 /**
  * Locale-aware date formatting utility.
@@ -41,23 +42,32 @@ class LocaleDateFormatter
      */
     private function createFormatters(): void
     {
-        $dayAndMonth = \IntlDateFormatter::create(
-            $this->primaryLanguage,
-            \IntlDateFormatter::FULL,
-            \IntlDateFormatter::NONE,
-            'UTC',
-            \IntlDateFormatter::GREGORIAN,
-            'd MMMM'
-        );
+        try {
+            $dayAndMonth = \IntlDateFormatter::create(
+                $this->primaryLanguage,
+                \IntlDateFormatter::FULL,
+                \IntlDateFormatter::NONE,
+                'UTC',
+                \IntlDateFormatter::GREGORIAN,
+                'd MMMM'
+            );
 
-        $dayOfTheWeek = \IntlDateFormatter::create(
-            $this->primaryLanguage,
-            \IntlDateFormatter::FULL,
-            \IntlDateFormatter::NONE,
-            'UTC',
-            \IntlDateFormatter::GREGORIAN,
-            'EEEE'
-        );
+            $dayOfTheWeek = \IntlDateFormatter::create(
+                $this->primaryLanguage,
+                \IntlDateFormatter::FULL,
+                \IntlDateFormatter::NONE,
+                'UTC',
+                \IntlDateFormatter::GREGORIAN,
+                'EEEE'
+            );
+        } catch (\ValueError $e) {
+            // PHP 8.4+ throws ValueError for invalid locales
+            throw new \RuntimeException(
+                sprintf('Invalid locale "%s": %s', $this->locale, $e->getMessage()),
+                0,
+                $e
+            );
+        }
 
         if (null === $dayAndMonth || null === $dayOfTheWeek) {
             throw new \RuntimeException(

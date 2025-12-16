@@ -484,28 +484,39 @@ final class CalendarHandler extends AbstractHandler
      */
     private function createFormatters(): void
     {
-        $dayOfTheWeek = \IntlDateFormatter::create(
-            LitLocale::$PRIMARY_LANGUAGE,
-            \IntlDateFormatter::FULL,
-            \IntlDateFormatter::NONE,
-            'UTC',
-            \IntlDateFormatter::GREGORIAN,
-            'EEEE'
-        );
+        try {
+            $dayOfTheWeek = \IntlDateFormatter::create(
+                LitLocale::$PRIMARY_LANGUAGE,
+                \IntlDateFormatter::FULL,
+                \IntlDateFormatter::NONE,
+                'UTC',
+                \IntlDateFormatter::GREGORIAN,
+                'EEEE'
+            );
 
-        $dayOfTheWeekEnglish = \IntlDateFormatter::create(
-            'en',
-            \IntlDateFormatter::FULL,
-            \IntlDateFormatter::NONE,
-            'UTC',
-            \IntlDateFormatter::GREGORIAN,
-            'EEEE'
-        );
+            $dayOfTheWeekEnglish = \IntlDateFormatter::create(
+                'en',
+                \IntlDateFormatter::FULL,
+                \IntlDateFormatter::NONE,
+                'UTC',
+                \IntlDateFormatter::GREGORIAN,
+                'EEEE'
+            );
 
-        $this->formatter = new \NumberFormatter(
-            LitLocale::$PRIMARY_LANGUAGE,
-            \NumberFormatter::SPELLOUT
-        );
+            $this->formatter = new \NumberFormatter(
+                LitLocale::$PRIMARY_LANGUAGE,
+                \NumberFormatter::SPELLOUT
+            );
+        } catch (\ValueError $e) {
+            // PHP 8.4+ throws ValueError for invalid locales
+            throw new ServiceUnavailableException(
+                sprintf(
+                    'Invalid locale "%s": %s',
+                    LitLocale::$PRIMARY_LANGUAGE,
+                    $e->getMessage()
+                )
+            );
+        }
 
         if (null === $dayOfTheWeek || null === $dayOfTheWeekEnglish) {
             throw new ServiceUnavailableException(
