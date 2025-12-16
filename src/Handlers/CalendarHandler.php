@@ -629,7 +629,8 @@ final class CalendarHandler extends AbstractHandler
     /**
      * Ensure the cache directory exists and is writable.
      *
-     * Creates the cache directory if it doesn't exist.
+     * Creates the cache directory if it doesn't exist and normalizes $this->CachePath
+     * to always have a trailing directory separator for consistent usage by call sites.
      *
      * Note: $this->CachePath must be initialized by handle() before calling this method.
      * This is used by both getGithubReleaseInfo() and prepareResponseBody().
@@ -654,6 +655,8 @@ final class CalendarHandler extends AbstractHandler
                     $resolved
                 ));
             }
+            // Normalize CachePath with trailing separator for consistent usage
+            $this->CachePath = $resolved . DIRECTORY_SEPARATOR;
             return;
         }
 
@@ -683,6 +686,9 @@ final class CalendarHandler extends AbstractHandler
             );
             throw new ServiceUnavailableException($description);
         }
+
+        // Normalize CachePath with trailing separator for consistent usage
+        $this->CachePath = $cachePath . DIRECTORY_SEPARATOR;
     }
 
     /**
