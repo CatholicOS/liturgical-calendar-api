@@ -29,6 +29,7 @@ use LiturgicalCalendar\Api\Http\Exception\ImplementationException;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Exception\YamlException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Http\Negotiator;
 use LiturgicalCalendar\Api\Models\LitCalItem;
 use LiturgicalCalendar\Api\Models\LitCalItemCollection;
@@ -4412,10 +4413,12 @@ final class CalendarHandler extends AbstractHandler
                     }
                     $bytes = file_put_contents($ghReleaseCacheFile, $GitHubReleaseEncoded, LOCK_EX);
                     if (false === $bytes) {
-                        throw new ServiceUnavailableException(sprintf(
-                            'Could not write GitHub release cache file: %s.',
-                            $ghReleaseCacheFile
-                        ));
+                        // Cache write failed, but we have the data in memory - log and continue
+                        // This allows ICS responses to succeed even when caching fails
+                        $logger = LoggerFactory::create('calendar', null, 30, false, true, false);
+                        $logger->warning('Could not write GitHub release cache file', [
+                            'cache_file' => $ghReleaseCacheFile
+                        ]);
                     }
                 }
             } catch (GuzzleException $e) {
