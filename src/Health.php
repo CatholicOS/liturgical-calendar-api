@@ -143,6 +143,9 @@ class Health implements MessageComponentInterface
         }
 
         // Initialize cache backend only once (not on every connection)
+        // Note: This check-then-set pattern is safe because Ratchet/ReactPHP WebSocket
+        // servers are single-threaded (event-loop based), so concurrent connections
+        // are processed sequentially within the same process.
         if (!self::$cacheInitialized) {
             self::$cacheInitialized = true;
 
