@@ -85,6 +85,17 @@ class LoginRateLimitTest extends ApiTestCase
 
         foreach ($files as $file) {
             @unlink($file);
+            // Also remove corresponding lock file
+            $lockFile = str_replace('.json', '.lock', $file);
+            @unlink($lockFile);
+        }
+
+        // Clean up any orphaned lock files
+        $lockFiles = glob($rateLimitDir . DIRECTORY_SEPARATOR . '*.lock');
+        if ($lockFiles !== false) {
+            foreach ($lockFiles as $lockFile) {
+                @unlink($lockFile);
+            }
         }
     }
 
