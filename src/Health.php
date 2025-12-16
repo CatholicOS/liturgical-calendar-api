@@ -939,37 +939,27 @@ class Health implements MessageComponentInterface
                             $message->classes = ".calendar-$calendar.json-valid.year-$year";
                             $this->sendMessage($to, $message);
 
-                            // Skip schema validation for cached data (already validated when first fetched)
-                            if ($fromCache) {
+                            // Always validate against schema (even for cached responses) since this is a test endpoint
+                            $validationResult = $xml->schemaValidate(JsonData::SCHEMAS_FOLDER->path() . '/LiturgicalCalendar.xsd');
+                            if ($validationResult) {
                                 $message          = new \stdClass();
                                 $message->type    = 'success';
                                 $message->text    = sprintf(
-                                    "The $category of $calendar for the year $year was previously validated against the Schema %s (cached)",
-                                    JsonData::SCHEMAS_FOLDER->path() . '/LiturgicalCalendar.xsd'
+                                    "The $category of $calendar for the year $year was successfully validated against the Schema %s%s",
+                                    JsonData::SCHEMAS_FOLDER->path() . '/LiturgicalCalendar.xsd',
+                                    $fromCache ? ' (cached)' : ''
                                 );
                                 $message->classes = ".calendar-$calendar.schema-valid.year-$year";
                                 $this->sendMessage($to, $message);
                             } else {
-                                $validationResult = $xml->schemaValidate(JsonData::SCHEMAS_FOLDER->path() . '/LiturgicalCalendar.xsd');
-                                if ($validationResult) {
-                                    $message          = new \stdClass();
-                                    $message->type    = 'success';
-                                    $message->text    = sprintf(
-                                        "The $category of $calendar for the year $year was successfully validated against the Schema %s",
-                                        JsonData::SCHEMAS_FOLDER->path() . '/LiturgicalCalendar.xsd'
-                                    );
-                                    $message->classes = ".calendar-$calendar.schema-valid.year-$year";
-                                    $this->sendMessage($to, $message);
-                                } else {
-                                    $errors      = libxml_get_errors();
-                                    $errorString = self::retrieveXmlErrors($errors, $xmlArr);
-                                    libxml_clear_errors();
-                                    $message          = new \stdClass();
-                                    $message->type    = 'error';
-                                    $message->text    = $errorString;
-                                    $message->classes = ".calendar-$calendar.schema-valid.year-$year";
-                                    $this->sendMessage($to, $message);
-                                }
+                                $errors      = libxml_get_errors();
+                                $errorString = self::retrieveXmlErrors($errors, $xmlArr);
+                                libxml_clear_errors();
+                                $message          = new \stdClass();
+                                $message->type    = 'error';
+                                $message->text    = $errorString;
+                                $message->classes = ".calendar-$calendar.schema-valid.year-$year";
+                                $this->sendMessage($to, $message);
                             }
                         }
                         break;
@@ -986,44 +976,34 @@ class Health implements MessageComponentInterface
                             $message->classes = ".calendar-$calendar.json-valid.year-$year";
                             $this->sendMessage($to, $message);
 
-                            // Skip schema validation for cached data (already validated when first fetched)
-                            if ($fromCache) {
+                            // Always validate against schema (even for cached responses) since this is a test endpoint
+                            $result = $vcalendar->validate();
+                            if (count($result) === 0) {
                                 $message          = new \stdClass();
                                 $message->type    = 'success';
                                 $message->text    = sprintf(
-                                    "The $category of $calendar for the year $year was previously validated according the iCalendar Schema %s (cached)",
-                                    'https://tools.ietf.org/html/rfc5545'
+                                    "The $category of $calendar for the year $year was successfully validated according the iCalendar Schema %s%s",
+                                    'https://tools.ietf.org/html/rfc5545',
+                                    $fromCache ? ' (cached)' : ''
                                 );
                                 $message->classes = ".calendar-$calendar.schema-valid.year-$year";
                                 $this->sendMessage($to, $message);
                             } else {
-                                $result = $vcalendar->validate();
-                                if (count($result) === 0) {
-                                    $message          = new \stdClass();
-                                    $message->type    = 'success';
-                                    $message->text    = sprintf(
-                                        "The $category of $calendar for the year $year was successfully validated according the iCalendar Schema %s",
-                                        'https://tools.ietf.org/html/rfc5545'
-                                    );
-                                    $message->classes = ".calendar-$calendar.schema-valid.year-$year";
-                                    $this->sendMessage($to, $message);
-                                } else {
-                                    $message       = new \stdClass();
-                                    $message->type = 'error';
-                                    $errorStrings  = [];
-                                    foreach ($result as $error) {
-                                        /** @var array{level:int,message:string,node:VObject\Property} $error */
-                                        $errorLevel = new ICSErrorLevel($error['level']);
-                                        /** @var int $lineIndex The type is obvious, and declared, yet PHPStan seems to be a bit dumb on this one? */
-                                        $lineIndex = $error['node']->lineIndex;
-                                        /** @var string $lineString The type is obvious, and declared, yet PHPStan seems to be a bit dumb on this one? */
-                                        $lineString     = $error['node']->lineString;
-                                        $errorStrings[] = $errorLevel . ': ' . $error['message'] . " at line {$lineIndex} ({$lineString})";
-                                    }
-                                    $message->text    = implode('&#013;', $errorStrings);
-                                    $message->classes = ".calendar-$calendar.schema-valid.year-$year";
-                                    $this->sendMessage($to, $message);
+                                $message       = new \stdClass();
+                                $message->type = 'error';
+                                $errorStrings  = [];
+                                foreach ($result as $error) {
+                                    /** @var array{level:int,message:string,node:VObject\Property} $error */
+                                    $errorLevel = new ICSErrorLevel($error['level']);
+                                    /** @var int $lineIndex The type is obvious, and declared, yet PHPStan seems to be a bit dumb on this one? */
+                                    $lineIndex = $error['node']->lineIndex;
+                                    /** @var string $lineString The type is obvious, and declared, yet PHPStan seems to be a bit dumb on this one? */
+                                    $lineString     = $error['node']->lineString;
+                                    $errorStrings[] = $errorLevel . ': ' . $error['message'] . " at line {$lineIndex} ({$lineString})";
                                 }
+                                $message->text    = implode('&#013;', $errorStrings);
+                                $message->classes = ".calendar-$calendar.schema-valid.year-$year";
+                                $this->sendMessage($to, $message);
                             }
                         } else {
                             $message               = new \stdClass();
@@ -1059,25 +1039,18 @@ class Health implements MessageComponentInterface
                                 $message->classes = ".calendar-$calendar.json-valid.year-$year";
                                 $this->sendMessage($to, $message);
 
-                                // Skip schema validation for cached data (already validated when first fetched)
-                                if ($fromCache) {
+                                // Always validate against schema (even for cached responses) since this is a test endpoint
+                                $validationResult = $this->validateDataAgainstSchema($yamlData, LitSchema::LITCAL->path());
+                                if (gettype($validationResult) === 'boolean' && $validationResult === true) {
                                     $message          = new \stdClass();
                                     $message->type    = 'success';
-                                    $message->text    = "The $category of $calendar for the year $year was previously validated against the Schema " . LitSchema::LITCAL->path() . ' (cached)';
+                                    $cachedNote       = $fromCache ? ' (cached)' : '';
+                                    $message->text    = "The $category of $calendar for the year $year was successfully validated against the Schema " . LitSchema::LITCAL->path() . $cachedNote;
                                     $message->classes = ".calendar-$calendar.schema-valid.year-$year";
                                     $this->sendMessage($to, $message);
-                                } else {
-                                    $validationResult = $this->validateDataAgainstSchema($yamlData, LitSchema::LITCAL->path());
-                                    if (gettype($validationResult) === 'boolean' && $validationResult === true) {
-                                        $message          = new \stdClass();
-                                        $message->type    = 'success';
-                                        $message->text    = "The $category of $calendar for the year $year was successfully validated against the Schema " . LitSchema::LITCAL->path();
-                                        $message->classes = ".calendar-$calendar.schema-valid.year-$year";
-                                        $this->sendMessage($to, $message);
-                                    } elseif ($validationResult instanceof \stdClass) {
-                                        $validationResult->classes = ".calendar-$calendar.schema-valid.year-$year";
-                                        $this->sendMessage($to, $validationResult);
-                                    }
+                                } elseif ($validationResult instanceof \stdClass) {
+                                    $validationResult->classes = ".calendar-$calendar.schema-valid.year-$year";
+                                    $this->sendMessage($to, $validationResult);
                                 }
                             }
                         } catch (\Throwable $e) {
@@ -1131,25 +1104,18 @@ class Health implements MessageComponentInterface
                         $message->classes = ".calendar-$calendar.json-valid.year-$year";
                         $this->sendMessage($to, $message);
 
-                        // Skip schema validation for cached data (already validated when first fetched)
-                        if ($fromCache) {
+                        // Always validate against schema (even for cached responses) since this is a test endpoint
+                        $validationResult = $this->validateDataAgainstSchema($jsonData, LitSchema::LITCAL->path());
+                        if (gettype($validationResult) === 'boolean' && $validationResult === true) {
                             $message          = new \stdClass();
                             $message->type    = 'success';
-                            $message->text    = "The $category of $calendar for the year $year was previously validated against the Schema " . LitSchema::LITCAL->path() . ' (cached)';
+                            $cachedNote       = $fromCache ? ' (cached)' : '';
+                            $message->text    = "The $category of $calendar for the year $year was successfully validated against the Schema " . LitSchema::LITCAL->path() . $cachedNote;
                             $message->classes = ".calendar-$calendar.schema-valid.year-$year";
                             $this->sendMessage($to, $message);
-                        } else {
-                            $validationResult = $this->validateDataAgainstSchema($jsonData, LitSchema::LITCAL->path());
-                            if (gettype($validationResult) === 'boolean' && $validationResult === true) {
-                                $message          = new \stdClass();
-                                $message->type    = 'success';
-                                $message->text    = "The $category of $calendar for the year $year was successfully validated against the Schema " . LitSchema::LITCAL->path();
-                                $message->classes = ".calendar-$calendar.schema-valid.year-$year";
-                                $this->sendMessage($to, $message);
-                            } elseif ($validationResult instanceof \stdClass) {
-                                $validationResult->classes = ".calendar-$calendar.schema-valid.year-$year";
-                                $this->sendMessage($to, $validationResult);
-                            }
+                        } elseif ($validationResult instanceof \stdClass) {
+                            $validationResult->classes = ".calendar-$calendar.schema-valid.year-$year";
+                            $this->sendMessage($to, $validationResult);
                         }
                 }
             },
