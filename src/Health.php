@@ -1255,7 +1255,12 @@ class Health implements MessageComponentInterface
     {
         echo "Redis connection lost: {$e->getMessage()}, falling back to APCu\n";
         self::$redis = null;
-        if (function_exists('apcu_enabled') && apcu_enabled()) {
+        // Use the same comprehensive APCu check as initialization
+        $apcuAvailable = extension_loaded('apcu')
+            && function_exists('apcu_exists')
+            && function_exists('apcu_store')
+            && function_exists('apcu_fetch');
+        if ($apcuAvailable) {
             self::$cacheBackend = 'apcu';
             echo "APCu fallback enabled\n";
         } else {
