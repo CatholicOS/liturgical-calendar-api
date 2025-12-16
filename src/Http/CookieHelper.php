@@ -137,20 +137,30 @@ class CookieHelper
     /**
      * Set refresh token cookie on response
      *
+     * When rememberMe is false, the cookie is set as a session cookie (no Max-Age/Expires),
+     * which means the browser will delete it when closed. When rememberMe is true,
+     * the cookie persists for the specified expiry duration.
+     *
      * @param ResponseInterface $response The response to add cookie to
      * @param string $token The refresh token
-     * @param int $expiry Token expiry in seconds
+     * @param int $expiry Token expiry in seconds (used only when rememberMe is true)
+     * @param bool $rememberMe Whether to persist the cookie beyond the browser session
      * @return ResponseInterface Response with Set-Cookie header
      */
     public static function setRefreshTokenCookie(
         ResponseInterface $response,
         string $token,
-        int $expiry
+        int $expiry,
+        bool $rememberMe = false
     ): ResponseInterface {
+        // When rememberMe is false, pass 0 for maxAge to create a session cookie
+        // When rememberMe is true, use the provided expiry for a persistent cookie
+        $maxAge = $rememberMe ? $expiry : 0;
+
         $cookie = self::buildCookieHeader(
             self::REFRESH_TOKEN_COOKIE,
             $token,
-            $expiry,
+            $maxAge,
             '/auth', // Refresh token only needs to be sent to /auth endpoints
             'Strict' // Strict for refresh token - extra security
         );

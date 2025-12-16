@@ -23,6 +23,7 @@ enum StatusCode: int
     case CONFLICT               = 409;
     case UNSUPPORTED_MEDIA_TYPE = 415;
     case UNPROCESSABLE_CONTENT  = 422;
+    case TOO_MANY_REQUESTS      = 429;
     case NOT_IMPLEMENTED        = 501;
     case SERVICE_UNAVAILABLE    = 503;
 
@@ -48,6 +49,7 @@ enum StatusCode: int
             StatusCode::CONFLICT               => 'Conflict',
             StatusCode::UNSUPPORTED_MEDIA_TYPE => 'Unsupported Media Type',
             StatusCode::UNPROCESSABLE_CONTENT  => 'Unprocessable Content',
+            StatusCode::TOO_MANY_REQUESTS      => 'Too Many Requests',
             StatusCode::NOT_IMPLEMENTED        => 'Not Implemented',
             StatusCode::SERVICE_UNAVAILABLE    => 'Service Unavailable'
         };

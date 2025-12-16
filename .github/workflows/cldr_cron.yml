@@ -11,6 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: development
 
       - name: Get latest CLDR release tag
         id: cldr
@@ -51,6 +53,7 @@ jobs:
             remote_version=$(echo "$remote_version" | cut -d '.' -f 1)
           fi
 
+          echo "remote_version=$remote_version" >> $GITHUB_OUTPUT
           if [[ $remote_version == $local_version ]]; then
             echo "up_to_date=true" >> $GITHUB_OUTPUT
           else
@@ -84,4 +87,5 @@ jobs:
             Release notes: https://github.com/unicode-org/cldr-json/releases/tag/${{ steps.cldr.outputs.tag }}
           labels: dependencies, automated
           branch: update-cldr
+          base: development
           delete-branch: true

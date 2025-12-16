@@ -738,6 +738,45 @@ class Utilities
     }
 
     /**
+     * Parse CORS_ALLOWED_ORIGINS environment variable into an array of allowed origins.
+     *
+     * This method provides consistent parsing across all entry points (Router, CLI servers, workers).
+     *
+     * @param string|null $envValue The value from $_ENV['CORS_ALLOWED_ORIGINS'] or null if not set.
+     * @param bool $throwOnEmpty If true, throws exception when value is set but results in empty array.
+     * @return string[] Array of allowed origins, or ['*'] if not configured or wildcard.
+     * @throws \InvalidArgumentException If $throwOnEmpty is true and parsed result is empty.
+     */
+    public static function parseCorsAllowedOrigins(?string $envValue, bool $throwOnEmpty = false): array
+    {
+        // Not set or explicit wildcard - allow all origins
+        if ($envValue === null || $envValue === '*') {
+            return ['*'];
+        }
+
+        // Parse comma-separated list, trim whitespace, filter empty strings only
+        // Using explicit callback to avoid filtering falsy values like "0"
+        $origins = array_filter(
+            array_map('trim', explode(',', $envValue)),
+            static fn(string $origin): bool => $origin !== ''
+        );
+
+        // Handle empty result (e.g., whitespace-only value)
+        if (count($origins) === 0) {
+            if ($throwOnEmpty) {
+                throw new \InvalidArgumentException(
+                    'CORS_ALLOWED_ORIGINS is set but contains no valid origins. '
+                    . 'Use "*" to allow all origins or provide a comma-separated list of origins.'
+                );
+            }
+            // Default to wildcard if not throwing
+            return ['*'];
+        }
+
+        return $origins;
+    }
+
+    /**
      * Function called after a successful installation of the Catholic Liturgical Calendar API.
      *
      * It prints the typical motto of the Jesuits (see {@link https://it.cathopedia.org/wiki/Ad_Maiorem_Dei_Gloriam})

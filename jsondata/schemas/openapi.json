@@ -12,7 +12,7 @@
   ],
   "info": {
     "description": "An API which allows to retrieve data about the **Roman Calendar** for any given year, between 1970 and 9999. The data strives for historical accuracy (memorials and feast days are only generated from the year in which they were effectively introduced). The data is based on original sources (Roman Missals, Decrees of the Dicastery for Divine Worship and the Discipline of the Sacraments, Mysterii Paschalis, etc.), not on data copied or retrieved from online sources which may not be accurate. The API offers multiple locales and multiple calendars, from the **General Roman Calendar** to national or diocesan calendars.",
-    "version": "5.5",
+    "version": "5.7",
     "title": "Liturgical Calendar",
     "contact": {
       "email": "priest@johnromanodorazio.com",
@@ -893,7 +893,7 @@
         ],
         "summary": "Authenticate user and obtain JWT tokens",
         "operationId": "authLogin",
-        "description": "Authenticate with username and password to obtain access and refresh tokens. The access token should be included in the Authorization header for protected endpoints.",
+        "description": "Authenticate with username and password to obtain access and refresh tokens. Tokens are returned in the response body AND set as HttpOnly cookies (litcal_access_token, litcal_refresh_token). Browser clients should use the cookie-based authentication (preferred for XSS protection), while server-to-server clients can use the Bearer token in the Authorization header.",
         "requestBody": {
           "required": true,
           "content": {
@@ -906,7 +906,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK: Authentication successful, tokens returned",
+            "description": "OK: Authentication successful. Tokens returned in response body and set as HttpOnly cookies.",
             "content": {
               "application/json": {
                 "schema": {
@@ -920,6 +920,9 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized401"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests429"
           }
         }
       }
@@ -934,9 +937,10 @@
         ],
         "summary": "Refresh access token using refresh token",
         "operationId": "authRefresh",
-        "description": "Use a valid refresh token to obtain a new access token without re-authenticating with username/password.",
+        "description": "Use a valid refresh token to obtain a new access token without re-authenticating with username/password.\n\n**Token Sources (in order of precedence):**\n1. **HttpOnly Cookie** (preferred): The refresh token is automatically read from the `litcal_refresh_token` cookie if present. Browser-based clients using cookie authentication can call this endpoint without a request body.\n2. **Request Body** (fallback): If no cookie is present, the refresh token must be provided in the JSON request body.\n\n**Usage:**\n- **Browser clients**: Use `credentials: 'include'` in fetch requests. No request body needed if cookies were set by `/auth/login`.\n- **Server/API clients**: Send the refresh token in the request body.",
         "requestBody": {
-          "required": true,
+          "required": false,
+          "description": "Optional when using cookie-based authentication. Required for clients that don't send cookies.",
           "content": {
             "application/json": {
               "schema": {
@@ -973,6 +977,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Logout user session",
@@ -1009,6 +1016,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Get current authenticated user information",
@@ -1687,6 +1697,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Create a national calendar data resource",
@@ -1758,6 +1771,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Create a wider region data resource",
@@ -1829,6 +1845,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Create a diocesan calendar data resource",
@@ -1976,6 +1995,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Update a national calendar data resource",
@@ -2051,6 +2073,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Delete a national calendar data resource",
@@ -2169,6 +2194,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Update a diocesan calendar data resource",
@@ -2243,6 +2271,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Delete a diocesan calendar data resource",
@@ -2360,6 +2391,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Update a wider region calendar data resource",
@@ -2434,6 +2468,9 @@
         "security": [
           {
             "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
           }
         ],
         "summary": "Delete a wider region calendar data resource",
@@ -2894,7 +2931,12 @@
           "Unit Tests"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Create a new unit test in the API `tests` folder",
         "operationId": "testsIndexPUT",
@@ -2944,6 +2986,9 @@
               }
             }
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
           "415": {
             "$ref": "#/components/responses/UnsupportedMediaType415"
           },
@@ -2973,7 +3018,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
             }
           }
         ],
@@ -3024,6 +3069,128 @@
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound404"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Unit Tests"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "summary": "Update an existing unit test in the API `tests` folder",
+        "operationId": "updateTestByNamePATCH",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "test_name",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
+            },
+            "description": "The name of the unit test to update (without .json extension)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ExactOrVariableCorrespondenceUnitTest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ExactCorrespondenceSinceUnitTest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ExactCorrespondenceUntilUnitTest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 OK. The unit test was updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "response": {
+                      "type": "string",
+                      "example": "Unit Test ExampleTest updated successfully."
+                    }
+                  },
+                  "required": [
+                    "response"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound404"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType415"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity422"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable503"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Unit Tests"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "summary": "Delete a unit test from the API `tests` folder",
+        "operationId": "deleteTestByNameDELETE",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "test_name",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
+            },
+            "description": "The name of the unit test to delete (without .json extension)"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "204 No Content. The unit test was deleted successfully."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -3827,12 +3994,12 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
             "description": "the liturgical event we are testing, must be the exact key of a corresponding liturgical event in the LitCal API",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$"
+            "pattern": "^([a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:[A-Z][a-zA-Z0-9]+)*(?:_\\d+)?(?:_vigil)?$"
           },
           "description": {
             "type": "string",
@@ -3883,12 +4050,12 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
             "description": "the liturgical event we are testing, must be the exact key of a corresponding liturgical event in the LitCal API",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$"
+            "pattern": "^([a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:[A-Z][a-zA-Z0-9]+)*(?:_\\d+)?(?:_vigil)?$"
           },
           "description": {
             "type": "string",
@@ -3943,12 +4110,12 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
             "description": "the liturgical event we are testing, must be the exact key of a corresponding liturgical event in the LitCal API",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$"
+            "pattern": "^([a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:[A-Z][a-zA-Z0-9]+)*(?:_\\d+)?(?:_vigil)?$"
           },
           "description": {
             "type": "string",
@@ -4000,7 +4167,7 @@
           "litcal_events": {
             "type": "object",
             "patternProperties": {
-              "^[A-Z](?:[A-Z]+_)*[a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$": {
+              "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?$": {
                 "type": "object",
                 "properties": {
                   "month": {
@@ -4017,7 +4184,7 @@
                   },
                   "event_key": {
                     "type": "string",
-                    "pattern": "^[A-Z](?:[A-Z]+_)*[a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$",
+                    "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?$",
                     "description": "corresponds to the `event_key` property of liturgical events in the output of the LitCal API and similar endpoints"
                   },
                   "grade": {
@@ -4298,6 +4465,11 @@
             "type": "string",
             "format": "password",
             "description": "Password for authentication"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, the refresh token cookie persists beyond the browser session (with Max-Age/Expires). When false (default), the refresh token is stored as a session cookie that is deleted when the browser closes."
           }
         },
         "required": [
@@ -4307,14 +4479,15 @@
       },
       "LoginResponse": {
         "type": "object",
+        "description": "Authentication response containing JWT tokens. Note: These tokens are also set as HttpOnly cookies (litcal_access_token, litcal_refresh_token) for browser-based clients. Browser clients should rely on cookies for authentication rather than storing tokens in localStorage/sessionStorage.",
         "properties": {
           "access_token": {
             "type": "string",
-            "description": "JWT access token valid for 1 hour (configurable via JWT_EXPIRY)"
+            "description": "JWT access token valid for 1 hour (configurable via JWT_EXPIRY). Also set as HttpOnly cookie 'litcal_access_token'."
           },
           "refresh_token": {
             "type": "string",
-            "description": "JWT refresh token valid for 7 days (configurable via JWT_REFRESH_EXPIRY)"
+            "description": "JWT refresh token valid for 7 days (configurable via JWT_REFRESH_EXPIRY). Also set as HttpOnly cookie 'litcal_refresh_token'."
           },
           "token_type": {
             "type": "string",
@@ -4337,15 +4510,16 @@
       },
       "RefreshRequest": {
         "type": "object",
+        "description": "Request body for token refresh. This body is optional when using cookie-based authentication, as the server will read the refresh token from the `litcal_refresh_token` HttpOnly cookie first.",
         "properties": {
           "refresh_token": {
             "type": "string",
-            "description": "Valid refresh token obtained from /auth/login"
+            "description": "Valid refresh token obtained from /auth/login. Required if the `litcal_refresh_token` cookie is not present. When both cookie and body are provided, the cookie takes precedence."
           }
         },
-        "required": [
-          "refresh_token"
-        ]
+        "example": {
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
       },
       "RefreshResponse": {
         "type": "object",
@@ -5091,6 +5265,45 @@
           }
         }
       },
+      "TooManyRequests429": {
+        "description": "429 Too Many Requests. The user has sent too many requests in a given amount of time (rate limiting). The response includes a Retry-After header indicating how long to wait before retrying.",
+        "headers": {
+          "Retry-After": {
+            "description": "Number of seconds to wait before retrying the request",
+            "schema": {
+              "type": "integer",
+              "example": 847
+            }
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "./Problem.json"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "retryAfter": {
+                      "type": "integer",
+                      "description": "Number of seconds to wait before retrying the request"
+                    }
+                  }
+                }
+              ]
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429",
+              "title": "Too Many Requests",
+              "status": 429,
+              "detail": "Too many login attempts. Please try again later.",
+              "retryAfter": 847
+            }
+          }
+        }
+      },
       "ServiceUnavailable503": {
         "description": "503 Service Unavailable",
         "content": {
@@ -5173,7 +5386,13 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "JWT access token obtained from /auth/login or /auth/refresh endpoint. Include in Authorization header as: `Authorization: Bearer <token>`"
+        "description": "JWT access token obtained from /auth/login or /auth/refresh endpoint. Include in Authorization header as: `Authorization: Bearer <token>`. This method is suitable for server-to-server communication or non-browser clients."
+      },
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "litcal_access_token",
+        "description": "HttpOnly cookie containing JWT access token, automatically set by /auth/login endpoint. This is the preferred authentication method for browser-based clients as it protects tokens from XSS attacks. Requires `credentials: 'include'` in fetch requests for cross-origin scenarios."
       }
     }
   }

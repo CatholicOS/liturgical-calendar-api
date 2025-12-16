@@ -8,12 +8,15 @@ use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
+use LiturgicalCalendar\Api\Http\Exception\TooManyRequestsException;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Models\Auth\User;
 use LiturgicalCalendar\Api\Services\JwtService;
 use LiturgicalCalendar\Api\Services\JwtServiceFactory;
+use LiturgicalCalendar\Api\Services\RateLimiter;
+use LiturgicalCalendar\Api\Services\RateLimiterFactory;
 use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -26,6 +29,7 @@ use Psr\Http\Message\ServerRequestInterface;
  * Accepts:
  * - username (string)
  * - password (string)
+ * - remember_me (boolean, optional) - When true, refresh token cookie persists beyond browser session
  *
  * Returns:
  * - access_token (string) - JWT access token
@@ -39,7 +43,8 @@ final class LoginHandler extends AbstractHandler
 {
     use ClientIpTrait;
 
-    private ?JwtService $jwtService = null;
+    private ?JwtService $jwtService   = null;
+    private ?RateLimiter $rateLimiter = null;
     private Logger $authLogger;
 
     /**
@@ -81,6 +86,17 @@ final class LoginHandler extends AbstractHandler
     }
 
     /**
+     * Get the rate limiter instance, creating it if needed (lazy loading).
+     */
+    private function getRateLimiter(): RateLimiter
+    {
+        if ($this->rateLimiter === null) {
+            $this->rateLimiter = RateLimiterFactory::fromEnv();
+        }
+        return $this->rateLimiter;
+    }
+
+    /**
      * Process a login request and return an authentication response.
      *
      * Authenticates username and password from the JSON request body and returns
@@ -89,6 +105,7 @@ final class LoginHandler extends AbstractHandler
      *
      * @param ServerRequestInterface $request The incoming HTTP request.
      * @return ResponseInterface Response with a JSON body containing `access_token`, `refresh_token`, `expires_in`, and `token_type`.
+     * @throws TooManyRequestsException If rate limit is exceeded for the client IP.
      * @throws UnauthorizedException If authentication fails for the provided credentials.
      * @throws ValidationException If the request body is missing or username/password are invalid.
      */
@@ -113,34 +130,60 @@ final class LoginHandler extends AbstractHandler
         $mime     = $this->validateAcceptHeader($request, AcceptabilityLevel::LAX);
         $response = $response->withHeader('Content-Type', $mime);
 
+        // Get client IP for rate limiting and logging (check proxy headers first, then fall back to REMOTE_ADDR)
+        /** @var array<string, mixed> $serverParams */
+        $serverParams = $request->getServerParams();
+        $clientIp     = $this->getClientIp($request, $serverParams);
+
+        // Check rate limit before processing login
+        $rateLimiter = $this->getRateLimiter();
+        if ($rateLimiter->isRateLimited($clientIp)) {
+            $retryAfter = $rateLimiter->getRetryAfter($clientIp);
+            $this->authLogger->warning('Login rate limited', [
+                'client_ip'   => $clientIp,
+                'retry_after' => $retryAfter
+            ]);
+            throw new TooManyRequestsException(
+                'Too many login attempts. Please try again later.',
+                $retryAfter
+            );
+        }
+
         // Parse request body (required=true handles Content-Type and empty body validation)
         $parsedBodyParams = $this->parseBodyParams($request, true);
 
-        // Extract username and password
-        $username = $parsedBodyParams['username'] ?? null;
-        $password = $parsedBodyParams['password'] ?? null;
+        // Extract username, password, and remember_me option
+        $username   = $parsedBodyParams['username'] ?? null;
+        $password   = $parsedBodyParams['password'] ?? null;
+        $rememberMe = $parsedBodyParams['remember_me'] ?? false;
 
         if (!is_string($username) || !is_string($password) || trim($username) === '' || trim($password) === '') {
             throw new ValidationException('Username and password are required and must be non-empty strings');
         }
 
-        // Get client IP for logging (check proxy headers first, then fall back to REMOTE_ADDR)
-        /** @var array<string, mixed> $serverParams */
-        $serverParams = $request->getServerParams();
-        $clientIp     = $this->getClientIp($request, $serverParams);
+        // Ensure remember_me is a boolean
+        $rememberMe = filter_var($rememberMe, FILTER_VALIDATE_BOOLEAN);
 
         // Authenticate user
         $user = User::authenticate($username, $password);
 
         if ($user === null) {
+            // Record failed attempt for rate limiting
+            $rateLimiter->recordFailedAttempt($clientIp);
+            $remaining = $rateLimiter->getRemainingAttempts($clientIp);
+
             // Log failed login attempt
             $this->authLogger->warning('Login failed', [
-                'username'  => $username,
-                'client_ip' => $clientIp,
-                'reason'    => 'Invalid credentials'
+                'username'           => $username,
+                'client_ip'          => $clientIp,
+                'reason'             => 'Invalid credentials',
+                'remaining_attempts' => $remaining
             ]);
             throw new UnauthorizedException('Invalid username or password');
         }
+
+        // Clear rate limit on successful login (good UX, prevents legitimate users from being locked out)
+        $rateLimiter->clearAttempts($clientIp);
 
         // Generate tokens (lazy-load JWT service here, after OPTIONS check)
         $jwtService   = $this->getJwtService();
@@ -154,8 +197,10 @@ final class LoginHandler extends AbstractHandler
         ]);
 
         // Set HttpOnly cookies for secure token storage
+        // Access token: persistent cookie with short TTL (e.g., 15-60 min), refreshed automatically
+        // Refresh token: session cookie (deleted on browser close) unless remember_me=true
         $response = CookieHelper::setAccessTokenCookie($response, $token, $jwtService->getExpiry());
-        $response = CookieHelper::setRefreshTokenCookie($response, $refreshToken, $jwtService->getRefreshExpiry());
+        $response = CookieHelper::setRefreshTokenCookie($response, $refreshToken, $jwtService->getRefreshExpiry(), $rememberMe);
 
         // Prepare response data (tokens still included for backwards compatibility)
         $responseData = [

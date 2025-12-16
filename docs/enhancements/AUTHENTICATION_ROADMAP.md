@@ -2,9 +2,9 @@
 
 This document outlines the implementation plan for adding authentication, authorization, and API key management to the Liturgical Calendar API and Frontend.
 
-## Current Implementation Status (2025-11-23)
+## Current Implementation Status (2025-12-06)
 
-**Status:** ✅ Phase 0 Complete - JWT authentication implemented and tested
+**Status:** ✅ Phase 0 Complete + Phase 2.5 Support + Production Security - JWT authentication with cookie-only auth and production-ready security features
 
 **Related Issue:** [#262 - Implement JWT authentication for PUT/PATCH/DELETE requests](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/262)
 
@@ -56,6 +56,7 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
 2. **Core Services**
    - ✅ `JwtService` (`src/Services/JwtService.php`) - Token generation, verification, and refresh
    - ✅ `User` model (`src/Models/Auth/User.php`) - Environment-based authentication
+   - ✅ `CookieHelper` (`src/Http/CookieHelper.php`) - Secure HttpOnly cookie management
 
 3. **Middleware**
    - ✅ `JwtAuthMiddleware` (`src/Http/Middleware/JwtAuthMiddleware.php`) - JWT validation for protected routes
@@ -64,6 +65,7 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
    - ✅ `LoginHandler` (`src/Handlers/Auth/LoginHandler.php`) - POST `/auth/login`
    - ✅ `LogoutHandler` (`src/Handlers/Auth/LogoutHandler.php`) - POST `/auth/logout`
    - ✅ `RefreshHandler` (`src/Handlers/Auth/RefreshHandler.php`) - POST `/auth/refresh`
+   - ✅ `MeHandler` (`src/Handlers/Auth/MeHandler.php`) - GET `/auth/me` (authentication state check)
 
 5. **HTTP Exceptions**
    - ✅ `UnauthorizedException` (401) - Missing/invalid authentication
@@ -71,12 +73,22 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
    - ✅ Updated `StatusCode` enum with UNAUTHORIZED and FORBIDDEN cases
 
 6. **Router Updates**
-   - ✅ Added `/auth/login`, `/auth/logout`, and `/auth/refresh` routes
+   - ✅ Added `/auth/login`, `/auth/logout`, `/auth/refresh`, and `/auth/me` routes
    - ✅ Applied JWT middleware to `/data` endpoint for PUT/PATCH/DELETE operations
+   - ✅ CORS credentials support (`Access-Control-Allow-Credentials: true`)
 
 7. **Configuration**
    - ✅ Added JWT environment variables to `.env.example`
    - ✅ Configured development environment in `.env.local`
+
+8. **HttpOnly Cookie Authentication (2025-11-27)**
+   - ✅ `CookieHelper` class for secure cookie management
+   - ✅ `LoginHandler` sets HttpOnly cookies after successful authentication
+   - ✅ `RefreshHandler` reads refresh token from cookie, sets new access token cookie
+   - ✅ `LogoutHandler` clears HttpOnly cookies on logout
+   - ✅ `JwtAuthMiddleware` reads token from cookie first, falls back to Authorization header
+   - ✅ `MeHandler` for checking authentication state (essential for cookie-based auth)
+   - ✅ Supports both HttpOnly cookies (preferred) and Authorization header (backwards compatible)
 
 **Testing Results:**
 
@@ -86,15 +98,22 @@ See [Frontend Authentication Roadmap](../../../LiturgicalCalendarFrontend/docs/A
 - ✅ DELETE/PATCH/PUT without authentication returns 401 Unauthorized
 - ✅ DELETE/PATCH/PUT with valid JWT token passes authentication
 - ✅ Invalid/malformed tokens rejected with 401 Unauthorized
+- ✅ HttpOnly cookies set correctly on login
+- ✅ `/auth/me` returns authentication state from cookie
+- ✅ Logout clears HttpOnly cookies
 
 **API Endpoints:**
 
-- `POST /auth/login` - Authenticate and receive tokens
-- `POST /auth/logout` - End session (stateless; client deletes tokens)
-- `POST /auth/refresh` - Refresh access token using refresh token
+- `POST /auth/login` - Authenticate and receive tokens (sets HttpOnly cookies)
+- `POST /auth/logout` - End session (clears HttpOnly cookies)
+- `POST /auth/refresh` - Refresh access token using refresh token (reads/sets cookies)
+- `GET /auth/me` - Check authentication state (returns user info from token)
 - `PUT /data/{category}/{calendar}` - Protected (requires JWT)
 - `PATCH /data/{category}/{calendar}` - Protected (requires JWT)
 - `DELETE /data/{category}/{calendar}` - Protected (requires JWT)
+- `PUT /tests` - Protected (requires JWT)
+- `PATCH /tests/{test_name}` - Protected (requires JWT)
+- `DELETE /tests/{test_name}` - Protected (requires JWT)
 
 **Endpoints Requiring JWT Protection (To Be Implemented):**
 
@@ -106,9 +125,6 @@ Per the API Client Libraries Roadmap, the following CRUD endpoints also need JWT
 - `PUT /decrees` - Create decree (not yet implemented)
 - `PATCH /decrees/{decree_id}` - Update decree (not yet implemented)
 - `DELETE /decrees/{decree_id}` - Delete decree (not yet implemented)
-- `PUT /tests` - Create test (**exists but lacks authentication - security gap**)
-- `PATCH /tests/{test_name}` - Update test (not yet implemented)
-- `DELETE /tests/{test_name}` - Delete test (not yet implemented)
 
 See `docs/enhancements/OPENAPI_EVALUATION_ROADMAP.md` for the full gap analysis.
 
@@ -442,15 +458,20 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 - ✅ **Longer-lived refresh tokens** - Default 7 days (configurable via `JWT_REFRESH_EXPIRY`)
 - ✅ **Password hashing** - Uses `password_hash()` with `PASSWORD_ARGON2ID`
 - ✅ **JWT signature verification** - All tokens validated with HS256 algorithm
-- ✅ **CSRF protection** - JWT in `Authorization` header (not cookies) provides inherent CSRF protection; explicit CSRF tokens may be added in Phase 5 for defense-in-depth
+- ✅ **HttpOnly cookies** - Tokens stored in HttpOnly cookies, inaccessible to JavaScript (XSS protection)
+- ✅ **SameSite cookie attribute** - CSRF protection via `SameSite=Lax` (access token) and `SameSite=Strict` (refresh token)
+- ✅ **Secure cookie flag** - Cookies only sent over HTTPS in production
+- ✅ **Path restriction** - Refresh token cookie only sent to `/auth` endpoints
+- ✅ **Backwards compatibility** - Also accepts Authorization header for clients not using cookies
 - ✅ **Authentication logging** - All login attempts (success/failure) and logouts logged to dedicated `auth.log` file
 
-**Recommended for Production (Not Yet Implemented):**
+**Recommended for Production (Implemented 2025-12-06):**
 
-- ⚠️ **HTTPS enforcement** - Configure reverse proxy to require HTTPS
-- ⚠️ **Strong JWT secret** - Use minimum 32 characters, generate locally before deployment with `php -r "echo bin2hex(random_bytes(32));"`
-- ⚠️ **Rate limiting** - Implement brute-force protection on `/auth/login` endpoint
-- ⚠️ **Token expiry monitoring** - Consider implementing token refresh alerts
+- ✅ **Rate limiting** - Brute-force protection on `/auth/login` endpoint (5 attempts per 15 minutes, configurable)
+- ✅ **HTTPS enforcement** - `HttpsEnforcementMiddleware` requires HTTPS for auth endpoints in staging/production
+- ✅ **Strong JWT secret** - `JwtServiceFactory` detects and rejects placeholder secrets in staging/production
+- ✅ **Production security documentation** - See `docs/PRODUCTION_SECURITY.md`
+- ⚠️ **Token expiry monitoring** - Consider implementing token refresh alerts (future enhancement)
 
 #### Known Limitations (To Be Addressed in Future Phases)
 
@@ -462,6 +483,49 @@ curl -X DELETE http://localhost:8000/data?category=national&calendar=TEST
 - **No refresh token rotation** - Refresh tokens don't expire on use
 
 These limitations are acceptable for the initial implementation to protect against unauthorized modifications. Future phases will address them.
+
+### Phase 2.5 Support: Full Cookie-Only Authentication (2025-12-02)
+
+The API backend fully supports Phase 2.5 (Full Cookie-Only Authentication) from the Frontend Authentication Roadmap.
+This allows frontends to use HttpOnly cookies exclusively, without needing to store tokens in localStorage/sessionStorage.
+
+**Backend Support Already Implemented:**
+
+1. **RefreshHandler** (`src/Handlers/Auth/RefreshHandler.php`)
+   - ✅ Reads refresh token from HttpOnly cookie first, falling back to request body
+   - ✅ No request body required when refresh token cookie is present
+
+2. **JwtAuthMiddleware** (`src/Http/Middleware/JwtAuthMiddleware.php`)
+   - ✅ Reads access token from HttpOnly cookie first, falling back to Authorization header
+   - ✅ Automatic token validation from cookies
+
+3. **CookieHelper** (`src/Http/CookieHelper.php`)
+   - ✅ `setAccessTokenCookie()` - Sets HttpOnly access token cookie
+   - ✅ `setRefreshTokenCookie()` - Sets HttpOnly refresh token cookie (path restricted to `/auth`)
+   - ✅ `clearAuthCookies()` - Clears both token cookies on logout
+   - ✅ `getAccessToken()` / `getRefreshToken()` - Reads tokens from cookie array
+
+4. **MeHandler** (`src/Handlers/Auth/MeHandler.php`)
+   - ✅ `GET /auth/me` endpoint for checking authentication state
+   - ✅ Essential for cookie-based auth since JavaScript cannot read HttpOnly cookies
+   - ✅ Returns `{ authenticated, username, roles, exp }` from token
+
+**Frontend Migration (Phase 2.5):**
+
+When frontends migrate to full cookie-only authentication:
+
+- No need to store tokens in localStorage/sessionStorage
+- Requests use `credentials: 'include'` to send HttpOnly cookies automatically
+- No Authorization header needed (cookies are automatic)
+- Auth state checked via `/auth/me` endpoint instead of parsing localStorage token
+
+**Backwards Compatibility:**
+
+The API maintains full backwards compatibility:
+
+- Authorization header still works for clients not using cookies
+- Request body refresh tokens still accepted alongside cookie-based refresh
+- Both authentication methods can coexist during migration
 
 #### Authentication Logging
 

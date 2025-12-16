@@ -1,10 +1,22 @@
 # CHANGELOG
 
 <!--
-## [v5.7](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.7) (unreleased)
+## [v5.8](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.8) (unreleased)
 
 * implement `filter` parameter for limited sets of calendar events, see issue [#43](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/43)
 -->
+
+## [v5.7](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.7) (December 15th 2025)
+
+* implement "Remember Me" functionality for login, see issue [#439](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/439)
+* add production security features: login rate limiting, HTTPS enforcement, and APP_ENV validation, see issue [#428](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/428)
+* add Redis cache with APCu fallback for improved performance, see issue [#420](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/420)
+* implement cookie-only authentication (Phase 2.5) with HttpOnly cookies for enhanced security
+* add JWT authentication for /tests PUT/PATCH/DELETE endpoints, see issue [#443](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/443)
+* improve CORS handling for authenticated requests with proper origin validation, see issue [#426](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/issues/426)
+* standardize dotenv configuration and add .env.test support
+
+O Oriens, splendor lucis æternæ, veni! 🌅
 
 ## [v5.6](https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/releases/tag/v5.6) (November 28th 2025)
 

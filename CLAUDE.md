@@ -45,7 +45,7 @@ composer stop
 - `API_PROTOCOL` (http|https)
 - `API_HOST` (localhost in dev)
 - `API_PORT` (8000 in dev)
-- `API_BASE_PATH` (/ in dev)
+- `API_BASE_PATH` (empty in dev, e.g. /api/dev in production)
 - `APP_ENV` (development|test|staging|production) - **Required in non-localhost environments**
   - `development` / `test`: Allow default password if `ADMIN_PASSWORD_HASH` is unset (for testing convenience)
   - `staging` / `production`: Require `ADMIN_PASSWORD_HASH` to be configured (throws exception if missing)
@@ -62,7 +62,7 @@ composer stop
   - Required in `staging` and `production` environments
   - Optional in `development` and `test` environments (defaults to password "password")
 
-**Protected Routes:** The following routes require JWT authentication (via `Authorization: Bearer <token>` header):
+**Protected Routes:** The following routes require JWT authentication (via HttpOnly cookie or `Authorization: Bearer <token>` header):
 
 - `PUT /data/{category}/{calendar}` - Create calendar data
 - `PATCH /data/{category}/{calendar}` - Update calendar data
@@ -70,8 +70,26 @@ composer stop
 
 **Authentication Endpoints:**
 
-- `POST /auth/login` - Authenticate with username/password, returns access and refresh tokens
-- `POST /auth/refresh` - Refresh access token using refresh token
+- `POST /auth/login` - Authenticate with username/password, returns access and refresh tokens (sets HttpOnly cookies)
+- `POST /auth/refresh` - Refresh access token using refresh token (reads from cookie or body)
+- `POST /auth/logout` - End session and clear HttpOnly cookies
+- `GET /auth/me` - Check authentication state (returns user info from token, essential for cookie-based auth)
+
+**Cookie-Based Authentication (Phase 2.5):**
+
+The API supports full cookie-only authentication where:
+
+- Tokens are stored in HttpOnly cookies (not accessible to JavaScript, mitigating token theft via XSS)
+- `JwtAuthMiddleware` reads token from cookie first, falls back to Authorization header
+- `RefreshHandler` reads refresh token from cookie, no request body needed
+- Frontend uses `credentials: 'include'` to send cookies automatically
+
+**CORS Configuration:**
+
+- `CORS_ALLOWED_ORIGINS` - Comma-separated list of allowed origins for credentialed CORS requests
+  - Default: `*` (all origins allowed - not recommended for production with cookies)
+  - Example: `CORS_ALLOWED_ORIGINS=https://example.com,https://admin.example.com`
+  - Auth endpoint errors only reflect validated origins (security measure)
 
 See [Authentication Roadmap](docs/enhancements/AUTHENTICATION_ROADMAP.md) for implementation details.
 
@@ -356,11 +374,20 @@ data validation via WebSocket backend.
 
 ## Git Workflow
 
-- Main branch: `master` (stable releases)
-- Development branch: `development` (testing)
-- Feature branches: Created for complex features
-- PRs should target `development` first, then merge to `master` after community testing
+- **Main branch:** `master` (stable releases)
+- **Development branch:** `development` (active development and testing)
+- **Feature branches:** Always branch off `development`, not `master`
+- **Pull requests:** Always target `development` branch, never `master` directly
+- **Release flow:** Changes merge from feature branches → `development` → `master` after community testing
 - Test locally before submitting PR
+
+**Creating a feature branch:**
+
+```bash
+git checkout development
+git pull origin development
+git checkout -b feature/your-feature-name
+```
 
 ## System Requirements
 

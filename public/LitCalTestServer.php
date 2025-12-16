@@ -41,13 +41,16 @@ use Ratchet\WebSocket\WsServer;
 use LiturgicalCalendar\Api\Health;
 use Dotenv\Dotenv;
 
-$dotenv = Dotenv::createImmutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.staging', '.env.production'], false);
+$dotenv = Dotenv::createImmutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.test', '.env.staging', '.env.production'], false);
 $dotenv->safeLoad();
 $dotenv->ifPresent(['API_PROTOCOL', 'API_HOST'])->notEmpty();
 $dotenv->ifPresent(['API_PORT'])->isInteger();
-$dotenv->ifPresent(['APP_ENV'])->notEmpty()->allowedValues(['development', 'production']);
+$dotenv->ifPresent(['APP_ENV'])->notEmpty()->allowedValues(['development', 'test', 'staging', 'production']);
 $dotenv->ifPresent(['WS_PROTOCOL', 'WS_HOST'])->notEmpty();
 $dotenv->ifPresent(['WS_PORT'])->isInteger();
+// Redis configuration for caching (socket takes precedence over TCP)
+$dotenv->ifPresent(['REDIS_SOCKET', 'REDIS_HOST'])->notEmpty();
+$dotenv->ifPresent(['REDIS_PORT'])->isInteger();
 
 $logsFolder = $projectFolder . DIRECTORY_SEPARATOR . 'logs';
 if (!file_exists($logsFolder)) {
@@ -55,7 +58,7 @@ if (!file_exists($logsFolder)) {
 }
 $logFile = $logsFolder . DIRECTORY_SEPARATOR . 'php-error-litcaltestserver.log';
 
-if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'development') {
+if (isset($_ENV['APP_ENV']) && in_array($_ENV['APP_ENV'], ['development', 'test'], true)) {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
     ini_set('log_errors', 1);

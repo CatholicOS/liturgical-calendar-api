@@ -51,7 +51,7 @@ use LiturgicalCalendar\Api\Router;
 use Dotenv\Dotenv;
 use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 
-$dotenv = Dotenv::createImmutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.staging', '.env.production'], false);
+$dotenv = Dotenv::createImmutable($projectFolder, ['.env', '.env.local', '.env.development', '.env.test', '.env.staging', '.env.production'], false);
 
 if (Router::isLocalhost()) {
     // In development environment if no .env file is present we don't want to throw an error
@@ -63,10 +63,12 @@ if (Router::isLocalhost()) {
     $dotenv->required(['API_BASE_PATH', 'APP_ENV']);
 }
 
-$dotenv->ifPresent(['API_PROTOCOL', 'API_HOST', 'API_BASE_PATH'])->notEmpty();
+$dotenv->ifPresent(['API_PROTOCOL', 'API_HOST'])->notEmpty();
+// API_BASE_PATH can be empty for local development
 $dotenv->ifPresent(['API_PROTOCOL'])->allowedValues(['http', 'https']);
 $dotenv->ifPresent(['API_PORT'])->isInteger();
 $dotenv->ifPresent(['APP_ENV'])->notEmpty()->allowedValues(['development', 'test', 'staging', 'production']);
+$dotenv->ifPresent(['CORS_ALLOWED_ORIGINS'])->notEmpty();
 
 $logsFolder = $projectFolder . DIRECTORY_SEPARATOR . 'logs';
 if (!file_exists($logsFolder)) {

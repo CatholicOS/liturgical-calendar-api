@@ -161,40 +161,83 @@ You can also use the `start-server.sh` and `stop-server.sh` scripts directly to 
 The **start** script writes the server PID to `server.pid` in the current directory,
 and the **stop** script terminates the process by its PID and removes `server.pid`.
 
-The following environment variables can be set to configure the API:
+## Using a docker container
 
-* `API_PROTOCOL`: The protocol to use for the API (default is `http`). Example: `API_PROTOCOL=https` to use the `https` protocol.
-* `API_HOST`: The hostname or IP address to use for the API (default is `localhost`). Example: `API_HOST=mydomain.com` to use the `mydomain.com` host.
-* `API_PORT`: The port to use for the API (default is `8000`). Example: `API_PORT=8080` to use port `8080`.
-* `API_BASE_PATH`: The base path to use for the API (default is `/`). Example: `API_BASE_PATH=/api/v1/` to use the `/api/v1/` base path.
+To further simplify your setup, without having to worry about getting all the system requirements in place, you can also launch the API in a docker container using the repo `Dockerfile`:
 
-These environment variables should be set in a `.env` or `.env.local` file (the same files used by the PHP application to load environment variables).
-You can copy the `.env.example` file to `.env` or `.env.local` (or `.env.development` or `.env.production`) and edit it as needed.
+```bash
+# If you haven't cloned the repo locally, you can build directly from the remote repo (replace `{branch}` with the branch or tag from which you want to build):
+DOCKER_BUILDKIT=1 docker build -t liturgy-api:{branch} https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI.git#{branch}
+# If instead you have cloned the repo locally, you can build from the local repo (replace `{branch}` with the branch or tag that you have checked out locally):
+DOCKER_BUILDKIT=1 docker build -t liturgy-api:{branch} .
+docker run -p 8000:8000 -d liturgy-api:{branch}
+```
 
-These environment variables are used when running the API in CLI mode, such as when using the `start-server.sh` script.
+This typically results in a Docker image of ~1.1 GB (subject to change). Unfortunately this cannot be reduced by means of an alpine image,
+if we want to install system locales in order for `gettext` to work properly with all supported languages.
+
+# Configuration
+
+Environment variables should be set in a `.env` or `.env.local` file.
+You can copy the `.env.example` file to `.env` or `.env.local` (or `.env.development`, `.env.test`, `.env.staging`, `.env.production`) and edit it as needed.
 The defaults are suitable for development and testing, but may need to be overridden for staging or production environments.
 
-### JWT Authentication Configuration
+## General Settings
 
-The API now supports JWT authentication for protected write operations. To enable authentication, configure the following environment variables:
+* `APP_ENV`: Application environment (**required in non-localhost environments**). Must be one of: `development`, `test`, `staging`, `production`
 
-* `JWT_SECRET`: Secret key for signing tokens (minimum 32 characters). Generate a secure 64-character hex string with: `php -r "echo bin2hex(random_bytes(32));"`
+## API Server Configuration
+
+* `API_PROTOCOL`: The protocol to use for the API (default: `http`). Example: `API_PROTOCOL=https`
+* `API_HOST`: The hostname or IP address to use for the API (default: `localhost`). Example: `API_HOST=mydomain.com`
+* `API_PORT`: The port to use for the API (default: `8000`). Example: `API_PORT=8080`
+* `API_BASE_PATH`: The base path to use for the API (empty by default for local development). Example: `API_BASE_PATH=/api/v1/` for production
+
+## JWT Authentication Configuration
+
+The API supports JWT authentication for protected write operations. Configure the following environment variables:
+
+* `JWT_SECRET`: Secret key for signing tokens (minimum 32 characters). Generate with: `php -r "echo bin2hex(random_bytes(32));"`
 * `JWT_ALGORITHM`: Algorithm for signing tokens (default: `HS256`)
 * `JWT_EXPIRY`: Access token expiry in seconds (default: `3600` = 1 hour)
 * `JWT_REFRESH_EXPIRY`: Refresh token expiry in seconds (default: `604800` = 7 days)
 * `ADMIN_USERNAME`: Admin username for authentication (default: `admin`)
 * `ADMIN_PASSWORD_HASH`: Argon2id password hash. Generate with: `php -r "echo password_hash('yourpassword', PASSWORD_ARGON2ID);"`
-* `APP_ENV`: Application environment (required). Must be one of: `development`, `test`, `staging`, `production`
 
 **Environment-Specific Security Behavior:**
 
-The API implements fail-closed authentication that requires `APP_ENV` to be explicitly set to a known value:
+The API implements fail-closed authentication that requires `APP_ENV` to be explicitly set:
 
-* **`development`** and **`test`**: Allow default password (`password`) if `ADMIN_PASSWORD_HASH` is not set or is not a valid hash format (for convenience in testing)
-* **`staging`** and **`production`**: Require `ADMIN_PASSWORD_HASH` to be a valid password hash (throws `RuntimeException` if missing or invalid)
+* **`development`** and **`test`**: Allow default password (`password`) if `ADMIN_PASSWORD_HASH` is not set (for convenience in testing)
+* **`staging`** and **`production`**: Require `ADMIN_PASSWORD_HASH` to be a valid password hash (throws `RuntimeException` if missing)
 * **Invalid or unset `APP_ENV`**: Throws `RuntimeException` and denies authentication
 
 This ensures that production environments cannot accidentally use weak default credentials.
+
+## CORS Configuration
+
+* `CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins for credentialed CORS requests (auth endpoints).
+  Use `*` to allow all origins (not recommended for production with cookie-based auth).
+  Example: `CORS_ALLOWED_ORIGINS=https://example.com,https://admin.example.com`
+
+## Example Production Configuration
+
+```bash
+APP_ENV=production
+API_PROTOCOL=https
+API_HOST=mydomain.com
+API_PORT=443
+API_BASE_PATH=/api/v1/
+JWT_ALGORITHM=HS256
+JWT_EXPIRY=3600
+JWT_REFRESH_EXPIRY=604800
+JWT_SECRET=change-this-to-a-secure-random-string-in-production-minimum-32-chars
+ADMIN_PASSWORD_HASH=CHANGE_ME_GENERATE_WITH_password_hash
+ADMIN_USERNAME=admin
+CORS_ALLOWED_ORIGINS=https://mydomain.com,https://admin.mydomain.com
+```
+
+## Authentication Endpoints and Protected Routes
 
 **Protected Routes** (require JWT authentication via HttpOnly cookie or `Authorization: Bearer <token>` header):
 
@@ -222,37 +265,6 @@ This ensures that production environments cannot accidentally use weak default c
   For enhanced security in cross-origin scenarios, consider implementing additional CSRF tokens
 
 For detailed implementation information, see [docs/enhancements/AUTHENTICATION_ROADMAP.md](docs/enhancements/AUTHENTICATION_ROADMAP.md).
-
-For example, to run the API in production with a custom domain and HTTPS, you would set the following environment variables:
-
-```bash
-API_PROTOCOL=https
-API_HOST=mydomain.com
-API_PORT=443
-API_BASE_PATH=/api/v1/
-JWT_ALGORITHM=HS256
-JWT_EXPIRY=3600
-JWT_REFRESH_EXPIRY=604800
-JWT_SECRET=change-this-to-a-secure-random-string-in-production-minimum-32-chars
-ADMIN_PASSWORD_HASH=CHANGE_ME_GENERATE_WITH_password_hash
-ADMIN_USERNAME=admin
-APP_ENV=production
-```
-
-## Using a docker container
-
-To further simplify your setup, without having to worry about getting all the system requirements in place, you can also launch the API in a docker container using the repo `Dockerfile`:
-
-```bash
-# If you haven't cloned the repo locally, you can build directly from the remote repo (replace `{branch}` with the branch or tag from which you want to build):
-DOCKER_BUILDKIT=1 docker build -t liturgy-api:{branch} https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI.git#{branch}
-# If instead you have cloned the repo locally, you can build from the local repo (replace `{branch}` with the branch or tag that you have checked out locally):
-DOCKER_BUILDKIT=1 docker build -t liturgy-api:{branch} .
-docker run -p 8000:8000 -d liturgy-api:{branch}
-```
-
-This typically results in a Docker image of ~1.1 GB (subject to change). Unfortunately this cannot be reduced by means of an alpine image,
-if we want to install system locales in order for `gettext` to work properly with all supported languages.
 
 # Translations
 

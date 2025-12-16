@@ -90,6 +90,28 @@ final class TestsHandler extends AbstractHandler
     }
 
     /**
+     * Validates the payload against the LitCalTest JSON schema.
+     *
+     * Uses the schema file path directly so Schema::import() can resolve
+     * relative $ref paths (e.g., ./CommonDef.json#/definitions/EventKey).
+     *
+     * @param string $operation The operation being performed ('create' or 'update')
+     * @throws ValidationException If the payload fails schema validation
+     */
+    private function validatePayloadAgainstTestSchema(string $operation): void
+    {
+        $schemaFile = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
+
+        try {
+            $schema = Schema::import($schemaFile);
+            $schema->in($this->payload);
+        } catch (InvalidValue | \Exception $e) {
+            $description = "The Unit Test you are attempting to {$operation} was incorrectly validated against schema {$schemaFile}: {$e->getMessage()}";
+            throw new ValidationException($description);
+        }
+    }
+
+    /**
      * Handles GET requests for tests.
      *
      * If no path parts are provided, this method returns an index of all tests.
@@ -198,20 +220,7 @@ final class TestsHandler extends AbstractHandler
             throw new ValidationException($description);
         }
 
-        // Validate incoming data against unit test schema
-        $schemaFile     = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
-        $schemaContents = Utilities::rawContentsFromFile($schemaFile);
-        $jsonSchema     = json_decode($schemaContents, null, 512, JSON_THROW_ON_ERROR);
-
-        try {
-            $schema = Schema::import($jsonSchema);
-            $schema->in($this->payload);
-        } catch (InvalidValue | \Exception $e) {
-            $description = 'The Unit Test you are attempting to create was incorrectly validated against schema ' . $schemaFile . ': ' . $e->getMessage();
-            throw new ValidationException($description);
-        }
-
-        // Sanitize data to avoid any possibility of script injection
+        $this->validatePayloadAgainstTestSchema('create');
         self::sanitizeObjectValues($this->payload);
 
         if (false === property_exists($this->payload, 'name') || false === is_string($this->payload->name)) {
@@ -230,9 +239,10 @@ final class TestsHandler extends AbstractHandler
         if (false === $bytesWritten) {
             $description = 'The server did not succeed in writing to disk the Unit Test. Please try again later or contact the service administrator for support.';
             throw new ServiceUnavailableException($description);
-        } else {
-            return $response->withStatus(StatusCode::CREATED->value, StatusCode::CREATED->reason());
         }
+
+        $responseBody = (object) ['response' => 'Unit Test ' . $this->payload->name . ' created successfully.'];
+        return $this->encodeResponseBody($response, $responseBody, StatusCode::CREATED);
     }
 
     /**
@@ -252,20 +262,7 @@ final class TestsHandler extends AbstractHandler
             throw new ValidationException($description);
         }
 
-        // Validate incoming data against unit test schema
-        $schemaFile     = JsonData::SCHEMAS_FOLDER->path() . '/LitCalTest.json';
-        $schemaContents = Utilities::rawContentsFromFile($schemaFile);
-        $jsonSchema     = json_decode($schemaContents, null, 512, JSON_THROW_ON_ERROR);
-
-        try {
-            $schema = Schema::import($jsonSchema);
-            $schema->in($this->payload);
-        } catch (InvalidValue | \Exception $e) {
-            $description = 'The Unit Test you are attempting to update was incorrectly validated against schema ' . $schemaFile . ': ' . $e->getMessage();
-            throw new ValidationException($description);
-        }
-
-        // Sanitize data to avoid any possibility of script injection
+        $this->validatePayloadAgainstTestSchema('update');
         self::sanitizeObjectValues($this->payload);
 
         if (false === property_exists($this->payload, 'name') || false === is_string($this->payload->name)) {
@@ -289,9 +286,10 @@ final class TestsHandler extends AbstractHandler
         if (false === $bytesWritten) {
             $description = 'The server did not succeed in writing to disk the Unit Test. Please try again later or contact the service administrator for support.';
             throw new ServiceUnavailableException($description);
-        } else {
-            return $response->withStatus(StatusCode::CREATED->value, StatusCode::CREATED->reason());
         }
+
+        $responseBody = (object) ['response' => 'Unit Test ' . $this->payload->name . ' updated successfully.'];
+        return $this->encodeResponseBody($response, $responseBody);
     }
 
     /**

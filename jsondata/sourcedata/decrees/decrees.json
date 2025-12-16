@@ -188,12 +188,12 @@
         }
     },
     {
-        "decree_id": "LadyLoreto_Create",
+        "decree_id": "OurLadyOfLoreto_Create",
         "decree_date": "2019-10-07",
         "decree_protocol": "Prot. N. 404/19",
         "description": "Pope Francis has decreed, by his own authority, that the optional memorial of the Blessed Virgin Mary of Loreto should be inscribed in the Roman Calendar on 10 December, the day on which the feast falls in Loreto, and celebrated every year.",
         "liturgical_event": {
-            "event_key": "LadyLoreto",
+            "event_key": "OurLadyOfLoreto",
             "grade": 2,
             "month": 12,
             "day": 10,

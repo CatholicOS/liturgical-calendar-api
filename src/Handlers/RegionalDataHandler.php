@@ -66,6 +66,8 @@ final class RegionalDataHandler extends AbstractHandler
     public function __construct(array $requestPathParams = [])
     {
         parent::__construct($requestPathParams);
+        // Allow credentials for cross-origin cookie requests (required for authenticated PUT/PATCH/DELETE)
+        $this->allowCredentials = true;
         /** @var \stdClass&object{litcal_metadata:MetadataCalendarsObject} $metadataObj */
         $metadataObj             = Utilities::jsonUrlToObject(Route::CALENDARS->path());
         $this->CalendarsMetadata = MetadataCalendars::fromObject($metadataObj->litcal_metadata);
@@ -1322,22 +1324,7 @@ final class RegionalDataHandler extends AbstractHandler
         // we don't care about locale for DELETE or PUT requests
         if (false === in_array($method, [RequestMethod::DELETE, RequestMethod::PUT], true)) {
             /** @var MetadataNationalCalendarItem $currentNation */
-            $validLangs = $currentNation->locales;
-            if (isset($params->locale)) {
-                if (
-                    null === $this->params->i18nRequest // short circuit for i18n requests
-                    && false === in_array($params->locale, $validLangs, true)
-                ) {
-                    $message = "Invalid value {$params->locale} for param `locale`, valid values for nation {$params->key} are: "
-                                . implode(', ', $validLangs);
-                    throw new UnprocessableContentException($message);
-                }
-            } else {
-                if (null !== $this->params->i18nRequest) {
-                    $description = 'Missing param `locale`';
-                    throw new UnprocessableContentException($description);
-                }
-            }
+            $this->validateLocaleForCalendar($params, $currentNation->locales);
         }
     }
 
@@ -1381,22 +1368,7 @@ final class RegionalDataHandler extends AbstractHandler
         // we don't care about locale for DELETE or PUT requests
         if (false === in_array($method, [RequestMethod::DELETE, RequestMethod::PUT], true)) {
             /** @var MetadataDiocesanCalendarItem $currentDiocese */
-            $validLangs = $currentDiocese->locales;
-            if (isset($params->locale)) {
-                if (
-                    null === $this->params->i18nRequest // short circuit for i18n requests
-                    && false === in_array($params->locale, $validLangs, true)
-                ) {
-                    $message = "Invalid value {$params->locale} for param `locale`, valid values for nation {$params->key} are: "
-                                . implode(', ', $validLangs);
-                    throw new UnprocessableContentException($message);
-                }
-            } else {
-                if (null !== $this->params->i18nRequest) {
-                    $description = 'Missing param `locale`';
-                    throw new UnprocessableContentException($description);
-                }
-            }
+            $this->validateLocaleForCalendar($params, $currentDiocese->locales);
         }
     }
 
@@ -1453,26 +1425,38 @@ final class RegionalDataHandler extends AbstractHandler
         // we don't care about locale for DELETE or PUT requests
         if (false === in_array($method, [RequestMethod::DELETE, RequestMethod::PUT], true)) {
             /** @var MetadataWiderRegionItem $currentWiderRegion */
-            $validLangs = $currentWiderRegion->locales;
-            if (isset($params->locale)) {
-                if (
-                    null === $this->params->i18nRequest // short circuit for i18n requests
-                    && false === in_array($params->locale, $validLangs, true)
-                ) {
-                    $message = "Invalid value {$params->locale} for param `locale`, valid values for nation {$params->key} are: "
-                                . implode(', ', $validLangs);
-                    throw new UnprocessableContentException($message);
-                }
-            } else {
-                if (null !== $this->params->i18nRequest) {
-                    $description = 'Missing param `locale`';
-                    throw new UnprocessableContentException($description);
-                }
-            }
+            $this->validateLocaleForCalendar($params, $currentWiderRegion->locales);
         }
     }
 
-
+    /**
+     * Validate the locale parameter for a regional calendar request.
+     *
+     * Checks that the locale is valid for the given calendar, unless this is an i18n request.
+     * Also validates that locale is present when required for i18n requests.
+     *
+     * @param RegionalDataParams $params The request parameters containing locale and key.
+     * @param string[] $validLangs The valid locales for the calendar.
+     * @throws UnprocessableContentException If locale validation fails.
+     */
+    private function validateLocaleForCalendar(RegionalDataParams $params, array $validLangs): void
+    {
+        if (isset($params->locale)) {
+            if (
+                null === $params->i18nRequest // short circuit for i18n requests
+                && false === in_array($params->locale, $validLangs, true)
+            ) {
+                $message = "Invalid value {$params->locale} for param `locale`, valid values for calendar {$params->key} are: "
+                            . implode(', ', $validLangs);
+                throw new UnprocessableContentException($message);
+            }
+        } else {
+            if (null !== $params->i18nRequest) {
+                $description = 'Missing param `locale`';
+                throw new UnprocessableContentException($description);
+            }
+        }
+    }
 
     /**
      * Initializes the RegionalData class.
@@ -1568,6 +1552,10 @@ final class RegionalDataHandler extends AbstractHandler
                         if (!property_exists($payload, 'i18n')) {
                             throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
                         }
+                        // A calendar must have at least one liturgical event
+                        if (empty($payload->litcal)) {
+                            throw new UnprocessableContentException('The litcal array must contain at least one liturgical event');
+                        }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = DiocesanData::fromObject($payload);  // DTO for property access
                         $key                  = $params['payload']->metadata->diocese_id;
@@ -1579,6 +1567,10 @@ final class RegionalDataHandler extends AbstractHandler
                         if (!property_exists($payload, 'i18n')) {
                             throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
                         }
+                        // A calendar must have at least one liturgical event
+                        if (empty($payload->litcal)) {
+                            throw new UnprocessableContentException('The litcal array must contain at least one liturgical event');
+                        }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = NationalData::fromObject($payload);  // DTO for property access
                         $key                  = $params['payload']->metadata->nation;
@@ -1589,6 +1581,10 @@ final class RegionalDataHandler extends AbstractHandler
                         // Schema marks i18n as optional (for stored files), but it's required for PUT/PATCH
                         if (!property_exists($payload, 'i18n')) {
                             throw new UnprocessableContentException('The i18n property is required for PUT/PATCH operations');
+                        }
+                        // A calendar must have at least one liturgical event
+                        if (empty($payload->litcal)) {
+                            throw new UnprocessableContentException('The litcal array must contain at least one liturgical event');
                         }
                         $params['rawPayload'] = $payload;  // Store raw for writing to disk
                         $params['payload']    = WiderRegionData::fromObject($payload);  // DTO for property access
