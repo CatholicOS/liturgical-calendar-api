@@ -1,6 +1,5 @@
 {
     "recommendations": [
-        "shevaua.phpcs",
         "bmewburn.vscode-intelephense-client",
         "davidanson.vscode-markdownlint"
     ]

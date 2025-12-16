@@ -29,6 +29,7 @@ use LiturgicalCalendar\Api\Http\Exception\ImplementationException;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Exception\YamlException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Http\Negotiator;
 use LiturgicalCalendar\Api\Models\LitCalItem;
 use LiturgicalCalendar\Api\Models\LitCalItemCollection;
@@ -562,11 +563,11 @@ final class CalendarHandler extends AbstractHandler
      */
     private function formatLocalizedDate(DateTime $date): string
     {
-        $locale = LitLocale::$PRIMARY_LANGUAGE;
-        if ($locale === LitLocale::LATIN_PRIMARY_LANGUAGE) {
+        $locale = LitLocale::$RUNTIME_LOCALE;
+        if (str_starts_with($locale, LitLocale::LATIN_PRIMARY_LANGUAGE)) {
             return $date->format('j') . ' ' . LatinUtils::LATIN_MONTHS[(int) $date->format('n')];
         }
-        if ($locale === 'en') {
+        if (str_starts_with($locale, 'en')) {
             return $date->format('F jS');
         }
         $formatted = $this->dayAndMonth->format($date->format('U'));
@@ -589,11 +590,11 @@ final class CalendarHandler extends AbstractHandler
      */
     private function getChristmasWeekdayIdentifier(DateTime $dateTime): string
     {
-        $locale = LitLocale::$PRIMARY_LANGUAGE;
-        if ($locale === LitLocale::LATIN_PRIMARY_LANGUAGE) {
+        $locale = LitLocale::$RUNTIME_LOCALE;
+        if (str_starts_with($locale, LitLocale::LATIN_PRIMARY_LANGUAGE)) {
             return LatinUtils::LATIN_DAYOFTHEWEEK[$dateTime->format('w')];
         }
-        if ($locale === 'it') {
+        if (str_starts_with($locale, 'it')) {
             $formatted = $this->dayAndMonth->format($dateTime->format('U'));
             return Utilities::ucfirst($formatted !== false ? $formatted : $dateTime->format('l'));
         }
@@ -613,10 +614,10 @@ final class CalendarHandler extends AbstractHandler
      */
     private function formatChristmasWeekdayName(string $dateIdentifier): string
     {
-        $locale = LitLocale::$PRIMARY_LANGUAGE;
-        return $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
+        $locale = LitLocale::$RUNTIME_LOCALE;
+        return str_starts_with($locale, LitLocale::LATIN_PRIMARY_LANGUAGE)
             ? sprintf('%s temporis Nativitatis', $dateIdentifier)
-            : ( $locale === 'it'
+            : ( str_starts_with($locale, 'it')
                 ? sprintf('Feria propria del %s', $dateIdentifier)
                 : sprintf(
                     /**translators: Christmas weekday name pattern */
@@ -4412,10 +4413,12 @@ final class CalendarHandler extends AbstractHandler
                     }
                     $bytes = file_put_contents($ghReleaseCacheFile, $GitHubReleaseEncoded, LOCK_EX);
                     if (false === $bytes) {
-                        throw new ServiceUnavailableException(sprintf(
-                            'Could not write GitHub release cache file: %s.',
-                            $ghReleaseCacheFile
-                        ));
+                        // Cache write failed, but we have the data in memory - log and continue
+                        // This allows ICS responses to succeed even when caching fails
+                        $logger = LoggerFactory::create('calendar', null, 30, false, true, false);
+                        $logger->warning('Could not write GitHub release cache file', [
+                            'cache_file' => $ghReleaseCacheFile
+                        ]);
                     }
                 }
             } catch (GuzzleException $e) {
