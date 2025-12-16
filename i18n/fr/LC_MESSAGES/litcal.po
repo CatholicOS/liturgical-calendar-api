@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-16 09:25+0000\n"
+"POT-Creation-Date: 2025-12-16 10:19+0000\n"
 "PO-Revision-Date: 2025-12-15 21:38+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: French <https://translate.johnromanodorazio.com/projects/"
@@ -1468,18 +1468,18 @@ msgstr ""
 "La %1$s '%2$s', propre au calendrier des %3$s et normalement célébrée le "
 "%4$s, est supprimée par le %5$s %6$s en l'an %7$d."
 
-#: src/Handlers/CalendarHandler.php:4507
+#: src/Handlers/CalendarHandler.php:4513
 msgid "Error converting Liturgical Calendar to XML."
 msgstr "Erreur lors de la conversion du calendrier liturgique en XML."
 
-#: src/Handlers/CalendarHandler.php:4542
+#: src/Handlers/CalendarHandler.php:4548
 #, php-format
 msgid "Error receiving or parsing info from GitHub about latest release: %s."
 msgstr ""
 "Erreur lors de la réception ou de l'analyse des informations de GitHub sur "
 "la dernière version : %s."
 
-#: src/Handlers/CalendarHandler.php:4553
+#: src/Handlers/CalendarHandler.php:4559
 msgid "Error serializing Liturgical Calendar."
 msgstr "Erreur de sérialisation du calendrier liturgique."
 
