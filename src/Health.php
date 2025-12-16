@@ -173,9 +173,16 @@ class Health implements MessageComponentInterface
                         $connectionInfo = "{$redisHost}:{$redisPort}";
                     }
                     if ($connected) {
-                        self::$cacheEnabled = true;
-                        self::$cacheBackend = 'redis';
-                        echo "Redis connected ({$connectionInfo}), will use for caching\n";
+                        // Verify connection is actually usable with a ping
+                        try {
+                            self::$redis->ping();
+                            self::$cacheEnabled = true;
+                            self::$cacheBackend = 'redis';
+                            echo "Redis connected ({$connectionInfo}), will use for caching\n";
+                        } catch (\RedisException $e) {
+                            self::$redis = null;
+                            echo "Redis ping failed: {$e->getMessage()}, trying APCu fallback\n";
+                        }
                     } else {
                         self::$redis = null;
                         echo "Redis connection failed, trying APCu fallback\n";
