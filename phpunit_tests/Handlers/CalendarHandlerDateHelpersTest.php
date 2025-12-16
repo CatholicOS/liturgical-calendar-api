@@ -455,4 +455,83 @@ class CalendarHandlerDateHelpersTest extends TestCase
             'Italian June'             => ['it', '2024-06-24', '/^24 giugno$/'],
         ];
     }
+
+    /* ========================= IntlDateFormatter Fallback Tests ========================= */
+
+    /**
+     * Test formatLocalizedDate fallback when IntlDateFormatter::format() returns false.
+     *
+     * When the formatter fails, formatLocalizedDate should fall back to 'j/n' format.
+     */
+    public function testFormatLocalizedDateFormatterFallback(): void
+    {
+        $this->setUpLocale('it_IT');
+
+        // Inject a mock formatter that returns false
+        $mockFormatter = $this->createMock(IntlDateFormatter::class);
+        $mockFormatter->method('format')->willReturn(false);
+
+        $reflection      = new ReflectionClass(CalendarHandler::class);
+        $dayAndMonthProp = $reflection->getProperty('dayAndMonth');
+        $dayAndMonthProp->setAccessible(true);
+        $dayAndMonthProp->setValue($this->handler, $mockFormatter);
+
+        $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-25', new \DateTimeZone('UTC'));
+        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
+
+        // Should fall back to 'j/n' format
+        $this->assertSame('25/12', $result);
+    }
+
+    /**
+     * Test getChristmasWeekdayIdentifier fallback for Italian when IntlDateFormatter fails.
+     *
+     * When dayAndMonth formatter fails, Italian should fall back to DateTime::format('l').
+     */
+    public function testGetChristmasWeekdayIdentifierItalianFormatterFallback(): void
+    {
+        $this->setUpLocale('it_IT');
+
+        // Inject a mock formatter that returns false
+        $mockFormatter = $this->createMock(IntlDateFormatter::class);
+        $mockFormatter->method('format')->willReturn(false);
+
+        $reflection      = new ReflectionClass(CalendarHandler::class);
+        $dayAndMonthProp = $reflection->getProperty('dayAndMonth');
+        $dayAndMonthProp->setAccessible(true);
+        $dayAndMonthProp->setValue($this->handler, $mockFormatter);
+
+        // Monday, December 30, 2024
+        $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
+        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
+
+        // Should fall back to DateTime::format('l') with ucfirst
+        $this->assertSame('Monday', $result);
+    }
+
+    /**
+     * Test getChristmasWeekdayIdentifier fallback for non-Latin/non-Italian when formatter fails.
+     *
+     * When dayOfTheWeek formatter fails, other locales should fall back to DateTime::format('l').
+     */
+    public function testGetChristmasWeekdayIdentifierOtherLocaleFormatterFallback(): void
+    {
+        $this->setUpLocale('fr_FR');
+
+        // Inject a mock formatter that returns false
+        $mockFormatter = $this->createMock(IntlDateFormatter::class);
+        $mockFormatter->method('format')->willReturn(false);
+
+        $reflection       = new ReflectionClass(CalendarHandler::class);
+        $dayOfTheWeekProp = $reflection->getProperty('dayOfTheWeek');
+        $dayOfTheWeekProp->setAccessible(true);
+        $dayOfTheWeekProp->setValue($this->handler, $mockFormatter);
+
+        // Monday, December 30, 2024
+        $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
+        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
+
+        // Should fall back to DateTime::format('l') with ucfirst
+        $this->assertSame('Monday', $result);
+    }
 }
