@@ -581,11 +581,12 @@ class Health implements MessageComponentInterface
                     continue;
                 }
 
-                /** @var PromiseInterface<string> $promise */
+                /** @var PromiseInterface<array{data: string, fromCache: bool}> $promise */
                 $promise    = $this->cachedFileGetContents($file);
                 $promises[] = $promise->then(
-                    function (string $fileData) use ($to, $validation, $filename, $schema, $pathForSchema, &$jsonDecodable, &$schemaValidated) {
-                        $fileData = (string) $fileData; // force fresh string
+                    function (array $result) use ($to, $validation, $filename, $schema, $pathForSchema, &$jsonDecodable, &$schemaValidated) {
+                        /** @var array{data: string, fromCache: bool} $result */
+                        $fileData = $result['data'];
                         $validate = (string) $validation->validate;
                         $category = (string) $validation->category;
                         $jsonData = json_decode($fileData);
@@ -712,10 +713,12 @@ class Health implements MessageComponentInterface
             } else {
                 // $dataPath is probably a source file in the filesystem in this case
                 echo 'Reading data from file ' . $dataPath . "\n";
-                /** @var PromiseInterface<string> $promise */
+                /** @var PromiseInterface<array{data: string, fromCache: bool}> $promise */
                 $promise = $this->cachedFileGetContents($dataPath);
                 $promise->then(
-                    function (string $data) use ($to, $validation, $dataPath, $schema, $pathForSchema) {
+                    function (array $result) use ($to, $validation, $dataPath, $schema, $pathForSchema) {
+                        /** @var array{data: string, fromCache: bool} $result */
+                        $data = $result['data'];
                         echo 'Fetched data for ' . $dataPath . ': got ' . strlen($data) . " bytes\n";
                         $this->processValidationData($data, $to, $validation, $dataPath, $schema, $pathForSchema);
                     },
@@ -1389,7 +1392,7 @@ class Health implements MessageComponentInterface
     }
 
     /**
-     * @return PromiseInterface<string>
+     * @return PromiseInterface<array{data: string, fromCache: bool}>
      */
     private function cachedFileGetContents(string $path, int $ttl = 300): PromiseInterface
     {
@@ -1403,12 +1406,12 @@ class Health implements MessageComponentInterface
                 echo "Cache hit for file $path\n";
                 // Schedule resolution via event loop to prevent blocking
                 Loop::futureTick(function () use ($deferred, $data) {
-                    $deferred->resolve($data);
+                    $deferred->resolve(['data' => $data, 'fromCache' => true]);
                 });
             } else {
                 $deferred->reject(new \RuntimeException("Cache fetch for file $path returned non-string data"));
             }
-            /** @var PromiseInterface<string> $deferredPromise */
+            /** @var PromiseInterface<array{data: string, fromCache: bool}> $deferredPromise */
             $deferredPromise = $deferred->promise();
             return $deferredPromise;
         }
@@ -1419,9 +1422,10 @@ class Health implements MessageComponentInterface
 
         $filesystem = Factory::create();
 
-        /** @var PromiseInterface<string> $fsPromise */
+        /** @var PromiseInterface<array{data: string, fromCache: bool}> $fsPromise */
         $fsPromise = $filesystem->file($path)->getContents()->then(
-            function (string $data) use ($key, $ttl, $path): string {
+            /** @return array{data: string, fromCache: bool} */
+            function (string $data) use ($key, $ttl, $path): array {
                 $data = (string) $data;          // force fresh string
                 if (self::$cacheEnabled) {
                     echo "Read file $path, caching contents\n";
@@ -1429,7 +1433,7 @@ class Health implements MessageComponentInterface
                     echo ( $stored ? "Stored file in cache\n" : "Failed to store file in cache\n" );
                     echo self::cacheInfo() . "\n";
                 }
-                return $data; // resolved promise
+                return ['data' => $data, 'fromCache' => false]; // resolved promise
             },
             function (\Throwable $e) use ($path): never {
                 throw new \RuntimeException("Unable to read file: $path", 0, $e);
