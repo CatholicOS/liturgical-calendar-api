@@ -1,115 +1,21 @@
 <?php
 
-namespace LiturgicalCalendar\Tests\Handlers;
+namespace LiturgicalCalendar\Tests;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use LiturgicalCalendar\Api\Handlers\CalendarHandler;
-use LiturgicalCalendar\Api\Enum\LitLocale;
+use LiturgicalCalendar\Api\LocaleDateFormatter;
 use LiturgicalCalendar\Api\LatinUtils;
-use ReflectionClass;
-use ReflectionMethod;
 use IntlDateFormatter;
 
 /**
- * Unit tests for the CalendarHandler date helper methods.
+ * Unit tests for the LocaleDateFormatter utility class.
  *
  * Tests formatLocalizedDate(), getChristmasWeekdayIdentifier(), and formatChristmasWeekdayName()
- * for representative locales (Latin, English, Italian, and other).
+ * for representative locales (Latin, English, Italian, French, German).
  */
-class CalendarHandlerDateHelpersTest extends TestCase
+class LocaleDateFormatterTest extends TestCase
 {
-    private CalendarHandler $handler;
-    private ReflectionMethod $formatLocalizedDate;
-    private ReflectionMethod $getChristmasWeekdayIdentifier;
-    private ReflectionMethod $formatChristmasWeekdayName;
-
-    /** @var string Original RUNTIME_LOCALE to restore after tests */
-    private string $originalRuntimeLocale;
-
-    /** @var string Original PRIMARY_LANGUAGE to restore after tests */
-    private string $originalPrimaryLanguage;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        // Save original values to restore after tests
-        $this->originalRuntimeLocale   = LitLocale::$RUNTIME_LOCALE;
-        $this->originalPrimaryLanguage = LitLocale::$PRIMARY_LANGUAGE;
-
-        // Create handler instance
-        $this->handler = new CalendarHandler();
-
-        // Get reflection methods for private methods
-        $reflection = new ReflectionClass(CalendarHandler::class);
-
-        $this->formatLocalizedDate = $reflection->getMethod('formatLocalizedDate');
-        $this->formatLocalizedDate->setAccessible(true);
-
-        $this->getChristmasWeekdayIdentifier = $reflection->getMethod('getChristmasWeekdayIdentifier');
-        $this->getChristmasWeekdayIdentifier->setAccessible(true);
-
-        $this->formatChristmasWeekdayName = $reflection->getMethod('formatChristmasWeekdayName');
-        $this->formatChristmasWeekdayName->setAccessible(true);
-    }
-
-    protected function tearDown(): void
-    {
-        // Restore original values
-        LitLocale::$RUNTIME_LOCALE   = $this->originalRuntimeLocale;
-        LitLocale::$PRIMARY_LANGUAGE = $this->originalPrimaryLanguage;
-
-        parent::tearDown();
-    }
-
-    /**
-     * Set up the handler with formatters for a specific locale.
-     *
-     * This method sets the locale properties and creates IntlDateFormatters
-     * using reflection to inject them into the handler.
-     *
-     * @param string $locale The locale to use
-     */
-    private function setUpLocale(string $locale): void
-    {
-        // Set the runtime locale
-        LitLocale::$RUNTIME_LOCALE   = $locale;
-        LitLocale::$PRIMARY_LANGUAGE = str_contains($locale, '_')
-            ? substr($locale, 0, strpos($locale, '_'))
-            : $locale;
-
-        // Create formatters using the primary language
-        $dayAndMonth = IntlDateFormatter::create(
-            LitLocale::$PRIMARY_LANGUAGE,
-            IntlDateFormatter::FULL,
-            IntlDateFormatter::NONE,
-            'UTC',
-            IntlDateFormatter::GREGORIAN,
-            'd MMMM'
-        );
-
-        $dayOfTheWeek = IntlDateFormatter::create(
-            LitLocale::$PRIMARY_LANGUAGE,
-            IntlDateFormatter::FULL,
-            IntlDateFormatter::NONE,
-            'UTC',
-            IntlDateFormatter::GREGORIAN,
-            'EEEE'
-        );
-
-        // Inject formatters via reflection
-        $reflection = new ReflectionClass(CalendarHandler::class);
-
-        $dayAndMonthProp = $reflection->getProperty('dayAndMonth');
-        $dayAndMonthProp->setAccessible(true);
-        $dayAndMonthProp->setValue($this->handler, $dayAndMonth);
-
-        $dayOfTheWeekProp = $reflection->getProperty('dayOfTheWeek');
-        $dayOfTheWeekProp->setAccessible(true);
-        $dayOfTheWeekProp->setValue($this->handler, $dayOfTheWeek);
-    }
-
     /* ========================= formatLocalizedDate Tests ========================= */
 
     /**
@@ -119,12 +25,12 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatLocalizedDateLatin(): void
     {
-        $this->setUpLocale('la');
+        $formatter = new LocaleDateFormatter('la');
 
-        $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-25', new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
-
+        $date     = new \LiturgicalCalendar\Api\DateTime('2024-12-25', new \DateTimeZone('UTC'));
+        $result   = $formatter->formatLocalizedDate($date);
         $expected = '25 ' . LatinUtils::LATIN_MONTHS[12];
+
         $this->assertSame($expected, $result, 'Latin date should use LATIN_MONTHS array');
         $this->assertSame('25 December', $result);
     }
@@ -134,12 +40,12 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatLocalizedDateLatinWithRegion(): void
     {
-        $this->setUpLocale('la_VA');
+        $formatter = new LocaleDateFormatter('la_VA');
 
-        $date   = new \LiturgicalCalendar\Api\DateTime('2024-01-06', new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
-
+        $date     = new \LiturgicalCalendar\Api\DateTime('2024-01-06', new \DateTimeZone('UTC'));
+        $result   = $formatter->formatLocalizedDate($date);
         $expected = '6 ' . LatinUtils::LATIN_MONTHS[1];
+
         $this->assertSame($expected, $result);
         $this->assertSame('6 Ianuarius', $result);
     }
@@ -151,10 +57,10 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatLocalizedDateEnglish(): void
     {
-        $this->setUpLocale('en');
+        $formatter = new LocaleDateFormatter('en');
 
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-25', new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
+        $result = $formatter->formatLocalizedDate($date);
 
         $this->assertSame('December 25th', $result);
     }
@@ -164,10 +70,10 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatLocalizedDateEnglishUS(): void
     {
-        $this->setUpLocale('en_US');
+        $formatter = new LocaleDateFormatter('en_US');
 
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-01-01', new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
+        $result = $formatter->formatLocalizedDate($date);
 
         $this->assertSame('January 1st', $result);
     }
@@ -177,10 +83,10 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatLocalizedDateItalian(): void
     {
-        $this->setUpLocale('it_IT');
+        $formatter = new LocaleDateFormatter('it_IT');
 
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-25', new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
+        $result = $formatter->formatLocalizedDate($date);
 
         // Italian format from IntlDateFormatter with 'd MMMM' pattern
         $this->assertSame('25 dicembre', $result);
@@ -191,10 +97,10 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatLocalizedDateFrench(): void
     {
-        $this->setUpLocale('fr_FR');
+        $formatter = new LocaleDateFormatter('fr_FR');
 
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-25', new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
+        $result = $formatter->formatLocalizedDate($date);
 
         // French format from IntlDateFormatter with 'd MMMM' pattern
         $this->assertSame('25 décembre', $result);
@@ -205,10 +111,10 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatLocalizedDateGerman(): void
     {
-        $this->setUpLocale('de_DE');
+        $formatter = new LocaleDateFormatter('de_DE');
 
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-25', new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
+        $result = $formatter->formatLocalizedDate($date);
 
         // German format from IntlDateFormatter with 'd MMMM' pattern
         $this->assertSame('25 Dezember', $result);
@@ -223,13 +129,13 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testGetChristmasWeekdayIdentifierLatin(): void
     {
-        $this->setUpLocale('la');
+        $formatter = new LocaleDateFormatter('la');
 
         // Monday, December 30, 2024
-        $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
-        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
-
+        $date     = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
+        $result   = $formatter->getChristmasWeekdayIdentifier($date);
         $expected = LatinUtils::LATIN_DAYOFTHEWEEK[(int) $date->format('w')];
+
         $this->assertSame($expected, $result);
         $this->assertSame('Feria II', $result); // Monday = Feria II
     }
@@ -239,11 +145,11 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testGetChristmasWeekdayIdentifierLatinSunday(): void
     {
-        $this->setUpLocale('la_VA');
+        $formatter = new LocaleDateFormatter('la_VA');
 
         // Sunday, December 29, 2024
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-29', new \DateTimeZone('UTC'));
-        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
+        $result = $formatter->getChristmasWeekdayIdentifier($date);
 
         $this->assertSame('Dominica', $result); // Sunday = Dominica
     }
@@ -255,11 +161,11 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testGetChristmasWeekdayIdentifierItalian(): void
     {
-        $this->setUpLocale('it_IT');
+        $formatter = new LocaleDateFormatter('it_IT');
 
         // Monday, December 30, 2024
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
-        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
+        $result = $formatter->getChristmasWeekdayIdentifier($date);
 
         // Italian uses dayAndMonth formatter, then ucfirst
         $this->assertSame('30 dicembre', $result);
@@ -272,11 +178,11 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testGetChristmasWeekdayIdentifierEnglish(): void
     {
-        $this->setUpLocale('en_US');
+        $formatter = new LocaleDateFormatter('en_US');
 
         // Monday, December 30, 2024
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
-        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
+        $result = $formatter->getChristmasWeekdayIdentifier($date);
 
         // English uses dayOfTheWeek formatter with ucfirst
         $this->assertSame('Monday', $result);
@@ -287,11 +193,11 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testGetChristmasWeekdayIdentifierFrench(): void
     {
-        $this->setUpLocale('fr_FR');
+        $formatter = new LocaleDateFormatter('fr_FR');
 
         // Monday, December 30, 2024
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
-        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
+        $result = $formatter->getChristmasWeekdayIdentifier($date);
 
         // French uses dayOfTheWeek formatter with ucfirst
         $this->assertSame('Lundi', $result);
@@ -306,9 +212,8 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatChristmasWeekdayNameLatin(): void
     {
-        $this->setUpLocale('la');
-
-        $result = $this->formatChristmasWeekdayName->invoke($this->handler, 'Feria II');
+        $formatter = new LocaleDateFormatter('la');
+        $result    = $formatter->formatChristmasWeekdayName('Feria II');
 
         $this->assertSame('Feria II temporis Nativitatis', $result);
     }
@@ -318,9 +223,8 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatChristmasWeekdayNameLatinWithRegion(): void
     {
-        $this->setUpLocale('la_VA');
-
-        $result = $this->formatChristmasWeekdayName->invoke($this->handler, 'Dominica');
+        $formatter = new LocaleDateFormatter('la_VA');
+        $result    = $formatter->formatChristmasWeekdayName('Dominica');
 
         $this->assertSame('Dominica temporis Nativitatis', $result);
     }
@@ -332,9 +236,8 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatChristmasWeekdayNameItalian(): void
     {
-        $this->setUpLocale('it_IT');
-
-        $result = $this->formatChristmasWeekdayName->invoke($this->handler, '30 dicembre');
+        $formatter = new LocaleDateFormatter('it_IT');
+        $result    = $formatter->formatChristmasWeekdayName('30 dicembre');
 
         $this->assertSame('Feria propria del 30 dicembre', $result);
     }
@@ -346,9 +249,8 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatChristmasWeekdayNameEnglish(): void
     {
-        $this->setUpLocale('en_US');
-
-        $result = $this->formatChristmasWeekdayName->invoke($this->handler, 'Monday');
+        $formatter = new LocaleDateFormatter('en_US');
+        $result    = $formatter->formatChristmasWeekdayName('Monday');
 
         // Without gettext loaded, falls back to the format string
         $this->assertSame('Monday - Christmas Weekday', $result);
@@ -361,9 +263,8 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatChristmasWeekdayNameFrench(): void
     {
-        $this->setUpLocale('fr_FR');
-
-        $result = $this->formatChristmasWeekdayName->invoke($this->handler, 'Lundi');
+        $formatter = new LocaleDateFormatter('fr_FR');
+        $result    = $formatter->formatChristmasWeekdayName('Lundi');
 
         // Without gettext loaded with French translations, falls back to pattern
         $this->assertStringContainsString('Lundi', $result);
@@ -376,13 +277,13 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testChristmasWeekdayFullFlowLatin(): void
     {
-        $this->setUpLocale('la');
+        $formatter = new LocaleDateFormatter('la');
 
         // Tuesday, December 31, 2024
         $date = new \LiturgicalCalendar\Api\DateTime('2024-12-31', new \DateTimeZone('UTC'));
 
-        $identifier = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
-        $name       = $this->formatChristmasWeekdayName->invoke($this->handler, $identifier);
+        $identifier = $formatter->getChristmasWeekdayIdentifier($date);
+        $name       = $formatter->formatChristmasWeekdayName($identifier);
 
         $this->assertSame('Feria III', $identifier);
         $this->assertSame('Feria III temporis Nativitatis', $name);
@@ -393,13 +294,13 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testChristmasWeekdayFullFlowItalian(): void
     {
-        $this->setUpLocale('it_IT');
+        $formatter = new LocaleDateFormatter('it_IT');
 
         // Tuesday, December 31, 2024
         $date = new \LiturgicalCalendar\Api\DateTime('2024-12-31', new \DateTimeZone('UTC'));
 
-        $identifier = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
-        $name       = $this->formatChristmasWeekdayName->invoke($this->handler, $identifier);
+        $identifier = $formatter->getChristmasWeekdayIdentifier($date);
+        $name       = $formatter->formatChristmasWeekdayName($identifier);
 
         $this->assertSame('31 dicembre', $identifier);
         $this->assertSame('Feria propria del 31 dicembre', $name);
@@ -410,13 +311,13 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testChristmasWeekdayFullFlowEnglish(): void
     {
-        $this->setUpLocale('en_US');
+        $formatter = new LocaleDateFormatter('en_US');
 
         // Tuesday, December 31, 2024
         $date = new \LiturgicalCalendar\Api\DateTime('2024-12-31', new \DateTimeZone('UTC'));
 
-        $identifier = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
-        $name       = $this->formatChristmasWeekdayName->invoke($this->handler, $identifier);
+        $identifier = $formatter->getChristmasWeekdayIdentifier($date);
+        $name       = $formatter->formatChristmasWeekdayName($identifier);
 
         $this->assertSame('Tuesday', $identifier);
         $this->assertSame('Tuesday - Christmas Weekday', $name);
@@ -431,10 +332,10 @@ class CalendarHandlerDateHelpersTest extends TestCase
         string $dateString,
         string $expectedPattern
     ): void {
-        $this->setUpLocale($locale);
+        $formatter = new LocaleDateFormatter($locale);
 
         $date   = new \LiturgicalCalendar\Api\DateTime($dateString, new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
+        $result = $formatter->formatLocalizedDate($date);
 
         $this->assertMatchesRegularExpression($expectedPattern, $result);
     }
@@ -465,19 +366,15 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testFormatLocalizedDateFormatterFallback(): void
     {
-        $this->setUpLocale('it_IT');
+        $formatter = new LocaleDateFormatter('it_IT');
 
         // Inject a mock formatter that returns false
         $mockFormatter = $this->createMock(IntlDateFormatter::class);
         $mockFormatter->method('format')->willReturn(false);
-
-        $reflection      = new ReflectionClass(CalendarHandler::class);
-        $dayAndMonthProp = $reflection->getProperty('dayAndMonth');
-        $dayAndMonthProp->setAccessible(true);
-        $dayAndMonthProp->setValue($this->handler, $mockFormatter);
+        $formatter->setDayAndMonthFormatter($mockFormatter);
 
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-25', new \DateTimeZone('UTC'));
-        $result = $this->formatLocalizedDate->invoke($this->handler, $date);
+        $result = $formatter->formatLocalizedDate($date);
 
         // Should fall back to 'j/n' format
         $this->assertSame('25/12', $result);
@@ -490,20 +387,16 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testGetChristmasWeekdayIdentifierItalianFormatterFallback(): void
     {
-        $this->setUpLocale('it_IT');
+        $formatter = new LocaleDateFormatter('it_IT');
 
         // Inject a mock formatter that returns false
         $mockFormatter = $this->createMock(IntlDateFormatter::class);
         $mockFormatter->method('format')->willReturn(false);
-
-        $reflection      = new ReflectionClass(CalendarHandler::class);
-        $dayAndMonthProp = $reflection->getProperty('dayAndMonth');
-        $dayAndMonthProp->setAccessible(true);
-        $dayAndMonthProp->setValue($this->handler, $mockFormatter);
+        $formatter->setDayAndMonthFormatter($mockFormatter);
 
         // Monday, December 30, 2024
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
-        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
+        $result = $formatter->getChristmasWeekdayIdentifier($date);
 
         // Should fall back to DateTime::format('l') with ucfirst
         $this->assertSame('Monday', $result);
@@ -516,22 +409,85 @@ class CalendarHandlerDateHelpersTest extends TestCase
      */
     public function testGetChristmasWeekdayIdentifierOtherLocaleFormatterFallback(): void
     {
-        $this->setUpLocale('fr_FR');
+        $formatter = new LocaleDateFormatter('fr_FR');
 
         // Inject a mock formatter that returns false
         $mockFormatter = $this->createMock(IntlDateFormatter::class);
         $mockFormatter->method('format')->willReturn(false);
-
-        $reflection       = new ReflectionClass(CalendarHandler::class);
-        $dayOfTheWeekProp = $reflection->getProperty('dayOfTheWeek');
-        $dayOfTheWeekProp->setAccessible(true);
-        $dayOfTheWeekProp->setValue($this->handler, $mockFormatter);
+        $formatter->setDayOfTheWeekFormatter($mockFormatter);
 
         // Monday, December 30, 2024
         $date   = new \LiturgicalCalendar\Api\DateTime('2024-12-30', new \DateTimeZone('UTC'));
-        $result = $this->getChristmasWeekdayIdentifier->invoke($this->handler, $date);
+        $result = $formatter->getChristmasWeekdayIdentifier($date);
 
         // Should fall back to DateTime::format('l') with ucfirst
         $this->assertSame('Monday', $result);
+    }
+
+    /* ========================= Getter/Setter Tests ========================= */
+
+    /**
+     * Test getLocale returns the correct locale.
+     */
+    public function testGetLocale(): void
+    {
+        $formatter = new LocaleDateFormatter('en_US');
+        $this->assertSame('en_US', $formatter->getLocale());
+    }
+
+    /**
+     * Test getPrimaryLanguage returns the correct primary language.
+     */
+    public function testGetPrimaryLanguage(): void
+    {
+        $formatter = new LocaleDateFormatter('en_US');
+        $this->assertSame('en', $formatter->getPrimaryLanguage());
+
+        $formatterSimple = new LocaleDateFormatter('la');
+        $this->assertSame('la', $formatterSimple->getPrimaryLanguage());
+    }
+
+    /**
+     * Test getDayAndMonthFormatter returns the formatter.
+     */
+    public function testGetDayAndMonthFormatter(): void
+    {
+        $formatter = new LocaleDateFormatter('en_US');
+        $this->assertInstanceOf(IntlDateFormatter::class, $formatter->getDayAndMonthFormatter());
+    }
+
+    /**
+     * Test getDayOfTheWeekFormatter returns the formatter.
+     */
+    public function testGetDayOfTheWeekFormatter(): void
+    {
+        $formatter = new LocaleDateFormatter('en_US');
+        $this->assertInstanceOf(IntlDateFormatter::class, $formatter->getDayOfTheWeekFormatter());
+    }
+
+    /**
+     * Test setDayAndMonthFormatter returns $this for fluent interface.
+     */
+    public function testSetDayAndMonthFormatterReturnsSelf(): void
+    {
+        $formatter     = new LocaleDateFormatter('en_US');
+        $mockFormatter = $this->createMock(IntlDateFormatter::class);
+
+        $result = $formatter->setDayAndMonthFormatter($mockFormatter);
+
+        $this->assertSame($formatter, $result);
+    }
+
+    /**
+     * Test setDayOfTheWeekFormatter returns $this for fluent interface.
+     */
+    public function testSetDayOfTheWeekFormatterReturnsSelf(): void
+    {
+        $formatter     = new LocaleDateFormatter('en_US');
+        $mockFormatter = $this->createMock(IntlDateFormatter::class);
+
+        $result = $formatter->setDayOfTheWeekFormatter($mockFormatter);
+
+        $this->assertSame($formatter, $result);
     }
 }
