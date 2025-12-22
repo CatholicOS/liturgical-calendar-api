@@ -38,7 +38,7 @@
         "react/filesystem": "0.2.x-dev",
         "psr/log": "^3.0",
         "monolog/monolog": "^3.9",
-        "firebase/php-jwt": "^6.11"
+        "firebase/php-jwt": "^6.11 || ^7.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^4.0",
