@@ -4,11 +4,15 @@
     {
       "description": "Liturgical Calendar API endpoint (development - unstable)",
       "url": "https://litcal.johnromanodorazio.com/api/dev"
+    },
+    {
+      "description": "Liturgical Calendar API endpoint (production - stable)",
+      "url": "https://litcal.johnromanodorazio.com/api/v5"
     }
   ],
   "info": {
     "description": "An API which allows to retrieve data about the **Roman Calendar** for any given year, between 1970 and 9999. The data strives for historical accuracy (memorials and feast days are only generated from the year in which they were effectively introduced). The data is based on original sources (Roman Missals, Decrees of the Dicastery for Divine Worship and the Discipline of the Sacraments, Mysterii Paschalis, etc.), not on data copied or retrieved from online sources which may not be accurate. The API offers multiple locales and multiple calendars, from the **General Roman Calendar** to national or diocesan calendars.",
-    "version": "5.0",
+    "version": "5.7",
     "title": "Liturgical Calendar",
     "contact": {
       "email": "priest@johnromanodorazio.com",
@@ -23,6 +27,10 @@
     {
       "name": "Main API endpoint",
       "description": "Retrieve a liturgical calendar"
+    },
+    {
+      "name": "Authentication",
+      "description": "JWT-based authentication (login and token refresh)"
     },
     {
       "name": "Calendars Index",
@@ -67,67 +75,25 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/GeneralRomanCalendarRequestBody"
-                },
-                {
-                  "$ref": "#/components/schemas/GeneralRomanCalendarTweakedRequestBody"
-                }
-              ]
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              },
-              "GeneralRomanCalendarTweaked": {
-                "$ref": "#/components/examples/GeneralRomanCalendarTweakedRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
+          },
+          {
+            "$ref": "#/components/parameters/EpiphanyParam"
+          },
+          {
+            "$ref": "#/components/parameters/AscensionParam"
+          },
+          {
+            "$ref": "#/components/parameters/CorpusChristiParam"
+          },
+          {
+            "$ref": "#/components/parameters/EternalHighPriestParam"
           }
         ],
         "responses": {
@@ -163,40 +129,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           }
         ],
         "requestBody": {
@@ -271,78 +207,28 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "year",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 1970,
-              "maximum": 9999
-            }
+            "$ref": "#/components/parameters/YearPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/GeneralRomanCalendarRequestBody"
-                },
-                {
-                  "$ref": "#/components/schemas/GeneralRomanCalendarTweakedRequestBody"
-                }
-              ]
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              },
-              "GeneralRomanCalendarTweaked": {
-                "$ref": "#/components/examples/GeneralRomanCalendarTweakedRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
+          },
+          {
+            "$ref": "#/components/parameters/EpiphanyParam"
+          },
+          {
+            "$ref": "#/components/parameters/AscensionParam"
+          },
+          {
+            "$ref": "#/components/parameters/CorpusChristiParam"
+          },
+          {
+            "$ref": "#/components/parameters/EternalHighPriestParam"
           }
         ],
         "responses": {
@@ -378,40 +264,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -497,73 +353,16 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "calendar_id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "IT",
-                "US",
-                "NL",
-                "VA",
-                "CA"
-              ],
-              "summary": "uppercase two letter ISO 3166 code of a nation for which the liturgical calendar has been defined"
-            }
+            "$ref": "#/components/parameters/NationalCalendarIdPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "$ref": "#/components/schemas/CivilOrLiturgicalYear"
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
           }
         ],
         "responses": {
@@ -599,40 +398,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -717,84 +486,19 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "calendar_id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "IT",
-                "US",
-                "NL",
-                "VA",
-                "CA"
-              ],
-              "summary": "when {category} is 'nation'"
-            }
+            "$ref": "#/components/parameters/NationalCalendarIdPathParam"
           },
           {
-            "in": "path",
-            "name": "year",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 1970,
-              "maximum": 9999
-            }
+            "$ref": "#/components/parameters/YearPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "$ref": "#/components/schemas/CivilOrLiturgicalYear"
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
           }
         ],
         "responses": {
@@ -830,40 +534,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -958,65 +632,16 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "calendar_id",
-            "required": true,
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/DiocesanCalendarId"
-            }
+            "$ref": "#/components/parameters/DiocesanCalendarIdPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "$ref": "#/components/schemas/CivilOrLiturgicalYear"
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
           }
         ],
         "responses": {
@@ -1052,40 +677,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -1162,76 +757,19 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
-            "in": "path",
-            "name": "calendar_id",
-            "required": true,
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/DiocesanCalendarId"
-            }
+            "$ref": "#/components/parameters/DiocesanCalendarIdPathParam"
           },
           {
-            "in": "path",
-            "name": "year",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "minimum": 1970,
-              "maximum": 9999
-            }
+            "$ref": "#/components/parameters/YearPathParam"
           },
           {
-            "in": "query",
-            "name": "parameters",
-            "style": "form",
-            "explode": true,
-            "schema": {
-              "$ref": "#/components/schemas/CivilOrLiturgicalYear"
-            },
-            "examples": {
-              "LiturgicalYearCalendar": {
-                "$ref": "#/components/examples/LiturgicalYearRequestBody"
-              },
-              "CivilYearCalendar": {
-                "$ref": "#/components/examples/CivilYearRequestBody"
-              }
-            }
+            "$ref": "#/components/parameters/YearTypeParam"
           }
         ],
         "responses": {
@@ -1267,40 +805,10 @@
         "description": "By passing in the appropriate options, you can retrieve data for the liturgical calendar for any given year",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
-            "in": "header",
-            "name": "Accept",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "application/json",
-                "application/xml",
-                "application/yaml",
-                "text/calendar"
-              ],
-              "default": "application/json"
-            }
+            "$ref": "#/components/parameters/AcceptHeader"
           },
           {
             "in": "path",
@@ -1371,6 +879,164 @@
           },
           "418": {
             "$ref": "#/components/responses/IMATeapot418"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {}
+        ],
+        "summary": "Authenticate user and obtain JWT tokens",
+        "operationId": "authLogin",
+        "description": "Authenticate with username and password to obtain access and refresh tokens. Tokens are returned in the response body AND set as HttpOnly cookies (litcal_access_token, litcal_refresh_token). Browser clients should use the cookie-based authentication (preferred for XSS protection), while server-to-server clients can use the Bearer token in the Authorization header.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK: Authentication successful. Tokens returned in response body and set as HttpOnly cookies.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests429"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {}
+        ],
+        "summary": "Refresh access token using refresh token",
+        "operationId": "authRefresh",
+        "description": "Use a valid refresh token to obtain a new access token without re-authenticating with username/password.\n\n**Token Sources (in order of precedence):**\n1. **HttpOnly Cookie** (preferred): The refresh token is automatically read from the `litcal_refresh_token` cookie if present. Browser-based clients using cookie authentication can call this endpoint without a request body.\n2. **Request Body** (fallback): If no cookie is present, the refresh token must be provided in the JSON request body.\n\n**Usage:**\n- **Browser clients**: Use `credentials: 'include'` in fetch requests. No request body needed if cookies were set by `/auth/login`.\n- **Server/API clients**: Send the refresh token in the request body.",
+        "requestBody": {
+          "required": false,
+          "description": "Optional when using cookie-based authentication. Required for clients that don't send cookies.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK: Token refresh successful, new access token returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "summary": "Logout user session",
+        "operationId": "authLogout",
+        "description": "Performs a stateless logout by clearing HttpOnly auth cookies and logging the event. Since JWTs are stateless, the client must also discard any stored access and refresh tokens. The endpoint extracts the username from the token (if available) for audit logging purposes.",
+        "responses": {
+          "200": {
+            "description": "OK: Logout successful, cookies cleared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Logged out successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "summary": "Get current authenticated user information",
+        "operationId": "authMe",
+        "description": "Returns information about the currently authenticated user. Supports both HttpOnly cookie-based authentication and Bearer token in Authorization header. Essential for cookie-based authentication where JavaScript cannot read HttpOnly cookies.",
+        "responses": {
+          "200": {
+            "description": "OK: User information returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
           }
         }
       }
@@ -1451,26 +1117,7 @@
         "operationId": "retrieveEventsGET",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           }
         ],
         "responses": {
@@ -1557,26 +1204,7 @@
         "operationId": "retrieveEventsPOST",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           }
         ],
         "responses": {
@@ -1667,26 +1295,7 @@
         "operationId": "retrieveEventsForNationalCalendarGET",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
             "in": "path",
@@ -1790,26 +1399,7 @@
         "operationId": "retrieveEventsForNationalCalendarPOST",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
             "in": "path",
@@ -1915,26 +1505,7 @@
         "operationId": "retrieveEventsForDiocesanCalendarGET",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
             "in": "path",
@@ -2031,26 +1602,7 @@
         "operationId": "retrieveEventsForDiocesanCalendarPOST",
         "parameters": [
           {
-            "in": "header",
-            "name": "Accept-Language",
-            "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
-            "schema": {
-              "$ref": "./CommonDef.json#/definitions/Locale"
-            },
-            "examples": {
-              "latin": {
-                "value": "la-VA",
-                "summary": "Latin (Vatican)"
-              },
-              "italian": {
-                "value": "it-IT",
-                "summary": "Italian (Italy)"
-              },
-              "english": {
-                "value": "en-US",
-                "summary": "English (United States)"
-              }
-            }
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
           },
           {
             "in": "path",
@@ -2143,7 +1695,12 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Create a national calendar data resource",
         "operationId": "nationalCalendarDataPUT",
@@ -2153,6 +1710,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./NationalCalendar.json"
+              },
+              "examples": {
+                "ItalyNationalCalendar": {
+                  "$ref": "#/components/examples/NationalCalendarRequestBody"
+                },
+                "USANationalCalendar": {
+                  "$ref": "#/components/examples/NationalCalendarUSRequestBody"
+                }
               }
             }
           }
@@ -2183,6 +1748,15 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict409"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2195,7 +1769,12 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Create a wider region data resource",
         "operationId": "widerregionDataPUT",
@@ -2205,6 +1784,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./WiderRegionCalendar.json"
+              },
+              "examples": {
+                "EuropeWiderRegion": {
+                  "$ref": "#/components/examples/WiderRegionCalendarRequestBody"
+                },
+                "AsiaWiderRegion": {
+                  "$ref": "#/components/examples/WiderRegionCalendarAsiaRequestBody"
+                }
               }
             }
           }
@@ -2235,6 +1822,15 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict409"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2247,7 +1843,12 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Create a diocesan calendar data resource",
         "operationId": "diocesanDataPUT",
@@ -2257,6 +1858,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./DiocesanCalendar.json"
+              },
+              "examples": {
+                "BostonDiocesan": {
+                  "$ref": "#/components/examples/DiocesanCalendarRequestBody"
+                },
+                "RomeDiocesan": {
+                  "$ref": "#/components/examples/DiocesanCalendarRomeRequestBody"
+                }
               }
             }
           }
@@ -2286,6 +1895,15 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict409"
           },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
@@ -2375,7 +1993,12 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Update a national calendar data resource",
         "operationId": "nationalDataPATCH",
@@ -2396,6 +2019,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./NationalCalendar.json"
+              },
+              "examples": {
+                "ItalyNationalCalendar": {
+                  "$ref": "#/components/examples/NationalCalendarRequestBody"
+                },
+                "USANationalCalendar": {
+                  "$ref": "#/components/examples/NationalCalendarUSRequestBody"
+                }
               }
             }
           }
@@ -2411,11 +2042,7 @@
                   "properties": {
                     "success": {
                       "type": "string",
-                      "examples": [
-                        "National calendar created or updated for nation {NATION}",
-                        "Wider region calendar created or updated for region {REGION}",
-                        "Diocesan calendar created or updated for diocese {DIOCESE}"
-                      ]
+                      "example": "National calendar created or updated for nation {NATION}"
                     }
                   },
                   "required": [
@@ -2428,6 +2055,12 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2438,7 +2071,12 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Delete a national calendar data resource",
         "operationId": "nationalDataDELETE",
@@ -2455,27 +2093,16 @@
         ],
         "responses": {
           "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "Diocesan calendar {DIOCESE} deleted from nation {NATION}"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/DeleteSuccess200"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -2565,7 +2192,12 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Update a diocesan calendar data resource",
         "operationId": "diocesanDataPATCH",
@@ -2585,6 +2217,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./DiocesanCalendar.json"
+              },
+              "examples": {
+                "BostonDiocesan": {
+                  "$ref": "#/components/examples/DiocesanCalendarRequestBody"
+                },
+                "RomeDiocesan": {
+                  "$ref": "#/components/examples/DiocesanCalendarRomeRequestBody"
+                }
               }
             }
           }
@@ -2600,11 +2240,7 @@
                   "properties": {
                     "success": {
                       "type": "string",
-                      "examples": [
-                        "National calendar created or updated for nation {NATION}",
-                        "Wider region calendar created or updated for region {REGION}",
-                        "Diocesan calendar created or updated for diocese {DIOCESE}"
-                      ]
+                      "example": "Diocesan calendar created or updated for diocese {DIOCESE}"
                     }
                   },
                   "required": [
@@ -2617,6 +2253,12 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2627,9 +2269,14 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
-        "summary": "Delete a wider region calendar data resource",
+        "summary": "Delete a diocesan calendar data resource",
         "operationId": "diocesanDataDELETE",
         "parameters": [
           {
@@ -2643,27 +2290,16 @@
         ],
         "responses": {
           "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "Diocesan calendar {DIOCESE} deleted from nation {NATION}"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/DeleteSuccess200"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -2753,7 +2389,12 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Update a wider region calendar data resource",
         "operationId": "widerregionDataPATCH",
@@ -2773,6 +2414,14 @@
             "application/json": {
               "schema": {
                 "$ref": "./WiderRegionCalendar.json"
+              },
+              "examples": {
+                "EuropeWiderRegion": {
+                  "$ref": "#/components/examples/WiderRegionCalendarRequestBody"
+                },
+                "AsiaWiderRegion": {
+                  "$ref": "#/components/examples/WiderRegionCalendarAsiaRequestBody"
+                }
               }
             }
           }
@@ -2788,11 +2437,7 @@
                   "properties": {
                     "success": {
                       "type": "string",
-                      "examples": [
-                        "National calendar created or updated for nation {NATION}",
-                        "Wider region calendar created or updated for region {REGION}",
-                        "Diocesan calendar created or updated for diocese {DIOCESE}"
-                      ]
+                      "example": "Wider region calendar created or updated for region {REGION}"
                     }
                   },
                   "required": [
@@ -2805,6 +2450,12 @@
           "400": {
             "$ref": "#/components/responses/BadRequest400"
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
+          },
           "422": {
             "$ref": "#/components/responses/UnprocessableEntity422"
           }
@@ -2815,7 +2466,12 @@
           "Calendar Source Data"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Delete a wider region calendar data resource",
         "operationId": "widerregionDataDELETE",
@@ -2831,27 +2487,16 @@
         ],
         "responses": {
           "200": {
-            "description": "200 OK: the resource was successfully deleted from the server",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "success": {
-                      "type": "string",
-                      "example": "Diocesan calendar {DIOCESE} deleted from nation {NATION}"
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
-                }
-              }
-            }
+            "$ref": "#/components/responses/DeleteSuccess200"
           },
           "400": {
             "$ref": "#/components/responses/BadRequest400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden403"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -2972,6 +2617,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest400"
           }
         }
       }
@@ -3283,7 +2931,12 @@
           "Unit Tests"
         ],
         "security": [
-          {}
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
         ],
         "summary": "Create a new unit test in the API `tests` folder",
         "operationId": "testsIndexPUT",
@@ -3333,6 +2986,9 @@
               }
             }
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
           "415": {
             "$ref": "#/components/responses/UnsupportedMediaType415"
           },
@@ -3362,7 +3018,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
             }
           }
         ],
@@ -3413,6 +3069,128 @@
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound404"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Unit Tests"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "summary": "Update an existing unit test in the API `tests` folder",
+        "operationId": "updateTestByNamePATCH",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "test_name",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
+            },
+            "description": "The name of the unit test to update (without .json extension)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ExactOrVariableCorrespondenceUnitTest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ExactCorrespondenceSinceUnitTest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ExactCorrespondenceUntilUnitTest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 OK. The unit test was updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "response": {
+                      "type": "string",
+                      "example": "Unit Test ExampleTest updated successfully."
+                    }
+                  },
+                  "required": [
+                    "response"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound404"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedMediaType415"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity422"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable503"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Unit Tests"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "CookieAuth": []
+          }
+        ],
+        "summary": "Delete a unit test from the API `tests` folder",
+        "operationId": "deleteTestByNameDELETE",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "test_name",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
+            },
+            "description": "The name of the unit test to delete (without .json extension)"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "204 No Content. The unit test was deleted successfully."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized401"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -3655,32 +3433,32 @@
                     "type": "boolean",
                     "description": "present for applicable events such as Solemnities or Sundays. Will have a boolean value of `true` if the expected Vigil Mass is confirmed, and of `false` if the expected Vigil Mass is superseded by another liturgical event. Sometimes this will be established from year to year for specific coincidences by the Dicastery for Divine Worship and the Discipline of the Sacraments.",
                     "examples": [
-                      0,
-                      1
+                      false,
+                      true
                     ]
                   },
                   "HasVesperI": {
                     "type": "boolean",
                     "description": "present for applicable events such as Solemnities or Sundays. Will have a boolean value of `true` if the expected First Vespers are confirmed, and of `false` if the expected First Vespers are superseded by another liturgical event. Sometimes this will be established from year to year for specific coincidences by the Dicastery for Divine Worship and the Discipline of the Sacraments.",
                     "examples": [
-                      0,
-                      1
+                      false,
+                      true
                     ]
                   },
                   "HasVesperII": {
                     "type": "boolean",
                     "description": "present for applicable events such as Solemnities or Sundays. Will have a boolean value of `true` if the expected Second Vespers are confirmed, and of `false` if the expected Second Vespers are superseded by another liturgical event. Sometimes this will be established from year to year for specific coincidences by the Dicastery for Divine Worship and the Discipline of the Sacraments.",
                     "examples": [
-                      0,
-                      1
+                      false,
+                      true
                     ]
                   },
                   "IsVigilMass": {
                     "type": "boolean",
                     "description": "present for applicable events such as Solemnities or Sundays. Will have a boolean value of 'true' if the event is a Vigil Mass for a Solemnity or Sunday",
                     "examples": [
-                      0,
-                      1
+                      false,
+                      true
                     ]
                   },
                   "IsVigilFor": {
@@ -3780,8 +3558,8 @@
                 "type": "boolean",
                 "description": "whether the celebration of Jesus Christ Eternal High Priest is applicable to the current requested calendar",
                 "examples": [
-                  0,
-                  1
+                  false,
+                  true
                 ]
               }
             }
@@ -3945,7 +3723,7 @@
                     "type": "string",
                     "examples": [
                       "application/json",
-                      "application/yml",
+                      "application/yaml",
                       "application/xml",
                       "text/calendar"
                     ]
@@ -4216,12 +3994,12 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
             "description": "the liturgical event we are testing, must be the exact key of a corresponding liturgical event in the LitCal API",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$"
+            "pattern": "^([a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:[A-Z][a-zA-Z0-9]+)*(?:_\\d+)?(?:_vigil)?$"
           },
           "description": {
             "type": "string",
@@ -4272,12 +4050,12 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
             "description": "the liturgical event we are testing, must be the exact key of a corresponding liturgical event in the LitCal API",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$"
+            "pattern": "^([a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:[A-Z][a-zA-Z0-9]+)*(?:_\\d+)?(?:_vigil)?$"
           },
           "description": {
             "type": "string",
@@ -4332,12 +4110,12 @@
           "name": {
             "type": "string",
             "description": "identifies the Unit Test, and follows the pattern `{event_key}Test`",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?Test$"
+            "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?Test$"
           },
           "event_key": {
             "type": "string",
             "description": "the liturgical event we are testing, must be the exact key of a corresponding liturgical event in the LitCal API",
-            "pattern": "^[A-Z][a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$"
+            "pattern": "^([a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:[A-Z][a-zA-Z0-9]+)*(?:_\\d+)?(?:_vigil)?$"
           },
           "description": {
             "type": "string",
@@ -4389,7 +4167,7 @@
           "litcal_events": {
             "type": "object",
             "patternProperties": {
-              "^[A-Z](?:[A-Z]+_)*[a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$": {
+              "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?$": {
                 "type": "object",
                 "properties": {
                   "month": {
@@ -4406,7 +4184,7 @@
                   },
                   "event_key": {
                     "type": "string",
-                    "pattern": "^[A-Z](?:[A-Z]+_)*[a-zA-Z1-9]+[0-9]{0,2}(?:_vigil)?$",
+                    "pattern": "^(?:[a-z]+_[a-z]+_)?[A-Z][a-zA-Z0-9]+(?:_\\d+)?(?:_vigil)?$",
                     "description": "corresponds to the `event_key` property of liturgical events in the output of the LitCal API and similar endpoints"
                   },
                   "grade": {
@@ -4675,6 +4453,261 @@
           "assert",
           "assertion"
         ]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Username for authentication"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Password for authentication"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "default": false,
+            "description": "When true, the refresh token cookie persists beyond the browser session (with Max-Age/Expires). When false (default), the refresh token is stored as a session cookie that is deleted when the browser closes."
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "description": "Authentication response containing JWT tokens. Note: These tokens are also set as HttpOnly cookies (litcal_access_token, litcal_refresh_token) for browser-based clients. Browser clients should rely on cookies for authentication rather than storing tokens in localStorage/sessionStorage.",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "JWT access token valid for 1 hour (configurable via JWT_EXPIRY). Also set as HttpOnly cookie 'litcal_access_token'."
+          },
+          "refresh_token": {
+            "type": "string",
+            "description": "JWT refresh token valid for 7 days (configurable via JWT_REFRESH_EXPIRY). Also set as HttpOnly cookie 'litcal_refresh_token'."
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ],
+            "description": "Token type, always 'Bearer'"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Access token expiry time in seconds"
+          }
+        },
+        "required": [
+          "access_token",
+          "refresh_token",
+          "token_type",
+          "expires_in"
+        ]
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "description": "Request body for token refresh. This body is optional when using cookie-based authentication, as the server will read the refresh token from the `litcal_refresh_token` HttpOnly cookie first.",
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "description": "Valid refresh token obtained from /auth/login. Required if the `litcal_refresh_token` cookie is not present. When both cookie and body are provided, the cookie takes precedence."
+          }
+        },
+        "example": {
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+      },
+      "RefreshResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "New JWT access token"
+          },
+          "token_type": {
+            "type": "string",
+            "enum": [
+              "Bearer"
+            ],
+            "description": "Token type, always 'Bearer'"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Access token expiry time in seconds"
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in"
+        ]
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "authenticated": {
+            "type": "boolean",
+            "description": "Whether the user is authenticated",
+            "example": true
+          },
+          "username": {
+            "type": "string",
+            "description": "Username of the authenticated user",
+            "example": "admin"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Roles assigned to the user",
+            "example": ["admin"]
+          },
+          "exp": {
+            "type": "integer",
+            "description": "Token expiration timestamp (Unix epoch)",
+            "example": 1735689600
+          }
+        },
+        "required": [
+          "authenticated"
+        ]
+      }
+    },
+    "parameters": {
+      "AcceptLanguageHeader": {
+        "in": "header",
+        "name": "Accept-Language",
+        "description": "The header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.)",
+        "schema": {
+          "$ref": "./CommonDef.json#/definitions/AcceptLanguage"
+        },
+        "examples": {
+          "latin": {
+            "value": "la-VA",
+            "summary": "Latin (Vatican)"
+          },
+          "italian": {
+            "value": "it-IT",
+            "summary": "Italian (Italy)"
+          },
+          "english": {
+            "value": "en-US",
+            "summary": "English (United States)"
+          }
+        }
+      },
+      "AcceptHeader": {
+        "in": "header",
+        "name": "Accept",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "application/json",
+            "application/xml",
+            "application/yaml",
+            "text/calendar"
+          ],
+          "default": "application/json"
+        }
+      },
+      "YearTypeParam": {
+        "in": "query",
+        "name": "year_type",
+        "description": "Whether to return a civil year (Jan 1 - Dec 31) or liturgical year (First Sunday of Advent through Saturday of 34th week of Ordinary Time)",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "CIVIL",
+            "LITURGICAL"
+          ],
+          "default": "LITURGICAL"
+        }
+      },
+      "EpiphanyParam": {
+        "in": "query",
+        "name": "epiphany",
+        "description": "When Epiphany is celebrated: on January 6th or on the Sunday between January 2nd and 8th",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "JAN6",
+            "SUNDAY_JAN2_JAN8"
+          ]
+        }
+      },
+      "AscensionParam": {
+        "in": "query",
+        "name": "ascension",
+        "description": "When Ascension is celebrated: on Thursday (40 days after Easter) or on Sunday (7th Sunday of Easter)",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "THURSDAY",
+            "SUNDAY"
+          ]
+        }
+      },
+      "CorpusChristiParam": {
+        "in": "query",
+        "name": "corpus_christi",
+        "description": "When Corpus Christi is celebrated: on Thursday after Trinity Sunday or on the following Sunday",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "THURSDAY",
+            "SUNDAY"
+          ]
+        }
+      },
+      "EternalHighPriestParam": {
+        "in": "query",
+        "name": "eternal_high_priest",
+        "description": "Whether to include the Feast of Jesus Christ, Eternal High Priest (Thursday after Pentecost)",
+        "schema": {
+          "type": "boolean"
+        }
+      },
+      "YearPathParam": {
+        "in": "path",
+        "name": "year",
+        "required": true,
+        "description": "The calendar year for which to retrieve liturgical events",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1970,
+          "maximum": 9999
+        }
+      },
+      "NationalCalendarIdPathParam": {
+        "in": "path",
+        "name": "calendar_id",
+        "required": true,
+        "description": "Uppercase two letter ISO 3166 code of a nation for which the liturgical calendar has been defined",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "IT",
+            "US",
+            "NL",
+            "VA",
+            "CA"
+          ]
+        }
+      },
+      "DiocesanCalendarIdPathParam": {
+        "in": "path",
+        "name": "calendar_id",
+        "required": true,
+        "description": "Identifier for a diocesan calendar",
+        "schema": {
+          "$ref": "./CommonDef.json#/definitions/DiocesanCalendarId"
+        }
       }
     },
     "examples": {
@@ -4701,15 +4734,405 @@
           "corpus_christi": "THURSDAY",
           "eternal_high_priest": true
         }
+      },
+      "NationalCalendarRequestBody": {
+        "summary": "National Calendar for Italy",
+        "description": "Example of a national calendar definition for Italy with patron saints and settings",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "StCatherineSiena",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1939,
+                "until_year": 1999,
+                "url": "https://www.vatican.va/content/pius-xii/it/briefs/documents/hf_p-xii_brief_19390618_patroni-italia.html"
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StFrancisAssisi",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1939,
+                "url": "https://www.vatican.va/content/pius-xii/it/briefs/documents/hf_p-xii_brief_19390618_patroni-italia.html"
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StNicholas",
+                "grade": 3
+              },
+              "metadata": {
+                "action": "setProperty",
+                "property": "grade",
+                "since_year": 2017,
+                "url": "https://liturgico.chiesacattolica.it/memoria-di-san-nicola/"
+              }
+            }
+          ],
+          "settings": {
+            "epiphany": "JAN6",
+            "ascension": "SUNDAY",
+            "corpus_christi": "SUNDAY",
+            "eternal_high_priest": false,
+            "holydays_of_obligation": {
+              "Christmas": true,
+              "Epiphany": true,
+              "Ascension": false,
+              "CorpusChristi": false,
+              "MaryMotherOfGod": true,
+              "ImmaculateConception": true,
+              "Assumption": true,
+              "StJoseph": false,
+              "StsPeterPaulAp": false,
+              "AllSaints": true
+            }
+          },
+          "metadata": {
+            "nation": "IT",
+            "wider_region": "Europe",
+            "missals": [
+              "IT_1983",
+              "IT_2020"
+            ],
+            "locales": [
+              "it_IT"
+            ]
+          },
+          "i18n": {
+            "it_IT": {
+              "StCatherineSiena": "Santa Caterina da Siena, vergine e dottore della Chiesa, patrona d'Italia",
+              "StFrancisAssisi": "San Francesco d'Assisi, patrono d'Italia"
+            }
+          }
+        }
+      },
+      "NationalCalendarUSRequestBody": {
+        "summary": "National Calendar for USA",
+        "description": "Example of a national calendar definition for USA with moved events and new celebrations",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "ImmaculateConception",
+                "grade": 6
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1970
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StVincentDeacon",
+                "day": 23,
+                "month": 1
+              },
+              "metadata": {
+                "action": "moveEvent",
+                "missal": "US_2011",
+                "reason": "National Day of Prayer for the Unborn",
+                "since_year": 1970
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "ThanksgivingDay",
+                "color": ["white"],
+                "grade": 3,
+                "strtotime": "fourth thursday of november",
+                "common": []
+              },
+              "metadata": {
+                "action": "createNew",
+                "since_year": 1970
+              }
+            }
+          ],
+          "settings": {
+            "epiphany": "SUNDAY_JAN2_JAN8",
+            "ascension": "SUNDAY",
+            "corpus_christi": "SUNDAY",
+            "eternal_high_priest": false,
+            "holydays_of_obligation": {
+              "Christmas": true,
+              "Epiphany": false,
+              "Ascension": true,
+              "CorpusChristi": false,
+              "MaryMotherOfGod": true,
+              "ImmaculateConception": true,
+              "Assumption": true,
+              "StJoseph": false,
+              "StsPeterPaulAp": false,
+              "AllSaints": true
+            }
+          },
+          "metadata": {
+            "nation": "US",
+            "locales": ["en_US"],
+            "wider_region": "Americas",
+            "missals": ["US_2011"]
+          },
+          "i18n": {
+            "en_US": {
+              "ThanksgivingDay": "Thanksgiving Day"
+            }
+          }
+        }
+      },
+      "DiocesanCalendarRequestBody": {
+        "summary": "Diocesan Calendar for Archdiocese of Boston",
+        "description": "Example of a diocesan calendar definition with local celebrations",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "DedicationoftheCathedraloftheHolyCross",
+                "color": ["white"],
+                "grade": 4,
+                "common": ["Dedication of a Church"],
+                "day": 8,
+                "month": 12
+              },
+              "metadata": {
+                "form_rownum": 1,
+                "since_year": 1970
+              }
+            }
+          ],
+          "settings": {
+            "epiphany": "JAN6",
+            "ascension": "THURSDAY",
+            "corpus_christi": "THURSDAY"
+          },
+          "metadata": {
+            "diocese_id": "boston_us",
+            "diocese_name": "Archdiocese of Boston (Massachusetts)",
+            "nation": "US",
+            "locales": ["en_US"],
+            "timezone": "America/New_York"
+          },
+          "i18n": {
+            "en_US": {
+              "DedicationoftheCathedraloftheHolyCross": "Dedication of the Cathedral of the Holy Cross"
+            }
+          }
+        }
+      },
+      "DiocesanCalendarRomeRequestBody": {
+        "summary": "Diocesan Calendar for Diocese of Rome",
+        "description": "Example of a diocesan calendar definition for the Diocese of Rome",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "DedicationoftheBasilicaofStJohnLateran",
+                "color": ["white"],
+                "grade": 6,
+                "common": ["Dedication of a Church"],
+                "day": 9,
+                "month": 11
+              },
+              "metadata": {
+                "form_rownum": 1,
+                "since_year": 1970
+              }
+            }
+          ],
+          "settings": {
+            "epiphany": "JAN6",
+            "ascension": "SUNDAY",
+            "corpus_christi": "SUNDAY"
+          },
+          "metadata": {
+            "diocese_id": "romamo_it",
+            "diocese_name": "Diocesi di Roma",
+            "nation": "IT",
+            "locales": ["it_IT"],
+            "timezone": "Europe/Rome"
+          },
+          "i18n": {
+            "it_IT": {
+              "DedicationoftheBasilicaofStJohnLateran": "Dedicazione della Basilica Lateranense"
+            }
+          }
+        }
+      },
+      "WiderRegionCalendarRequestBody": {
+        "summary": "Wider Region Calendar for Europe",
+        "description": "Example of a wider region calendar definition for Europe with patron saints",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "StBenedict",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1964,
+                "url": "https://www.vatican.va/content/paul-vi/la/apost_letters/documents/hf_p-vi_apl_19641024_pacis-nuntius.html",
+                "url_lang_map": {
+                  "it": "it",
+                  "es": "es",
+                  "la": "la"
+                }
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StsCyrilMethodius",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1980,
+                "url": "https://www.vatican.va/content/john-paul-ii/la/apost_letters/1980/documents/hf_jp-ii_apl_31121980_egregiae-virtutis.html",
+                "url_lang_map": {
+                  "es": "es",
+                  "it": "it",
+                  "la": "la",
+                  "pt": "pt"
+                }
+              }
+            },
+            {
+              "liturgical_event": {
+                "event_key": "StBridget",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1999,
+                "url": "https://www.vatican.va/content/john-paul-ii/en/motu_proprio/documents/hf_jp-ii_motu-proprio_01101999_co-patronesses-europe.html",
+                "url_lang_map": {
+                  "de": "de",
+                  "en": "en",
+                  "es": "es",
+                  "fr": "fr",
+                  "it": "it",
+                  "la": "la",
+                  "pt": "pt"
+                }
+              }
+            }
+          ],
+          "national_calendars": {
+            "Bulgaria": "BG",
+            "Czechia": "CZ",
+            "Croatia": "HR",
+            "Denmark": "DK",
+            "Italy": "IT",
+            "Netherlands": "NL",
+            "Poland": "PL",
+            "Spain": "ES"
+          },
+          "metadata": {
+            "locales": [
+              "it_IT",
+              "nl_NL",
+              "pl_PL",
+              "es_ES",
+              "de_DE",
+              "fr_FR"
+            ],
+            "wider_region": "Europe"
+          },
+          "i18n": {
+            "it_IT": {
+              "StBenedict": "San Benedetto, abate, patrono d'Europa",
+              "StsCyrilMethodius": "Santi Cirillo, monaco, e Metodio, vescovo, patroni d'Europa",
+              "StBridget": "Santa Brigida, religiosa, patrona d'Europa"
+            },
+            "en_GB": {
+              "StBenedict": "Saint Benedict, Abbot, Patron of Europe",
+              "StsCyrilMethodius": "Saints Cyril, Monk, and Methodius, Bishop, Patrons of Europe",
+              "StBridget": "Saint Bridget, Religious, Patroness of Europe"
+            }
+          }
+        }
+      },
+      "WiderRegionCalendarAsiaRequestBody": {
+        "summary": "Wider Region Calendar for Asia",
+        "description": "Example of a wider region calendar definition for Asia",
+        "value": {
+          "litcal": [
+            {
+              "liturgical_event": {
+                "event_key": "StFrancisXavier",
+                "grade": 4
+              },
+              "metadata": {
+                "action": "makePatron",
+                "since_year": 1927,
+                "url": "https://www.vatican.va/content/pius-xi/la/encyclicals/documents/hf_p-xi_enc_19271215_rerum-ecclesiae.html",
+                "url_lang_map": {
+                  "la": "la"
+                }
+              }
+            }
+          ],
+          "national_calendars": {
+            "Japan": "JP",
+            "China": "CN"
+          },
+          "metadata": {
+            "locales": [
+              "ja_JP",
+              "zh_Hans_CN"
+            ],
+            "wider_region": "Asia"
+          },
+          "i18n": {
+            "ja_JP": {
+              "StFrancisXavier": "聖フランシスコ・ザビエル司祭"
+            }
+          }
+        }
       }
     },
     "responses": {
+      "DeleteSuccess200": {
+        "description": "200 OK: the resource was successfully deleted from the server. Per RFC 9110 Section 9.3.5, we use 200 (not 204) because the response includes a representation describing the status.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "success": {
+                  "type": "string",
+                  "description": "A message indicating successful deletion",
+                  "examples": [
+                    "Calendar data \"nation/US\" deletion successful.",
+                    "Calendar data \"diocese/US_BOSTON\" deletion successful.",
+                    "Calendar data \"widerregion/Americas\" deletion successful."
+                  ]
+                }
+              },
+              "required": ["success"]
+            }
+          }
+        }
+      },
       "UnprocessableEntity422": {
         "description": "422 Unprocessable Entity. The request body does not conform to its defined schema",
         "content": {
           "application/problem+json": {
             "schema": {
               "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/422",
+              "title": "Unprocessable Entity",
+              "status": 422,
+              "detail": "The request body does not conform to the defined schema"
             }
           }
         }
@@ -4720,6 +5143,44 @@
           "application/problem+json": {
             "schema": {
               "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+              "title": "Bad Request",
+              "status": 400,
+              "detail": "The request parameters do not conform to the defined schema"
+            }
+          }
+        }
+      },
+      "Unauthorized401": {
+        "description": "401 Unauthorized. Authentication is required and has failed or has not been provided. This response is returned when the JWT token is missing, invalid, or expired.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401",
+              "title": "Unauthorized",
+              "status": 401,
+              "detail": "Authentication is required. The JWT token is missing, invalid, or expired."
+            }
+          }
+        }
+      },
+      "Forbidden403": {
+        "description": "403 Forbidden. The request was valid but the server is refusing action. The user might not have the necessary permissions for the resource.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403",
+              "title": "Forbidden",
+              "status": 403,
+              "detail": "You do not have the necessary permissions for this resource"
             }
           }
         }
@@ -4730,16 +5191,12 @@
           "application/problem+json": {
             "schema": {
               "$ref": "./Problem.json"
-            }
-          }
-        }
-      },
-      "MethodNotAllowed405": {
-        "description": "405 Method Not Allowed",
-        "content": {
-          "application/problem+json": {
-            "schema": {
-              "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+              "title": "Not Found",
+              "status": 404,
+              "detail": "The requested resource was not found"
             }
           }
         }
@@ -4750,6 +5207,28 @@
           "application/problem+json": {
             "schema": {
               "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/406",
+              "title": "Not Acceptable",
+              "status": 406,
+              "detail": "The requested content type is not supported"
+            }
+          }
+        }
+      },
+      "Conflict409": {
+        "description": "409 Conflict. The request could not be completed due to a conflict with the current state of the resource. This typically occurs when trying to create a resource that already exists.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/409",
+              "title": "Conflict",
+              "status": 409,
+              "detail": "A resource with this identifier already exists"
             }
           }
         }
@@ -4760,6 +5239,12 @@
           "application/problem+json": {
             "schema": {
               "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/415",
+              "title": "Unsupported Media Type",
+              "status": 415,
+              "detail": "The request content type is not supported"
             }
           }
         }
@@ -4770,6 +5255,51 @@
           "application/problem+json": {
             "schema": {
               "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/418",
+              "title": "I'm a teapot",
+              "status": 418,
+              "detail": "The server refuses to brew coffee because it is, permanently, a teapot"
+            }
+          }
+        }
+      },
+      "TooManyRequests429": {
+        "description": "429 Too Many Requests. The user has sent too many requests in a given amount of time (rate limiting). The response includes a Retry-After header indicating how long to wait before retrying.",
+        "headers": {
+          "Retry-After": {
+            "description": "Number of seconds to wait before retrying the request",
+            "schema": {
+              "type": "integer",
+              "example": 847
+            }
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "./Problem.json"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "retryAfter": {
+                      "type": "integer",
+                      "description": "Number of seconds to wait before retrying the request"
+                    }
+                  }
+                }
+              ]
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429",
+              "title": "Too Many Requests",
+              "status": 429,
+              "detail": "Too many login attempts. Please try again later.",
+              "retryAfter": 847
             }
           }
         }
@@ -4780,6 +5310,12 @@
           "application/problem+json": {
             "schema": {
               "$ref": "./Problem.json"
+            },
+            "example": {
+              "type": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503",
+              "title": "Service Unavailable",
+              "status": 503,
+              "detail": "The server is currently unable to handle the request"
             }
           }
         }
@@ -4843,6 +5379,20 @@
             }
           }
         }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT access token obtained from /auth/login or /auth/refresh endpoint. Include in Authorization header as: `Authorization: Bearer <token>`. This method is suitable for server-to-server communication or non-browser clients."
+      },
+      "CookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "litcal_access_token",
+        "description": "HttpOnly cookie containing JWT access token, automatically set by /auth/login endpoint. This is the preferred authentication method for browser-based clients as it protects tokens from XSS attacks. Requires `credentials: 'include'` in fetch requests for cross-origin scenarios."
       }
     }
   }

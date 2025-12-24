@@ -1,0 +1,54 @@
+{
+    "litcal": [
+        {
+            "liturgical_event": {
+                "event_key": "NationalHoliday",
+                "day": 4,
+                "month": 7,
+                "color": ["white"],
+                "grade": 3,
+                "common": []
+            },
+            "metadata": {
+                "action": "createNew",
+                "since_year": 2000
+            }
+        },
+        {
+            "liturgical_event": {
+                "event_key": "PatronSaint",
+                "day": 1,
+                "month": 1,
+                "color": ["white"],
+                "grade": 5,
+                "common": ["Proper"]
+            },
+            "metadata": {
+                "action": "createNew",
+                "since_year": 1970
+            }
+        }
+    ],
+    "settings": {
+        "epiphany": "JAN6",
+        "ascension": "THURSDAY",
+        "corpus_christi": "THURSDAY",
+        "eternal_high_priest": false
+    },
+    "metadata": {
+        "nation": "IT",
+        "locales": ["it_IT", "la_VA"],
+        "wider_region": "Europe",
+        "missals": ["IT_1983"]
+    },
+    "i18n": {
+        "it_IT": {
+            "NationalHoliday": "Festa Nazionale",
+            "PatronSaint": "Santo Patrono della Nazione"
+        },
+        "la_VA": {
+            "NationalHoliday": "Festum Nationale",
+            "PatronSaint": "Sanctus Patronus Nationis"
+        }
+    }
+}

@@ -20,6 +20,8 @@ use LiturgicalCalendar\Api\Enum\Route;
 use LiturgicalCalendar\Api\Enum\JsonData;
 use LiturgicalCalendar\Api\Enum\RomanMissal;
 use LiturgicalCalendar\Api\Http\Enum\ReturnTypeParam;
+use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Models\Metadata\MetadataCalendars;
 use LiturgicalCalendar\Api\Models\Metadata\MetadataDiocesanCalendarItem;
 use LiturgicalCalendar\Api\Test\LitTestRunner;
@@ -41,7 +43,7 @@ use Psr\Http\Message\ResponseInterface;
  * @phpstan-type ExecuteValidationSourceFolder \stdClass&object{action:'executeValidation',category:'sourceDataCheck',validate:string,sourceFolder:string}
  * @phpstan-type ExecuteValidationSourceFile \stdClass&object{action:'executeValidation',category:'sourceDataCheck',validate:string,sourceFile:string}
  * @phpstan-type ExecuteValidationResource \stdClass&object{action:'executeValidation',category:'resourceDataCheck',validate:string,sourceFile:string}
- * @phpstan-type ValidateCalendar \stdClass&object{action:'validateCalendar',calendar:string,year:int,category:'nationalcalendar'|'diocesanCalendar',responsetype:'JSON'|'XML'|'ICS'|'YML'}
+ * @phpstan-type ValidateCalendar \stdClass&object{action:'validateCalendar',calendar:string,year:int,category:'nationalcalendar'|'diocesancalendar',responsetype:'JSON'|'XML'|'ICS'|'YML'}
  * @phpstan-type ExecuteUnitTest \stdClass&object{action:'executeUnitTest',calendar:string,year:int,category:'nationalcalendar'|'diocesancalendar',test:string}
  *
  * @phpstan-import-type LiturgicalEvent from \LiturgicalCalendar\Api\Test\LitTestRunner
@@ -86,7 +88,10 @@ class Health implements MessageComponentInterface
     private array $queue  = [];
     private bool $ticking = false;
 
-    private static bool $cacheEnabled = false;
+    private static bool $cacheInitialized = false;
+    private static bool $cacheEnabled     = false;
+    private static string $cacheBackend   = 'none';
+    private static ?\Redis $redis         = null;
     //private static PromiseInterface $metadataPromise;
 
     /**
@@ -113,10 +118,12 @@ class Health implements MessageComponentInterface
             'curl'            => [ CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_2_0 ]
         ]);
 
-        if (Router::isLocalhost() || ( isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'development' )) {
+        if (isset($_ENV['WS_MAX_CONCURRENCY']) && is_numeric($_ENV['WS_MAX_CONCURRENCY'])) {
+            $this->maxConcurrency = (int) $_ENV['WS_MAX_CONCURRENCY'];
+        } elseif (Router::isLocalhost() || ( isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'development' )) {
             $this->maxConcurrency = 4;
         } else {
-            $this->maxConcurrency = 50;
+            $this->maxConcurrency = 10; // Conservative default for production
         }
     }
 
@@ -136,12 +143,101 @@ class Health implements MessageComponentInterface
             echo "New connection! ({$conn->resourceId}) and current working directory is " . getcwd() . "\n";
         }
 
-        self::$cacheEnabled = ( extension_loaded('apcu') && function_exists('apcu_exists') && function_exists('apcu_store') && function_exists('apcu_fetch') );
+        // Initialize cache backend only once (not on every connection)
+        // Note: This check-then-set pattern is safe because Ratchet/ReactPHP WebSocket
+        // servers are single-threaded (event-loop based), so concurrent connections
+        // are processed sequentially within the same process.
+        if (!self::$cacheInitialized) {
+            self::$cacheInitialized = true;
 
-        if (self::$cacheEnabled) {
-            echo 'APCu extension loaded, will use for caching' . "\n";
-        } else {
-            echo 'APCu extension not loaded, will not use for caching' . "\n";
+            // Create logger for cache initialization (no HTTP processors for WebSocket context)
+            $logger = LoggerFactory::create('health', null, 30, false, true, false);
+
+            // Try Redis first, fall back to APCu
+            if (extension_loaded('redis')) {
+                try {
+                    self::$redis = new \Redis();
+                    // Support Unix socket (REDIS_SOCKET) or TCP connection (REDIS_HOST/REDIS_PORT)
+                    $redisSocket = isset($_ENV['REDIS_SOCKET']) && is_string($_ENV['REDIS_SOCKET'])
+                        ? $_ENV['REDIS_SOCKET']
+                        : null;
+                    if ($redisSocket !== null && $redisSocket !== '') {
+                        // Unix socket connection
+                        $connected      = self::$redis->connect($redisSocket, 0, 2.0); // 2 second timeout
+                        $connectionInfo = "socket: {$redisSocket}";
+                    } else {
+                        // TCP connection with configurable host/port
+                        $redisHost      = isset($_ENV['REDIS_HOST']) && is_string($_ENV['REDIS_HOST'])
+                            ? $_ENV['REDIS_HOST']
+                            : '127.0.0.1';
+                        $redisPort      = isset($_ENV['REDIS_PORT']) && is_numeric($_ENV['REDIS_PORT'])
+                            ? (int) $_ENV['REDIS_PORT']
+                            : 6379;
+                        $connected      = self::$redis->connect($redisHost, $redisPort, 2.0); // 2 second timeout
+                        $connectionInfo = "{$redisHost}:{$redisPort}";
+                    }
+                    if ($connected) {
+                        // Optional authentication for production deployments
+                        $redisPassword = isset($_ENV['REDIS_PASSWORD']) && is_string($_ENV['REDIS_PASSWORD'])
+                            ? $_ENV['REDIS_PASSWORD']
+                            : null;
+                        if ($redisPassword !== null && $redisPassword !== '') {
+                            try {
+                                $authenticated = self::$redis->auth($redisPassword);
+                                if (!$authenticated) {
+                                    self::$redis = null;
+                                    echo "Redis authentication failed, trying APCu fallback\n";
+                                    $logger->warning('Redis authentication failed, trying APCu fallback');
+                                }
+                            } catch (\RedisException $e) {
+                                self::$redis = null;
+                                echo "Redis auth exception: {$e->getMessage()}, trying APCu fallback\n";
+                                $logger->warning('Redis auth exception, trying APCu fallback', ['error' => $e->getMessage()]);
+                            }
+                        }
+
+                        // Verify connection is actually usable with a ping (if still connected)
+                        if (self::$redis !== null) {
+                            try {
+                                self::$redis->ping();
+                                self::$cacheEnabled = true;
+                                self::$cacheBackend = 'redis';
+                                echo "Redis connected ({$connectionInfo}), will use for caching\n";
+                                $logger->info('Redis connected, will use for caching', ['connection' => $connectionInfo]);
+                            } catch (\RedisException $e) {
+                                self::$redis = null;
+                                echo "Redis ping failed: {$e->getMessage()}, trying APCu fallback\n";
+                                $logger->warning('Redis ping failed, trying APCu fallback', ['error' => $e->getMessage()]);
+                            }
+                        }
+                    } else {
+                        self::$redis = null;
+                        echo "Redis connection failed, trying APCu fallback\n";
+                        $logger->warning('Redis connection failed, trying APCu fallback');
+                    }
+                } catch (\RedisException $e) {
+                    self::$redis = null;
+                    echo "Redis exception: {$e->getMessage()}, trying APCu fallback\n";
+                    $logger->warning('Redis exception, trying APCu fallback', ['error' => $e->getMessage()]);
+                }
+            }
+
+            // Fall back to APCu if Redis not available
+            if (self::$cacheBackend === 'none') {
+                $apcuAvailable = extension_loaded('apcu')
+                    && function_exists('apcu_exists')
+                    && function_exists('apcu_store')
+                    && function_exists('apcu_fetch');
+                if ($apcuAvailable) {
+                    self::$cacheEnabled = true;
+                    self::$cacheBackend = 'apcu';
+                    echo "APCu extension loaded, will use for caching\n";
+                    $logger->info('APCu extension loaded, will use for caching');
+                } else {
+                    echo "No cache backend available (Redis and APCu both unavailable)\n";
+                    $logger->warning('No cache backend available (Redis and APCu both unavailable)');
+                }
+            }
         }
 
         Router::getApiPaths();
@@ -155,13 +251,14 @@ class Health implements MessageComponentInterface
                 ]
             ];
 
-            /** @var PromiseInterface<string> $metadataPromise */
+            /** @var PromiseInterface<array{data: string, fromCache: bool}> $metadataPromise */
             $metadataPromise = $this->cachedGet(Route::CALENDARS->path(), $opts);
             //self::$metadataPromise = $metadataPromise;
 
             $metadataPromise->then(
-                function (string $rawData) {
-                    $rawData = (string) $rawData; // force fresh string
+                function (array $result) {
+                    /** @var array{data: string, fromCache: bool} $result */
+                    $rawData = $result['data'];
                     echo 'Fetched metadata: got ' . strlen($rawData) . " bytes\n";
 
                     $metadataObj = json_decode($rawData);
@@ -325,6 +422,31 @@ class Health implements MessageComponentInterface
     }
 
     /**
+     * Find diocese metadata by calendar ID.
+     *
+     * @param string $calendarId The diocese calendar ID to look up.
+     * @return MetadataDiocesanCalendarItem The diocese metadata.
+     * @throws \RuntimeException If metadata is not loaded yet.
+     * @throws NotFoundException If no diocese is found for the given calendar ID.
+     */
+    private function findDioceseMetadata(string $calendarId): MetadataDiocesanCalendarItem
+    {
+        if (false === isset(self::$metadata)) {
+            throw new \RuntimeException('Metadata not loaded yet; it is fetched asynchronously on WebSocket connection');
+        }
+        $dioceseMetadata = array_find(
+            self::$metadata->diocesan_calendars,
+            function (MetadataDiocesanCalendarItem $el) use ($calendarId): bool {
+                return $el->calendar_id === $calendarId;
+            }
+        );
+        if ($dioceseMetadata === null) {
+            throw new NotFoundException("No diocese found for calendar id: {$calendarId}");
+        }
+        return $dioceseMetadata;
+    }
+
+    /**
      * Validate a data file by checking that it exists and that it is valid JSON that conforms to a specific schema.
      *
      * @param ExecuteValidationSourceFolder|ExecuteValidationSourceFile|ExecuteValidationResource $validation The validation object. It should have the following properties:
@@ -374,24 +496,17 @@ class Health implements MessageComponentInterface
                             );
                             break;
                         case 'diocesan-calendar':
-                            if (false === isset(self::$metadata)) {
-                                throw new \RuntimeException('Metadata not loaded yet; retry shortly');
+                            try {
+                                $dioceseMetadata = $this->findDioceseMetadata($matches[2]);
+                            } catch (\RuntimeException | NotFoundException $e) {
+                                $this->handleDioceseMetadataError($e, $to, $validation, $matches[2]);
+                                return;
                             }
-                            $dioceseMetadata = array_find(
-                                self::$metadata->diocesan_calendars,
-                                function (MetadataDiocesanCalendarItem $el) use ($matches): bool {
-                                    return $el->calendar_id === $matches[2];
-                                }
-                            );
-                            if ($dioceseMetadata === null) {
-                                throw new \Exception("No diocese found for calendar id: {$matches[2]}");
-                            }
-                            $nation   = $dioceseMetadata->nation;
                             $dataPath = strtr(
                                 JsonData::DIOCESAN_CALENDAR_I18N_FOLDER->path(),
                                 [
                                     '{diocese}' => $matches[2],
-                                    '{nation}'  => $nation
+                                    '{nation}'  => $dioceseMetadata->nation
                                 ]
                             );
                             break;
@@ -426,26 +541,18 @@ class Health implements MessageComponentInterface
                                 );
                                 break;
                             case 'diocesan-calendar':
-                                if (false === isset(self::$metadata)) {
-                                    throw new \RuntimeException('Metadata not loaded yet; retry shortly');
+                                try {
+                                    $dioceseMetadata = $this->findDioceseMetadata($matches[2]);
+                                } catch (\RuntimeException | NotFoundException $e) {
+                                    $this->handleDioceseMetadataError($e, $to, $validation, $matches[2]);
+                                    return;
                                 }
-                                $dioceseMetadata = array_find(
-                                    self::$metadata->diocesan_calendars,
-                                    function (MetadataDiocesanCalendarItem $el) use ($matches): bool {
-                                        return $el->calendar_id === $matches[2];
-                                    }
-                                );
-                                if ($dioceseMetadata === null) {
-                                    throw new \Exception("No diocese found for calendar id: {$matches[2]}");
-                                }
-                                $nation      = (string) $dioceseMetadata->nation;
-                                $dioceseName = (string) $dioceseMetadata->diocese;
-                                $dataPath    = strtr(
+                                $dataPath = strtr(
                                     JsonData::DIOCESAN_CALENDAR_FILE->path(),
                                     [
                                         '{diocese}'      => $matches[2],
-                                        '{nation}'       => $nation,
-                                        '{diocese_name}' => $dioceseName
+                                        '{nation}'       => $dioceseMetadata->nation,
+                                        '{diocese_name}' => $dioceseMetadata->diocese
                                     ]
                                 );
                                 break;
@@ -515,11 +622,12 @@ class Health implements MessageComponentInterface
                     continue;
                 }
 
-                /** @var PromiseInterface<string> $promise */
+                /** @var PromiseInterface<array{data: string, fromCache: bool}> $promise */
                 $promise    = $this->cachedFileGetContents($file);
                 $promises[] = $promise->then(
-                    function (string $fileData) use ($to, $validation, $filename, $schema, $pathForSchema, &$jsonDecodable, &$schemaValidated) {
-                        $fileData = (string) $fileData; // force fresh string
+                    function (array $result) use ($to, $validation, $filename, $schema, $pathForSchema, &$jsonDecodable, &$schemaValidated) {
+                        /** @var array{data: string, fromCache: bool} $result */
+                        $fileData = $result['data'];
                         $validate = (string) $validation->validate;
                         $category = (string) $validation->category;
                         $jsonData = json_decode($fileData);
@@ -602,18 +710,11 @@ class Health implements MessageComponentInterface
             $matches = null;
             if (preg_match('/^diocesan-calendar-([a-z]{6}_[a-z]{2})$/', $pathForSchema, $matches)) {
                 $dioceseId = $matches[1];
-                if (false === isset(self::$metadata)) {
-                    throw new \RuntimeException('Metadata not loaded yet; retry shortly');
-                }
-
-                $dioceseMetadata = array_find(
-                    self::$metadata->diocesan_calendars,
-                    function (MetadataDiocesanCalendarItem $diocesan_calendar) use ($dioceseId): bool {
-                        return $diocesan_calendar->calendar_id === $dioceseId;
-                    }
-                );
-                if (null === $dioceseMetadata) {
-                    throw new \InvalidArgumentException("Invalid diocese ID $dioceseId");
+                try {
+                    $dioceseMetadata = $this->findDioceseMetadata($dioceseId);
+                } catch (\RuntimeException | NotFoundException $e) {
+                    $this->handleDioceseMetadataError($e, $to, $validation, $dioceseId);
+                    return;
                 }
                 $nation      = $dioceseMetadata->nation;
                 $dioceseName = $dioceseMetadata->diocese;
@@ -637,45 +738,111 @@ class Health implements MessageComponentInterface
             if (str_starts_with($dataPath, 'http://') || str_starts_with($dataPath, 'https://')) {
                 // $dataPath is an API path in this case
                 echo 'Retrieving data from URL ' . $dataPath . "\n";
-                /** @var PromiseInterface<string> $promise */
-                $promise = $this->cachedGet($dataPath);
+                /** @var PromiseInterface<array{data: string, fromCache: bool}> $httpPromise */
+                $httpPromise = $this->cachedGet($dataPath);
+                $httpPromise->then(
+                    function (array $result) use ($to, $validation, $dataPath, $schema, $pathForSchema) {
+                        /** @var array{data: string, fromCache: bool} $result */
+                        $data = $result['data'];
+                        echo 'Fetched data for ' . $dataPath . ': got ' . strlen($data) . " bytes\n";
+                        $this->processValidationData($data, $to, $validation, $dataPath, $schema, $pathForSchema);
+                    },
+                    function (\Throwable $e) use ($to, $validation, $dataPath) {
+                        $this->handleValidationDataError($e, $to, $validation, $dataPath);
+                    }
+                );
             } else {
                 // $dataPath is probably a source file in the filesystem in this case
                 echo 'Reading data from file ' . $dataPath . "\n";
-                /** @var PromiseInterface<string> $promise */
+                /** @var PromiseInterface<array{data: string, fromCache: bool}> $promise */
                 $promise = $this->cachedFileGetContents($dataPath);
+                $promise->then(
+                    function (array $result) use ($to, $validation, $dataPath, $schema, $pathForSchema) {
+                        /** @var array{data: string, fromCache: bool} $result */
+                        $data = $result['data'];
+                        echo 'Fetched data for ' . $dataPath . ': got ' . strlen($data) . " bytes\n";
+                        $this->processValidationData($data, $to, $validation, $dataPath, $schema, $pathForSchema);
+                    },
+                    function (\Throwable $e) use ($to, $validation, $dataPath) {
+                        $this->handleValidationDataError($e, $to, $validation, $dataPath);
+                    }
+                );
             }
-
-            $promise->then(
-                function (string $data) use ($to, $validation, $dataPath, $schema, $pathForSchema) {
-                    $data = (string) $data; // force fresh string
-                    echo 'Fetched data for ' . $dataPath . ': got ' . strlen($data) . " bytes\n";
-                    $this->processValidationData($data, $to, $validation, $dataPath, $schema, $pathForSchema);
-                },
-                function (\Throwable $e) use ($to, $validation, $dataPath) {
-                    $validate = (string) $validation->validate;
-                    $category = (string) $validation->category;
-                    echo 'Error reading data: could not read data from ' . $dataPath . ': ' . $e->getMessage() . "\n";
-                    $message          = new \stdClass();
-                    $message->type    = 'error';
-                    $message->text    = "Data file $dataPath is not readable: " . $e->getMessage();
-                    $message->classes = ".$validate.file-exists";
-                    $this->sendMessage($to, $message);
-
-                    $message          = new \stdClass();
-                    $message->type    = 'error';
-                    $message->text    = "Could not decode the Data file $dataPath as JSON because it is not readable";
-                    $message->classes = ".$validate.json-valid";
-                    $this->sendMessage($to, $message);
-
-                    $message          = new \stdClass();
-                    $message->type    = 'error';
-                    $message->text    = "Unable to verify schema for dataPath {$dataPath} and category {$category} since Data file $dataPath does not exist or is not readable";
-                    $message->classes = ".$validate.schema-valid";
-                    $this->sendMessage($to, $message);
-                }
-            );
         }
+    }
+
+    /**
+     * Handle errors when reading validation data.
+     *
+     * @param \Throwable $e The exception that occurred while reading data.
+     * @param ConnectionInterface $to The WebSocket connection to send errors to.
+     * @param ExecuteValidationSourceFolder|ExecuteValidationSourceFile|ExecuteValidationResource $validation The validation object.
+     * @param string $dataPath The path to the data that failed to load.
+     * @return void
+     */
+    private function handleValidationDataError(\Throwable $e, ConnectionInterface $to, \stdClass $validation, string $dataPath): void
+    {
+        $validate = (string) $validation->validate;
+        $category = (string) $validation->category;
+        echo 'Error reading data: could not read data from ' . $dataPath . ': ' . $e->getMessage() . "\n";
+        $message          = new \stdClass();
+        $message->type    = 'error';
+        $message->text    = "Data file $dataPath is not readable: " . $e->getMessage();
+        $message->classes = ".$validate.file-exists";
+        $this->sendMessage($to, $message);
+
+        $message          = new \stdClass();
+        $message->type    = 'error';
+        $message->text    = "Could not decode the Data file $dataPath as JSON because it is not readable";
+        $message->classes = ".$validate.json-valid";
+        $this->sendMessage($to, $message);
+
+        $message          = new \stdClass();
+        $message->type    = 'error';
+        $message->text    = "Unable to verify schema for dataPath {$dataPath} and category {$category} since Data file $dataPath does not exist or is not readable";
+        $message->classes = ".$validate.schema-valid";
+        $this->sendMessage($to, $message);
+    }
+
+    /**
+     * Handle diocese metadata lookup errors.
+     *
+     * Sends a structured WebSocket error message to indicate that the caller
+     * should abort further processing.
+     *
+     * @param \RuntimeException|NotFoundException $e The exception that was thrown.
+     * @param ConnectionInterface $to The WebSocket connection to send the error to.
+     * @param ExecuteValidationSourceFolder|ExecuteValidationSourceFile|ExecuteValidationResource $validation The validation object.
+     * @param string $calendarId The diocese calendar ID that failed to resolve.
+     * @return void
+     */
+    private function handleDioceseMetadataError(
+        \RuntimeException|NotFoundException $e,
+        ConnectionInterface $to,
+        \stdClass $validation,
+        string $calendarId
+    ): void {
+        $validate = (string) $validation->validate;
+
+        $message       = new \stdClass();
+        $message->type = 'error';
+
+        // Check NotFoundException first since it extends RuntimeException via ApiException
+        if ($e instanceof NotFoundException) {
+            $message->error_code = 'unknown_diocese';
+            $message->text       = "Unknown diocese calendar ID: {$calendarId}. Please verify the calendar ID is correct.";
+            $message->hint       = 'invalid_input';
+            echo "Diocese metadata error (NotFoundException) for {$calendarId}: " . $e->getMessage() . "\n";
+        } else {
+            // Generic RuntimeException (e.g., metadata not loaded yet)
+            $message->error_code = 'metadata_loading';
+            $message->text       = "Metadata not loaded yet. Please retry in a moment. Calendar ID: {$calendarId}";
+            $message->hint       = 'retry';
+            echo "Diocese metadata error (RuntimeException) for {$calendarId}: " . $e->getMessage() . "\n";
+        }
+
+        $message->classes = ".$validate.diocese-metadata";
+        $this->sendMessage($to, $message);
     }
 
     /**
@@ -730,6 +897,26 @@ class Health implements MessageComponentInterface
     }
 
     /**
+     * Build the calendar API request path based on calendar ID, year, and category.
+     *
+     * @param string $calendar The calendar identifier (e.g., 'VA' for Vatican, 'USA' for national).
+     * @param int $year The year for the calendar request.
+     * @param string $category The type of calendar ('nationalcalendar' or 'diocesancalendar').
+     * @return string The constructed request path.
+     */
+    private function buildCalendarRequestPath(string $calendar, int $year, string $category): string
+    {
+        if ($calendar === 'VA') {
+            return "/$year?year_type=CIVIL";
+        }
+        return match ($category) {
+            'nationalcalendar'  => "/nation/$calendar/$year?year_type=CIVIL",
+            'diocesancalendar'  => "/diocese/$calendar/$year?year_type=CIVIL",
+            default             => throw new \InvalidArgumentException("Unknown calendar category: {$category}")
+        };
+    }
+
+    /**
      * Validates the specified liturgical calendar for a given year and category,
      * and sends the validation results to the specified connection.
      *
@@ -754,27 +941,14 @@ class Health implements MessageComponentInterface
             'stream'  => true
         ];
 
-        if ($calendar === 'VA') {
-            $req = "/$year?year_type=CIVIL";
-        } else {
-            switch ($category) {
-                case 'nationalcalendar':
-                    $req = "/nation/$calendar/$year?year_type=CIVIL";
-                    break;
-                case 'diocesancalendar':
-                    $req = "/diocese/$calendar/$year?year_type=CIVIL";
-                    break;
-                default:
-                    //we shouldn't ever get any other categories
-                    $req = '/unknown';
-            }
-        }
-
+        $req     = $this->buildCalendarRequestPath($calendar, $year, $category);
         $promise = $this->cachedGet(Route::CALENDAR->path() . $req, $opts);
         $promise->then(
-            function (string $data) use ($to, $calendar, $year, $category, $req, $responseType) {
-                $data = (string) $data; // force fresh string
-                echo 'Fetched data for ' . Route::CALENDAR->path() . $req . ': got ' . strlen($data) . " bytes\n";
+            function (array $result) use ($to, $calendar, $year, $category, $req, $responseType) {
+                /** @var array{data: string, fromCache: bool} $result */
+                $data      = $result['data'];
+                $fromCache = $result['fromCache'];
+                echo 'Fetched data for ' . Route::CALENDAR->path() . $req . ': got ' . strlen($data) . ' bytes' . ( $fromCache ? ' (from cache)' : '' ) . "\n";
 
                 $message          = new \stdClass();
                 $message->type    = 'success';
@@ -807,13 +981,15 @@ class Health implements MessageComponentInterface
                             $message->classes = ".calendar-$calendar.json-valid.year-$year";
                             $this->sendMessage($to, $message);
 
+                            // Always validate against schema (even for cached responses) since this is a test endpoint
                             $validationResult = $xml->schemaValidate(JsonData::SCHEMAS_FOLDER->path() . '/LiturgicalCalendar.xsd');
                             if ($validationResult) {
                                 $message          = new \stdClass();
                                 $message->type    = 'success';
                                 $message->text    = sprintf(
-                                    "The $category of $calendar for the year $year was successfully validated against the Schema %s",
-                                    JsonData::SCHEMAS_FOLDER->path() . '/LiturgicalCalendar.xsd'
+                                    "The $category of $calendar for the year $year was successfully validated against the Schema %s%s",
+                                    JsonData::SCHEMAS_FOLDER->path() . '/LiturgicalCalendar.xsd',
+                                    $fromCache ? ' (cached)' : ''
                                 );
                                 $message->classes = ".calendar-$calendar.schema-valid.year-$year";
                                 $this->sendMessage($to, $message);
@@ -842,13 +1018,15 @@ class Health implements MessageComponentInterface
                             $message->classes = ".calendar-$calendar.json-valid.year-$year";
                             $this->sendMessage($to, $message);
 
+                            // Always validate against schema (even for cached responses) since this is a test endpoint
                             $result = $vcalendar->validate();
                             if (count($result) === 0) {
                                 $message          = new \stdClass();
                                 $message->type    = 'success';
                                 $message->text    = sprintf(
-                                    "The $category of $calendar for the year $year was successfully validated according the iCalendar Schema %s",
-                                    'https://tools.ietf.org/html/rfc5545'
+                                    "The $category of $calendar for the year $year was successfully validated according the iCalendar Schema %s%s",
+                                    'https://tools.ietf.org/html/rfc5545',
+                                    $fromCache ? ' (cached)' : ''
                                 );
                                 $message->classes = ".calendar-$calendar.schema-valid.year-$year";
                                 $this->sendMessage($to, $message);
@@ -903,11 +1081,13 @@ class Health implements MessageComponentInterface
                                 $message->classes = ".calendar-$calendar.json-valid.year-$year";
                                 $this->sendMessage($to, $message);
 
+                                // Always validate against schema (even for cached responses) since this is a test endpoint
                                 $validationResult = $this->validateDataAgainstSchema($yamlData, LitSchema::LITCAL->path());
                                 if (gettype($validationResult) === 'boolean' && $validationResult === true) {
                                     $message          = new \stdClass();
                                     $message->type    = 'success';
-                                    $message->text    = "The $category of $calendar for the year $year was successfully validated against the Schema " . LitSchema::LITCAL->path();
+                                    $cachedNote       = $fromCache ? ' (cached)' : '';
+                                    $message->text    = "The $category of $calendar for the year $year was successfully validated against the Schema " . LitSchema::LITCAL->path() . $cachedNote;
                                     $message->classes = ".calendar-$calendar.schema-valid.year-$year";
                                     $this->sendMessage($to, $message);
                                 } elseif ($validationResult instanceof \stdClass) {
@@ -966,11 +1146,13 @@ class Health implements MessageComponentInterface
                         $message->classes = ".calendar-$calendar.json-valid.year-$year";
                         $this->sendMessage($to, $message);
 
+                        // Always validate against schema (even for cached responses) since this is a test endpoint
                         $validationResult = $this->validateDataAgainstSchema($jsonData, LitSchema::LITCAL->path());
                         if (gettype($validationResult) === 'boolean' && $validationResult === true) {
                             $message          = new \stdClass();
                             $message->type    = 'success';
-                            $message->text    = "The $category of $calendar for the year $year was successfully validated against the Schema " . LitSchema::LITCAL->path();
+                            $cachedNote       = $fromCache ? ' (cached)' : '';
+                            $message->text    = "The $category of $calendar for the year $year was successfully validated against the Schema " . LitSchema::LITCAL->path() . $cachedNote;
                             $message->classes = ".calendar-$calendar.schema-valid.year-$year";
                             $this->sendMessage($to, $message);
                         } elseif ($validationResult instanceof \stdClass) {
@@ -1009,25 +1191,12 @@ class Health implements MessageComponentInterface
             'stream'  => true
         ];
 
-        if ($calendar === 'VA') {
-            $req = "/$year?year_type=CIVIL";
-        } else {
-            switch ($category) {
-                case 'nationalcalendar':
-                    $req = "/nation/$calendar/$year?year_type=CIVIL";
-                    break;
-                case 'diocesancalendar':
-                    $req = "/diocese/$calendar/$year?year_type=CIVIL";
-                    break;
-                default:
-                    //we shouldn't ever get any other categories
-                    $req = '/unknown';
-            }
-        }
+        $req     = $this->buildCalendarRequestPath($calendar, $year, $category);
         $promise = $this->cachedGet(Route::CALENDAR->path() . $req, $opts);
         $promise->then(
-            function (string $data) use ($to, $test, $year) {
-                $data = (string) $data; // force fresh string
+            function (array $result) use ($to, $test, $year) {
+                /** @var array{data: string, fromCache: bool} $result */
+                $data = $result['data'];
                 /** @var \stdClass&object{settings:object{year:int,national_calendar?:string,diocesan_calendar?:string},litcal:LiturgicalEvent[]} $jsonData */
                 $jsonData = json_decode($data);
                 if (json_last_error() === JSON_ERROR_NONE) {
@@ -1080,56 +1249,207 @@ class Health implements MessageComponentInterface
     }
 
     /**
-     * @return PromiseInterface<string>
+     * Handle Redis connection failure by falling back to APCu if available.
+     */
+    private static function handleRedisFailure(\RedisException $e): void
+    {
+        echo "Redis connection lost: {$e->getMessage()}, falling back to APCu\n";
+        self::$redis = null;
+        // Use the same comprehensive APCu check as initialization
+        $apcuAvailable = extension_loaded('apcu')
+            && function_exists('apcu_exists')
+            && function_exists('apcu_store')
+            && function_exists('apcu_fetch');
+        if ($apcuAvailable) {
+            self::$cacheBackend = 'apcu';
+            echo "APCu fallback enabled\n";
+        } else {
+            self::$cacheBackend = 'none';
+            self::$cacheEnabled = false;
+            echo "No cache backend available, caching disabled\n";
+        }
+    }
+
+    /**
+     * Check if a key exists in the cache.
+     */
+    private static function cacheExists(string $key): bool
+    {
+        if (!self::$cacheEnabled) {
+            return false;
+        }
+        if (self::$cacheBackend === 'redis' && self::$redis !== null) {
+            try {
+                return (bool) self::$redis->exists($key);
+            } catch (\RedisException $e) {
+                self::handleRedisFailure($e);
+                // Retry with APCu if now available
+                if (self::$cacheBackend === 'apcu') {
+                    return apcu_exists($key);
+                }
+                return false;
+            }
+        }
+        if (self::$cacheBackend === 'apcu') {
+            return apcu_exists($key);
+        }
+        return false;
+    }
+
+    /**
+     * Get a value from the cache.
+     *
+     * @return array{0: bool, 1: string|null} [success, data]
+     */
+    private static function cacheGet(string $key): array
+    {
+        if (!self::$cacheEnabled) {
+            return [false, null];
+        }
+        if (self::$cacheBackend === 'redis' && self::$redis !== null) {
+            try {
+                $data = self::$redis->get($key);
+                if ($data === false || !is_string($data)) {
+                    return [false, null];
+                }
+                return [true, $data];
+            } catch (\RedisException $e) {
+                self::handleRedisFailure($e);
+                // Retry with APCu if now available
+                if (self::$cacheBackend === 'apcu') {
+                    $data = apcu_fetch($key, $success);
+                    if ($success && is_string($data)) {
+                        return [true, $data];
+                    }
+                }
+                return [false, null];
+            }
+        }
+        if (self::$cacheBackend === 'apcu') {
+            $data = apcu_fetch($key, $success);
+            if ($success && is_string($data)) {
+                return [true, $data];
+            }
+            return [false, null];
+        }
+        return [false, null];
+    }
+
+    /**
+     * Store a value in the cache.
+     */
+    private static function cacheSet(string $key, string $value, int $ttl): bool
+    {
+        if (!self::$cacheEnabled) {
+            return false;
+        }
+        if (self::$cacheBackend === 'redis' && self::$redis !== null) {
+            try {
+                return self::$redis->setex($key, $ttl, $value);
+            } catch (\RedisException $e) {
+                self::handleRedisFailure($e);
+                // Retry with APCu if now available
+                if (self::$cacheBackend === 'apcu') {
+                    return apcu_store($key, $value, $ttl);
+                }
+                return false;
+            }
+        }
+        if (self::$cacheBackend === 'apcu') {
+            return apcu_store($key, $value, $ttl);
+        }
+        return false;
+    }
+
+    /**
+     * Get cache memory info string for logging.
+     */
+    private static function cacheInfo(): string
+    {
+        if (!self::$cacheEnabled) {
+            return 'Cache disabled';
+        }
+        if (self::$cacheBackend === 'redis' && self::$redis !== null) {
+            try {
+                $info = self::$redis->info('memory');
+                if (is_array($info) && isset($info['used_memory'], $info['maxmemory'])) {
+                    $usedRaw = $info['used_memory'];
+                    $maxRaw  = $info['maxmemory'];
+                    $used    = is_numeric($usedRaw) ? (int) $usedRaw : 0;
+                    $max     = is_numeric($maxRaw) ? (int) $maxRaw : 0;
+                    if ($max > 0) {
+                        $percent = ( $used / $max ) * 100;
+                        return 'Redis used: ' . round($used / 1024 / 1024, 2) . ' MB of ' .
+                            round($max / 1024 / 1024, 2) . ' MB (' . round($percent, 2) . '%)';
+                    }
+                    return 'Redis used: ' . round($used / 1024 / 1024, 2) . ' MB (no maxmemory limit)';
+                }
+            } catch (\RedisException $e) {
+                return 'Redis info error: ' . $e->getMessage();
+            }
+            return 'Redis info unavailable';
+        }
+        if (self::$cacheBackend === 'apcu') {
+            /** @var array{seg_size:int,avail_mem:int}|false $info */
+            $info = apcu_sma_info(true);
+            if (false !== $info) {
+                $total = isset($info['seg_size']) ? (int) $info['seg_size'] : 0;
+                $free  = isset($info['avail_mem']) ? (int) $info['avail_mem'] : 0;
+                if ($total > 0) {
+                    $used    = $total - $free;
+                    $percent = ( $used / $total ) * 100;
+                    return 'APCu used: ' . round($used / 1024 / 1024, 2) . ' MB of ' .
+                        round($total / 1024 / 1024, 2) . ' MB (' . round($percent, 2) . '%)';
+                }
+            }
+            return 'APCu info unavailable';
+        }
+        return 'No cache backend';
+    }
+
+    /**
+     * @return PromiseInterface<array{data: string, fromCache: bool}>
      */
     private function cachedFileGetContents(string $path, int $ttl = 300): PromiseInterface
     {
         $key = 'fgc_' . md5($path);
 
-        if (self::$cacheEnabled) {
-            if (apcu_exists($key)) {
-                $deferred = new Deferred();
-                $data     = apcu_fetch($key, $success);
-                if ($success && is_string($data)) {
-                    echo "Cache hit for file $path\n";
-                    $deferred->resolve($data);
-                } else {
-                    $deferred->reject(new \RuntimeException("Cache fetch for file $path returned non-string data"));
-                }
-                /** @var PromiseInterface<string> $deferredPromise */
-                $deferredPromise = $deferred->promise();
-                return $deferredPromise;
+        // Use futureTick to allow event loop to process other events
+        if (self::$cacheEnabled && self::cacheExists($key)) {
+            $deferred         = new Deferred();
+            [$success, $data] = self::cacheGet($key);
+            if ($success && is_string($data)) {
+                echo "Cache hit for file $path\n";
+                // Schedule resolution via event loop to prevent blocking
+                Loop::futureTick(function () use ($deferred, $data) {
+                    $deferred->resolve(['data' => $data, 'fromCache' => true]);
+                });
+            } else {
+                $deferred->reject(new \RuntimeException("Cache fetch for file $path returned non-string data"));
             }
+            /** @var PromiseInterface<array{data: string, fromCache: bool}> $deferredPromise */
+            $deferredPromise = $deferred->promise();
+            return $deferredPromise;
+        }
+
+        if (self::$cacheEnabled) {
             echo "Cache miss for file $path, reading from filesystem\n";
         }
 
         $filesystem = Factory::create();
 
-        /** @var PromiseInterface<string> $fsPromise */
+        /** @var PromiseInterface<array{data: string, fromCache: bool}> $fsPromise */
         $fsPromise = $filesystem->file($path)->getContents()->then(
-            function (string $data) use ($key, $ttl, $path): string {
+            /** @return array{data: string, fromCache: bool} */
+            function (string $data) use ($key, $ttl, $path): array {
                 $data = (string) $data;          // force fresh string
                 if (self::$cacheEnabled) {
                     echo "Read file $path, caching contents\n";
-                    $stored = apcu_store($key, $data, $ttl);
+                    $stored = self::cacheSet($key, $data, $ttl);
                     echo ( $stored ? "Stored file in cache\n" : "Failed to store file in cache\n" );
-                    /** @var array{seg_size:int,avail_mem:int} $info */
-                    $info = apcu_sma_info(true);
-                    if (false !== $info) {
-                        $total = isset($info['seg_size']) ? (int) $info['seg_size'] : 0;
-                        $free  = isset($info['avail_mem']) ? (int) $info['avail_mem'] : 0;
-                        if ($total > 0) { // avoid division by zero
-                            $used    = $total - $free;
-                            $percent = ( $used / $total ) * 100;
-
-                            echo 'APCu used: ' . round($used / 1024 / 1024, 2) . ' MB of ' .
-                                round($total / 1024 / 1024, 2) . ' MB (' .
-                                round($percent, 2) . "%)\n";
-                        }
-                    }
-                    //var_dump(apcu_exists($key), apcu_fetch($key));
+                    echo self::cacheInfo() . "\n";
                 }
-                return $data; // resolved promise
+                return ['data' => $data, 'fromCache' => false]; // resolved promise
             },
             function (\Throwable $e) use ($path): never {
                 throw new \RuntimeException("Unable to read file: $path", 0, $e);
@@ -1142,28 +1462,32 @@ class Health implements MessageComponentInterface
     /**
      * @param array{headers?:array{Accept:string}} $options
      *
-     * @return PromiseInterface<string>
+     * @return PromiseInterface<array{data: string, fromCache: bool}>
      */
     private function cachedGet(string $url, array $options = [], int $ttl = 300): PromiseInterface
     {
         $key      = 'http_' . md5($url . serialize($options));
         $deferred = new Deferred();
 
-        // Return from cache if available
-        if (self::$cacheEnabled) {
-            if (apcu_exists($key)) {
-                echo "Cache hit for $url\n";
-                $data = apcu_fetch($key, $success);
-                if ($success && is_string($data)) {
-                    $deferred->resolve($data);
-                } else {
-                    $deferred->reject(new \RuntimeException("Cache fetch for URL $url failed or returned non-string data"));
-                }
-
-                /** @var PromiseInterface<string> $deferredPromise */
-                $deferredPromise = $deferred->promise();
-                return $deferredPromise;
+        // Return from cache if available - use futureTick to allow event loop to process other events
+        if (self::$cacheEnabled && self::cacheExists($key)) {
+            echo "Cache hit for $url\n";
+            [$success, $data] = self::cacheGet($key);
+            if ($success && is_string($data)) {
+                // Schedule resolution via event loop to prevent blocking
+                Loop::futureTick(function () use ($deferred, $data) {
+                    $deferred->resolve(['data' => $data, 'fromCache' => true]);
+                });
+            } else {
+                $deferred->reject(new \RuntimeException("Cache fetch for URL $url failed or returned non-string data"));
             }
+
+            /** @var PromiseInterface<array{data: string, fromCache: bool}> $deferredPromise */
+            $deferredPromise = $deferred->promise();
+            return $deferredPromise;
+        }
+
+        if (self::$cacheEnabled) {
             echo "Cache miss for $url, making HTTP request\n";
         }
 
@@ -1188,25 +1512,12 @@ class Health implements MessageComponentInterface
             }
 
             if (self::$cacheEnabled) {
-                $stored = apcu_store($key, $body, $ttl);
+                $stored = self::cacheSet($key, $body, $ttl);
                 echo ( $stored ? "Stored response body in cache\n" : "Failed to store response body in cache\n" );
-                /** @var array{seg_size:int,avail_mem:int} $info */
-                $info = apcu_sma_info(true);
-                if (false !== $info) {
-                    $total = isset($info['seg_size']) ? (int) $info['seg_size'] : 0;
-                    $free  = isset($info['avail_mem']) ? (int) $info['avail_mem'] : 0;
-                    if ($total > 0) { // avoid division by zero
-                        $used    = $total - $free;
-                        $percent = ( $used / $total ) * 100;
-
-                        echo 'APCu used: ' . round($used / 1024 / 1024, 2) . ' MB of ' .
-                            round($total / 1024 / 1024, 2) . ' MB (' .
-                            round($percent, 2) . "%)\n";
-                    }
-                }
+                echo self::cacheInfo() . "\n";
             }
             --$this->inFlight;
-            $deferred->resolve($body);
+            $deferred->resolve(['data' => $body, 'fromCache' => false]);
         };
 
         $reject = function (\Throwable $e) use ($deferred) {
@@ -1222,7 +1533,7 @@ class Health implements MessageComponentInterface
             'reject'  => $reject
         ];
 
-        /** @var PromiseInterface<string> $deferredPromise */
+        /** @var PromiseInterface<array{data: string, fromCache: bool}> $deferredPromise */
         $deferredPromise = $deferred->promise();
         $this->ensureTicking();
         return $deferredPromise;

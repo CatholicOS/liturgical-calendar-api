@@ -1,12 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft-07/schema#",
-    "$id": "./NationalCalendar.json",
     "title": "NationalCalendar",
     "type": "object",
     "additionalProperties": false,
     "properties": {
         "litcal": {
             "type": "array",
+            "minItems": 1,
             "items": {
                 "oneOf": [
                     {

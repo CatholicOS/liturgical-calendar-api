@@ -1,0 +1,33 @@
+{
+    "litcal": [
+        {
+            "liturgical_event": {
+                "event_key": "StTestSaint",
+                "day": 15,
+                "month": 6,
+                "color": ["white"],
+                "grade": 3,
+                "common": ["Martyrs"]
+            },
+            "metadata": {
+                "form_rownum": 0,
+                "since_year": 2020
+            }
+        }
+    ],
+    "metadata": {
+        "diocese_id": "newyor_us",
+        "diocese_name": "Archdiocese of New York (New York)",
+        "nation": "US",
+        "locales": ["en_US", "es_US"],
+        "timezone": "America/New_York"
+    },
+    "i18n": {
+        "en_US": {
+            "StTestSaint": "Saint Test"
+        },
+        "es_US": {
+            "StTestSaint": "Santo Prueba"
+        }
+    }
+}

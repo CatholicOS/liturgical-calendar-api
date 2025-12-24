@@ -10,6 +10,7 @@ use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Exception\MethodNotAllowedException;
 use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
+use LiturgicalCalendar\Api\Http\Negotiator;
 use LiturgicalCalendar\Api\Models\Decrees\DecreeItemCollection;
 use LiturgicalCalendar\Api\Params\DecreesParams;
 use LiturgicalCalendar\Api\Utilities;
@@ -124,10 +125,7 @@ final class DecreesHandler extends AbstractHandler
         $params = [];
 
         // Second of all, we check if an Accept-Language header was set in the request
-        $acceptLanguageHeader = $request->getHeaderLine('Accept-Language');
-        $locale               = '' !== $acceptLanguageHeader
-            ? \Locale::acceptFromHttp($acceptLanguageHeader)
-            : LitLocale::LATIN;
+        $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
         if ($locale && LitLocale::isValid($locale)) {
             $params['locale'] = $locale;
         } else {

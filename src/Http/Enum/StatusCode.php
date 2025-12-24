@@ -15,19 +15,22 @@ enum StatusCode: int
     case NO_CONTENT             = 204;
     case NOT_MODIFIED           = 304;
     case BAD_REQUEST            = 400;
+    case UNAUTHORIZED           = 401;
+    case FORBIDDEN              = 403;
     case NOT_FOUND              = 404;
     case METHOD_NOT_ALLOWED     = 405;
     case NOT_ACCEPTABLE         = 406;
     case CONFLICT               = 409;
     case UNSUPPORTED_MEDIA_TYPE = 415;
     case UNPROCESSABLE_CONTENT  = 422;
+    case TOO_MANY_REQUESTS      = 429;
     case NOT_IMPLEMENTED        = 501;
     case SERVICE_UNAVAILABLE    = 503;
 
     /**
-     * Converts an HTTP status code to its corresponding string representation.
+     * Get the reason phrase for the HTTP status code.
      *
-     * @return string The 'reason' that accompanies the HTTP Status code.
+     * @return string The reason phrase corresponding to the status code.
      */
     public function toString(): string
     {
@@ -38,12 +41,15 @@ enum StatusCode: int
             StatusCode::NO_CONTENT             => 'No Content',
             StatusCode::NOT_MODIFIED           => 'Not Modified',
             StatusCode::BAD_REQUEST            => 'Bad Request',
+            StatusCode::UNAUTHORIZED           => 'Unauthorized',
+            StatusCode::FORBIDDEN              => 'Forbidden',
             StatusCode::NOT_FOUND              => 'Not Found',
             StatusCode::METHOD_NOT_ALLOWED     => 'Method Not Allowed',
             StatusCode::NOT_ACCEPTABLE         => 'Not Acceptable',
             StatusCode::CONFLICT               => 'Conflict',
             StatusCode::UNSUPPORTED_MEDIA_TYPE => 'Unsupported Media Type',
             StatusCode::UNPROCESSABLE_CONTENT  => 'Unprocessable Content',
+            StatusCode::TOO_MANY_REQUESTS      => 'Too Many Requests',
             StatusCode::NOT_IMPLEMENTED        => 'Not Implemented',
             StatusCode::SERVICE_UNAVAILABLE    => 'Service Unavailable'
         };

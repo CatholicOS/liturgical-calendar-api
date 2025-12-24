@@ -3,12 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # Gábor <pleineux@gmail.com>, 2025.
 # "John R. D'Orazio" <priest@johnromanodorazio.com>, 2025.
+# OpenAI <noreply-mt-openai@weblate.org>, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
-"POT-Creation-Date: 2025-10-04 00:53+0000\n"
-"PO-Revision-Date: 2025-11-15 02:01+0000\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-16 13:42+0000\n"
+"PO-Revision-Date: 2025-12-06 12:42+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Hungarian <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/hu/>\n"
@@ -42,147 +43,147 @@ msgstr "piros"
 #. translators: context = liturgical color
 #: src/Enum/LitColor.php:38
 msgid "rose"
-msgstr ""
+msgstr "rózsaszín"
 
 #. translators: context = from the Proper of the festivity (as opposed to a Common)
 #: src/Enum/LitCommon.php:166
 msgid "Proper"
-msgstr ""
+msgstr "Proprium"
 
 #. translators: context = from the Common of the Dedication of a Church
 #: src/Enum/LitCommon.php:168
 msgid "Dedication of a Church"
-msgstr ""
+msgstr "Templom felszentelése"
 
 #. translators: context = from the Common of the Blessed Virgin Mary
 #: src/Enum/LitCommon.php:170
 msgid "Blessed Virgin Mary"
-msgstr ""
+msgstr "Boldogságos Szűz Mária"
 
 #. translators: context = from the Common of Martyrs
 #: src/Enum/LitCommon.php:172
 msgid "Martyrs"
-msgstr ""
+msgstr "Vértanúk"
 
 #. translators: context = from the Common of Pastors
 #: src/Enum/LitCommon.php:174
 msgid "Pastors"
-msgstr ""
+msgstr "Lelkipásztorok"
 
 #. translators: context = from the Common of Doctors
 #: src/Enum/LitCommon.php:176
 msgid "Doctors"
-msgstr ""
+msgstr "Egyházdoktorok"
 
 #. translators: context = from the Common of Virgins
 #: src/Enum/LitCommon.php:178
 msgid "Virgins"
-msgstr ""
+msgstr "Szüzek"
 
 #. translators: context = from the Common of Holy Men and Women
 #: src/Enum/LitCommon.php:180
 msgid "Holy Men and Women"
-msgstr ""
+msgstr "Szent férfiak és nők"
 
 #. translators: context = from the Common of Martyrs: For One Martyr
 #: src/Enum/LitCommon.php:182
 msgid "For One Martyr"
-msgstr ""
+msgstr "Egy vértanúért"
 
 #. translators: context = from the Common of Martyrs: For Several Martyrs
 #: src/Enum/LitCommon.php:184
 msgid "For Several Martyrs"
-msgstr ""
+msgstr "Több vértanúért"
 
 #. translators: context = from the Common of Martyrs: For Missionary Martyrs
 #: src/Enum/LitCommon.php:186
 msgid "For Missionary Martyrs"
-msgstr ""
+msgstr "Misszionárius vértanúkért"
 
 #. translators: context = from the Common of Martyrs: For One Missionary Martyr
 #: src/Enum/LitCommon.php:188
 msgid "For One Missionary Martyr"
-msgstr ""
+msgstr "Egy misszionárius vértanúért"
 
 #. translators: context = from the Common of Martyrs: For Several Missionary Martyrs
 #: src/Enum/LitCommon.php:190
 msgid "For Several Missionary Martyrs"
-msgstr ""
+msgstr "Több misszionárius vértanúért"
 
 #. translators: context = from the Common of Martyrs: For a Virgin Martyr
 #: src/Enum/LitCommon.php:192
 msgid "For a Virgin Martyr"
-msgstr ""
+msgstr "Egy szűz vértanúért"
 
 #. translators: context = from the Common of Martyrs: For a Holy Woman Martyr
 #: src/Enum/LitCommon.php:194
 msgid "For a Holy Woman Martyr"
-msgstr ""
+msgstr "Egy szent női vértanúért"
 
 #. translators: context = from the Common of Pastors: For a Pope
 #: src/Enum/LitCommon.php:196
 msgid "For a Pope"
-msgstr ""
+msgstr "Egy pápáért"
 
 #. translators: context = from the Common of Pastors: For a Bishop
 #: src/Enum/LitCommon.php:198
 msgid "For a Bishop"
-msgstr ""
+msgstr "Egy püspökért"
 
 #. translators: context = from the Common of Pastors: For One Pastor
 #: src/Enum/LitCommon.php:200
 msgid "For One Pastor"
-msgstr ""
+msgstr "Egy lelkipásztorért"
 
 #. translators: context = from the Common of Pastors: For Several Pastors
 #: src/Enum/LitCommon.php:202
 msgid "For Several Pastors"
-msgstr ""
+msgstr "Több lelkipásztorért"
 
 #. translators: context = from the Common of Pastors: For Founders of a Church
 #: src/Enum/LitCommon.php:204
 msgid "For Founders of a Church"
-msgstr ""
+msgstr "Egy egyház alapítóiért"
 
 #. translators: context = from the Common of Pastors: For One Founder
 #: src/Enum/LitCommon.php:206
 msgid "For One Founder"
-msgstr ""
+msgstr "Egy alapítóért"
 
 #. translators: context = from the Common of Pastors: For Several Founders
 #: src/Enum/LitCommon.php:208
 msgid "For Several Founders"
-msgstr ""
+msgstr "Több alapítóért"
 
 #. translators: context = from the Common of Pastors: For Missionaries
 #: src/Enum/LitCommon.php:210
 msgid "For Missionaries"
-msgstr ""
+msgstr "Misszionáriusokért"
 
 #. translators: context = from the Common of Virgins: For One Virgin
 #: src/Enum/LitCommon.php:212
 msgid "For One Virgin"
-msgstr ""
+msgstr "Egy szűzért"
 
 #. translators: context = from the Common of Virgins: For Several Virgins
 #: src/Enum/LitCommon.php:214
 msgid "For Several Virgins"
-msgstr ""
+msgstr "Több szűzért"
 
 #. translators: context = from the Common of Holy Men and Women: For Several Saints
 #: src/Enum/LitCommon.php:216
 msgid "For Several Saints"
-msgstr ""
+msgstr "Több szentért"
 
 #. translators: context = from the Common of Holy Men and Women: For One Saint
 #: src/Enum/LitCommon.php:218
 msgid "For One Saint"
-msgstr ""
+msgstr "Egy szentért"
 
 #. translators: context = from the Common of Holy Men and Women: For an Abbot
 #: src/Enum/LitCommon.php:220
 msgid "For an Abbot"
-msgstr ""
+msgstr "Egy apátért"
 
 #. translators: context = from the Common of Holy Men and Women: For a Monk
 #: src/Enum/LitCommon.php:222
@@ -613,45 +614,39 @@ msgstr "Húsvét"
 msgid "Ordinary Time"
 msgstr "Évközi időszak"
 
-#: src/Handlers/CalendarHandler.php:424
+#: src/Handlers/CalendarHandler.php:432
 #, php-format
 msgid ""
 "The name of the diocese could not be derived from the diocese ID \"%s\"."
 msgstr ""
+"A püspökség neve nem volt levezethető a püspökség azonosítójából: \"%s\"."
 
-#: src/Handlers/CalendarHandler.php:561
+#: src/Handlers/CalendarHandler.php:634
 #, php-format
 msgid ""
 "Only years from 1970 and after are supported. You tried requesting the year "
 "%d."
-msgstr ""
+msgstr "Csak az 1970 utáni évek támogatottak. Ön a %d évet próbálta kérni."
 
-#: src/Handlers/CalendarHandler.php:568
+#: src/Handlers/CalendarHandler.php:641
 #, php-format
 msgid "Only years until 9999 are supported. You tried requesting the year %d."
 msgstr ""
 "Csak az 9999-ig terjedő évek támogatottak. Az évet próbáltad megadni: %d."
 
-#. translators: days before Epiphany (not useful in Italian!)
-#. translators: days after Epiphany when Epiphany falls on Jan 6 (not useful in Italian!)
-#: src/Handlers/CalendarHandler.php:852 src/Handlers/CalendarHandler.php:910
-#, php-format
-msgid "%s - Christmas Weekday"
-msgstr ""
-
 #. translators: context alternate name for a liturgical event, e.g. Second Sunday of Easter `or` Divine Mercy Sunday
 #. translators: when there are multiple possible commons, this will be the glue "[; or] From the Common of..."
-#: src/Handlers/CalendarHandler.php:1052 src/Models/Calendar/LitCommons.php:228
+#: src/Handlers/CalendarHandler.php:1091 src/Models/Calendar/LitCommons.php:228
 #: src/Models/Calendar/LiturgicalEvent.php:140
 #: src/Models/EventsPath/LiturgicalEventAbstract.php:104 src/Utilities.php:450
 #: src/Utilities.php:456
 msgid "or"
-msgstr ""
+msgstr "vagy"
 
 #. translators: as instituted on the day of the canonization of St Faustina Kowalska by Pope John Paul II in the year 2000
-#: src/Handlers/CalendarHandler.php:1056
+#: src/Handlers/CalendarHandler.php:1095
 msgid "Divine Mercy Sunday"
-msgstr ""
+msgstr "Az Isteni Irgalmasság vasárnapja"
 
 #. translators: 1: Solemnity name, 2: Coinciding Solemnity name, 3: Requested calendar year, 4: Description of the reason for the transferral (ex. the Saturday preceding Palm Sunday), 5: actual date for the transferral, 6: Decree of the Dicastery for Divine Worship and the Discipline of the Sacraments
 #. translators: 1: Solemnity name, 2: Coinciding Solemnity name, 3: Requested calendar year, 4: Explicatory string for the transferral (ex. the Saturday preceding Palm Sunday), 5: actual date for the transferral, 6: Decree of the Dicastery for Divine Worship and the Discipline of the Sacraments
@@ -663,23 +658,25 @@ msgstr ""
 #.  5: actual date for the transferral,
 #.  6: Decree of the Dicastery for Divine Worship and the Discipline of the Sacraments
 #.
-#: src/Handlers/CalendarHandler.php:1239 src/Handlers/CalendarHandler.php:1264
-#: src/Handlers/CalendarHandler.php:1320
+#: src/Handlers/CalendarHandler.php:1277 src/Handlers/CalendarHandler.php:1297
+#: src/Handlers/CalendarHandler.php:1348
 #, php-format
 msgid ""
 "The Solemnity '%1$s' falls on %2$s in the year %3$d, the celebration has "
 "been transferred to %4$s (%5$s) as per the %6$s."
 msgstr ""
+"A '%1$s' ünnepélyessége %2$s-ra esik %3$d-ben, az ünneplést áthelyezték %4$s "
+"(%5$s)-ra %6$s szerint."
 
-#: src/Handlers/CalendarHandler.php:1243
+#: src/Handlers/CalendarHandler.php:1281
 msgid "the Saturday preceding Palm Sunday"
-msgstr ""
+msgstr "Virágvasárnap előtti szombaton"
 
-#: src/Handlers/CalendarHandler.php:1251 src/Handlers/CalendarHandler.php:1276
-#: src/Handlers/CalendarHandler.php:1331 src/Handlers/CalendarHandler.php:1369
-#: src/Handlers/CalendarHandler.php:1964 src/Handlers/CalendarHandler.php:2270
-#: src/Handlers/CalendarHandler.php:2751 src/Handlers/CalendarHandler.php:2767
-#: src/Handlers/CalendarHandler.php:2785 src/Handlers/CalendarHandler.php:2824
+#: src/Handlers/CalendarHandler.php:1284 src/Handlers/CalendarHandler.php:1304
+#: src/Handlers/CalendarHandler.php:1354 src/Handlers/CalendarHandler.php:1392
+#: src/Handlers/CalendarHandler.php:1974 src/Handlers/CalendarHandler.php:2268
+#: src/Handlers/CalendarHandler.php:2743 src/Handlers/CalendarHandler.php:2759
+#: src/Handlers/CalendarHandler.php:2777 src/Handlers/CalendarHandler.php:2816
 #: src/Models/Calendar/LiturgicalEventCollection.php:1473
 #: src/Models/Decrees/DecreeEventMetadata.php:54
 #: src/Models/RegionalData/NationalData/LitCalItemMakePatronMetadata.php:49
@@ -687,23 +684,28 @@ msgid ""
 "Decree of the Dicastery for Divine Worship and the Discipline of the "
 "Sacraments"
 msgstr ""
+"A vallási szertartásokért és a szentségi fegyelemért felelős dikasztérium "
+"dekrétuma"
 
-#: src/Handlers/CalendarHandler.php:1268
+#: src/Handlers/CalendarHandler.php:1301
 msgid "the Monday following the Second Sunday of Easter"
-msgstr ""
+msgstr "A húsvét második vasárnapját követő hétfőn"
 
-#: src/Handlers/CalendarHandler.php:1324
+#: src/Handlers/CalendarHandler.php:1352
 msgid "the following Monday"
-msgstr ""
+msgstr "a következő hétfőn"
 
 #. translators: 1: Solemnity name, 2: Coinciding Solemnity name, 3: Requested calendar year
-#: src/Handlers/CalendarHandler.php:1343
+#: src/Handlers/CalendarHandler.php:1366
 #, php-format
 msgid ""
 "The Solemnity '%1$s' coincides with the Solemnity '%2$s' in the year %3$d. "
 "We should ask the Dicastery for Divine Worship and the Discipline of the "
 "Sacraments what to do about this!"
 msgstr ""
+"A '%1$s' ünnepe egybeesik a '%2$s' ünnepével az %3$d évben. Meg kellene "
+"kérdeznünk a vallási szertartásokért és a szentségi fegyelemért felelős "
+"dikasztériumot, mit tegyünk ezzel kapcsolatban!"
 
 #. translators:
 #.  1: LiturgicalEvent name,
@@ -711,28 +713,32 @@ msgstr ""
 #.  3: Requested calendar year,
 #.  4: Decree of the Dicastery for Divine Worship and the Discipline of the Sacraments
 #.
-#: src/Handlers/CalendarHandler.php:1381
+#: src/Handlers/CalendarHandler.php:1404
 #, php-format
 msgid ""
 "Seeing that the Solemnity '%1$s' coincides with the Solemnity '%2$s' in the "
 "year %3$d, it has been anticipated by one day as per %4$s."
 msgstr ""
+"Mivel a '%1$s' ünnep egybeesik a '%2$s' ünneppel %3$d-ben, egy nappal "
+"előrehozták %4$s szerint."
 
 #. translators: 1: LiturgicalEvent name (Christmas), 2: Requested calendar year, 3: LiturgicalEvent name (Holy Family), 4: New date for Holy Family
-#: src/Handlers/CalendarHandler.php:1467
+#: src/Handlers/CalendarHandler.php:1489
 #, php-format
 msgid ""
 "'%1$s' falls on a Sunday in the year %2$d, therefore the Feast '%3$s' is "
 "celebrated on %4$s rather than on the Sunday after Christmas."
 msgstr ""
+"'%1$s' vasárnapra esik %2$d-ben, ezért a '%3$s' ünnepét %4$s-án tartják, nem "
+"pedig karácsony utáni vasárnap."
 
 #. translators: You can ignore this translation if the Feast has not been inserted by the Episcopal Conference
-#: src/Handlers/CalendarHandler.php:1498
+#: src/Handlers/CalendarHandler.php:1515
 msgid "Our Lord Jesus Christ, The Eternal High Priest"
-msgstr ""
+msgstr "A mi Urunk Jézus Krisztus, az Örök Főpap"
 
 #. translators: 1: National Calendar, 2: Requested calendar year, 3: source of the rule
-#: src/Handlers/CalendarHandler.php:1510
+#: src/Handlers/CalendarHandler.php:1527
 #, php-format
 msgid ""
 "In 2012, Pope Benedict XVI gave faculty to the Episcopal Conferences to "
@@ -740,34 +746,38 @@ msgid ""
 "own liturgical calendars on the Thursday after Pentecost: applicable to the "
 "calendar '%1$s' in the year '%2$d' (%3$s)."
 msgstr ""
+"2012-ben XVI. Benedek pápa felhatalmazta a püspöki konferenciákat, hogy "
+"saját liturgikus naptárukba vegyék fel a Jézus Krisztus örök főpap ünnepét "
+"pünkösd utáni csütörtökre: alkalmazható a '%1$s' naptárban az év "
+"'%2$d' (%3$s) szerint."
 
 #. translators: 1: LiturgicalEvent name, 2: Superseding LiturgicalEvent grade, 3: Superseding LiturgicalEvent name, 4: Requested calendar year
-#: src/Handlers/CalendarHandler.php:1571 src/Handlers/CalendarHandler.php:1617
+#: src/Handlers/CalendarHandler.php:1588 src/Handlers/CalendarHandler.php:1634
 #, php-format
 msgid "'%1$s' is superseded by the %2$s '%3$s' in the year %4$d."
-msgstr ""
+msgstr "'%1$s' -t megelőzi a %2$s '%3$s' az év %4$d-ben."
 
 #. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1720
+#: src/Handlers/CalendarHandler.php:1737
 #, php-format
 msgid "of the %s Week of Advent"
-msgstr ""
+msgstr "Advent %s hetében"
 
 #. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1780
+#: src/Handlers/CalendarHandler.php:1797
 #, php-format
 msgid "%s Day of the Octave of Christmas"
-msgstr ""
+msgstr "Karácsony oktávájának %s napja"
 
 #. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1838
+#: src/Handlers/CalendarHandler.php:1855
 #, php-format
 msgid "of the %s Week of Lent"
-msgstr ""
+msgstr "Nagyböjt %s hetében"
 
-#: src/Handlers/CalendarHandler.php:1859
+#: src/Handlers/CalendarHandler.php:1876
 msgid "after Ash Wednesday"
-msgstr ""
+msgstr "Hamvazószerda utáni"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -788,32 +798,39 @@ msgstr ""
 #. translators:
 #.  1. Grade or rank of the liturgical event
 #.  2. Name of the liturgical event
-#.  3. Day and month of the liturgical event
+#.  3. Date of the liturgical event (localized date for fixed events, or mobile date expression for some mobile events)
 #.  4. Year from which the liturgical event has been added
 #.  5. Source of the information
 #.  6. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:1896 src/Handlers/CalendarHandler.php:2365
-#: src/Handlers/CalendarHandler.php:2594 src/Handlers/CalendarHandler.php:3475
+#: src/Handlers/CalendarHandler.php:1911 src/Handlers/CalendarHandler.php:2361
+#: src/Handlers/CalendarHandler.php:2586 src/Handlers/CalendarHandler.php:3450
 #, php-format
 msgid ""
 "The %1$s '%2$s' has been added on %3$s since the year %4$d (%5$s), "
 "applicable to the year %6$d."
 msgstr ""
+"A %1$s '%2$s' hozzáadásra került %3$s-án az év %4$d (%5$s) óta, alkalmazandó "
+"az év %6$d-re."
 
-#: src/Handlers/CalendarHandler.php:1946 src/Handlers/CalendarHandler.php:2136
+#: src/Handlers/CalendarHandler.php:1956 src/Handlers/CalendarHandler.php:2146
 msgid ""
 "Vatican Press conference: Presentation of the Editio Typica Tertia of the "
 "Roman Missal"
 msgstr ""
+"Vatikáni sajtótájékoztató: A Római Misekönyv harmadik hivatalos kiadásának "
+"bemutatása"
 
-#: src/Handlers/CalendarHandler.php:2011
+#: src/Handlers/CalendarHandler.php:2021
 #, php-format
 msgid ""
 "The %1$s '%2$s' either falls between 17 Dec. and 24 Dec., or during the "
 "Octave of Christmas, or on the weekdays of the Lenten season in the year "
 "%3$d, rank reduced to Commemoration."
 msgstr ""
+"A %1$s '%2$s' vagy december 17. és december 24. közé esik, vagy a karácsony "
+"nyolcadán, vagy a nagyböjti időszak hétköznapjain az év %3$d-ban, rangja "
+"Kommemorációra csökkentve."
 
 #. translators:
 #.  1. Grade or rank of the liturgical event that has been superseded
@@ -822,14 +839,14 @@ msgstr ""
 #.  4. Name of the liturgical event that is superseding
 #.  5. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2049 src/Handlers/CalendarHandler.php:2097
+#: src/Handlers/CalendarHandler.php:2059 src/Handlers/CalendarHandler.php:2107
 #, php-format
 msgid "The %1$s '%2$s' is superseded by the %3$s '%4$s' in the year %5$d."
-msgstr ""
+msgstr "A %1$s '%2$s'-t a %3$s '%4$s' váltja fel az %5$d. évben."
 
-#: src/Handlers/CalendarHandler.php:2130
+#: src/Handlers/CalendarHandler.php:2140
 msgid "Apostolic Constitution Missale Romanum"
-msgstr ""
+msgstr "Apostoli Konstitúció Missale Romanum"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event that has been superseded
@@ -842,13 +859,16 @@ msgstr ""
 #.  8. Name of the liturgical event that is superseding
 #.  9. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2159
+#: src/Handlers/CalendarHandler.php:2169
 #, php-format
 msgid ""
 "The %1$s '%2$s', added in the %3$s of the Roman Missal since the year %4$d "
 "(%5$s) and usually celebrated on %6$s, is suppressed by the %7$s '%8$s' in "
 "the year %9$d."
 msgstr ""
+"A %1$s '%2$s', amelyet hozzáadtak a Római Misekönyv %3$s-ára az év %4$d "
+"(%5$s) óta, és általában %6$s-án ünneplik, az év %9$d-ében a %7$s '%8$s' "
+"eltörli."
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -860,100 +880,6 @@ msgstr ""
 #.  7. Name of the superseding liturgical event
 #.  8. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2212
-#, php-format
-msgid ""
-"The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
-"superseded by a %6$s '%7$s' in the year %8$d."
-msgstr ""
-
-#. translators:
-#.  1. Name of the first coinciding Memorial
-#.  2. Name of the second coinciding Memorial
-#.  3. Requested calendar year
-#.  4. Source of the information
-#.
-#: src/Handlers/CalendarHandler.php:2265
-#, php-format
-msgid ""
-"The Memorial '%1$s' coincides with another Memorial '%2$s' in the year %3$d. "
-"They are both reduced in rank to optional memorials (%4$s)."
-msgstr ""
-
-#. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
-#: src/Handlers/CalendarHandler.php:2314
-#, php-format
-msgid ""
-"Cannot create mobile liturgical event '%1$s': can only be relative to "
-"liturgical event with key '%2$s' using keywords %3$s"
-msgstr ""
-
-#. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
-#: src/Handlers/CalendarHandler.php:2328
-#, php-format
-msgid ""
-"Cannot create mobile liturgical event '%1$s' relative to liturgical event "
-"with key '%2$s'"
-msgstr ""
-
-#. translators:
-#.  1. Grade or rank of the liturgical event
-#.  2. Name of the liturgical event
-#.  3. New name of the liturgical event
-#.  4. Year from which the grade has been changed
-#.  5. Requested calendar year
-#.  6. Source of the information
-#.
-#: src/Handlers/CalendarHandler.php:2425
-#, php-format
-msgid ""
-"The name of the %1$s '%2$s' has been changed to %3$s since the year %4$d, "
-"applicable to the year %5$d (%6$s)."
-msgstr ""
-
-#. translators:
-#.  1. Grade or rank of the liturgical event
-#.  2. Name of the liturgical event
-#.  3. New grade of the liturgical event
-#.  4. Year from which the grade has been changed
-#.  5. Requested calendar year
-#.  6. Source of the information
-#.
-#: src/Handlers/CalendarHandler.php:2447
-#, php-format
-msgid ""
-"The %1$s '%2$s' has been raised to the rank of %3$s since the year %4$d, "
-"applicable to the year %5$d (%6$s)."
-msgstr ""
-
-#. translators:
-#.  1. Grade or rank of the liturgical event
-#.  2. Name of the liturgical event
-#.  3. New grade of the liturgical event
-#.  4. Year from which the grade has been changed
-#.  5. Requested calendar year
-#.  6. Source of the information
-#.
-#: src/Handlers/CalendarHandler.php:2457
-#, php-format
-msgid ""
-"The %1$s '%2$s' has been lowered to the rank of %3$s since the year %4$d, "
-"applicable to the year %5$d (%6$s)."
-msgstr ""
-
-#. translators:
-#.  1. Name of the liturgical event
-#.  2. Year in which was declared Doctor
-#.  3. Requested calendar year
-#.  4. Source of the information
-#.
-#: src/Handlers/CalendarHandler.php:2510
-#, php-format
-msgid ""
-"'%1$s' has been declared a Doctor of the Church since the year %2$d, "
-"applicable to the year %3$d (%4$s)."
-msgstr ""
-
 #. translators:
 #.  1. Grade or rank of the liturgical event being created
 #.  2. Name of the liturgical event being created
@@ -964,12 +890,115 @@ msgstr ""
 #.  7. Name of superseding liturgical event
 #.  8. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:2649
+#: src/Handlers/CalendarHandler.php:2215 src/Handlers/CalendarHandler.php:2641
 #, php-format
 msgid ""
 "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
 "superseded by the %6$s '%7$s' in the year %8$d."
 msgstr ""
+"A %1$s '%2$s', amelyet %3$s-en adtak hozzá %4$d évétől kezdődően (%5$s), "
+"azonban a %6$s '%7$s' váltja fel %8$d-ban."
+
+#. translators:
+#.  1. Name of the first coinciding Memorial
+#.  2. Name of the second coinciding Memorial
+#.  3. Requested calendar year
+#.  4. Source of the information
+#.
+#: src/Handlers/CalendarHandler.php:2263
+#, php-format
+msgid ""
+"The Memorial '%1$s' coincides with another Memorial '%2$s' in the year %3$d. "
+"They are both reduced in rank to optional memorials (%4$s)."
+msgstr ""
+"A '%1$s' emléknap egybeesik egy másik emléknappal '%2$s' az év %3$d-ben. "
+"Mindkettő rangja fakultatív emléknapra csökken %4$s szerint."
+
+#. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
+#: src/Handlers/CalendarHandler.php:2312
+#, php-format
+msgid ""
+"Cannot create mobile liturgical event '%1$s': can only be relative to "
+"liturgical event with key '%2$s' using keywords %3$s"
+msgstr ""
+"Nem lehet létrehozni mobil liturgikus eseményt '%1$s': csak a '%2$s' kulcsú "
+"liturgikus eseményhez viszonyítva használható %3$s kulcsszavak"
+
+#. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
+#: src/Handlers/CalendarHandler.php:2326
+#, php-format
+msgid ""
+"Cannot create mobile liturgical event '%1$s' relative to liturgical event "
+"with key '%2$s'"
+msgstr ""
+"Nem lehet létrehozni mobil liturgikus eseményt '%1$s' a '%2$s' kulcsú "
+"liturgikus eseményhez viszonyítva"
+
+#. translators:
+#.  1. Grade or rank of the liturgical event
+#.  2. Name of the liturgical event
+#.  3. New name of the liturgical event
+#.  4. Year from which the grade has been changed
+#.  5. Requested calendar year
+#.  6. Source of the information
+#.
+#: src/Handlers/CalendarHandler.php:2417
+#, php-format
+msgid ""
+"The name of the %1$s '%2$s' has been changed to %3$s since the year %4$d, "
+"applicable to the year %5$d (%6$s)."
+msgstr ""
+"A %1$s '%2$s' neve megváltozott %3$s-ra az év %4$d óta, alkalmazandó az év "
+"%5$d-ére (%6$s)."
+
+#. translators:
+#.  1. Grade or rank of the liturgical event
+#.  2. Name of the liturgical event
+#.  3. New grade of the liturgical event
+#.  4. Year from which the grade has been changed
+#.  5. Requested calendar year
+#.  6. Source of the information
+#.
+#: src/Handlers/CalendarHandler.php:2439
+#, php-format
+msgid ""
+"The %1$s '%2$s' has been raised to the rank of %3$s since the year %4$d, "
+"applicable to the year %5$d (%6$s)."
+msgstr ""
+"A %1$s '%2$s' rangját %3$s rangra emelték az év %4$d-e óta, alkalmazandó az "
+"év %5$d-re (%6$s)."
+
+#. translators:
+#.  1. Grade or rank of the liturgical event
+#.  2. Name of the liturgical event
+#.  3. New grade of the liturgical event
+#.  4. Year from which the grade has been changed
+#.  5. Requested calendar year
+#.  6. Source of the information
+#.
+#: src/Handlers/CalendarHandler.php:2449
+#, php-format
+msgid ""
+"The %1$s '%2$s' has been lowered to the rank of %3$s since the year %4$d, "
+"applicable to the year %5$d (%6$s)."
+msgstr ""
+"A %1$s '%2$s' rangját leminősítették %3$s-ban, %4$d évére, tehát az évre "
+"vonatkozik %5$d (%6$s) vonatkozóan."
+
+#. translators:
+#.  1. Name of the liturgical event
+#.  2. Year in which was declared Doctor
+#.  3. Requested calendar year
+#.  4. Source of the information
+#.
+#: src/Handlers/CalendarHandler.php:2502
+#, php-format
+msgid ""
+"'%1$s' has been declared a Doctor of the Church since the year %2$d, "
+"applicable to the year %3$d (%4$s)."
+msgstr ""
+"'%1$s' egyháztanítónak nyilvánították %2$d-ban, %3$d évére (%4$s) "
+"vonatkozóan."
 
 #. translators:
 #.  1. Requested calendar year
@@ -981,41 +1010,51 @@ msgstr ""
 #.  7. Year from which the liturgical event has been added
 #.  8. Source of the information
 #.
-#: src/Handlers/CalendarHandler.php:2676
+#: src/Handlers/CalendarHandler.php:2668
 #, php-format
 msgid ""
 "In the year %1$d, the %2$s '%3$s' has been suppressed by the %4$s '%5$s', "
 "added on %6$s since the year %7$d (%8$s)."
 msgstr ""
+"%1$d évben a %2$s '%3$s'-t elnyelte a %4$s '%5$s', amelyet %6$s-on adtak "
+"hozzá %7$d évétől (%8$s) kezdődően."
 
 #. translators: 1: LiturgicalEvent name, 2: Source of the information, 3: Requested calendar year
-#: src/Handlers/CalendarHandler.php:2748
+#: src/Handlers/CalendarHandler.php:2740
 #, php-format
 msgid ""
 "The optional memorial '%1$s' has been transferred from Dec. 12 to Aug. 12 "
 "since the year 2002 (%2$s), applicable to the year %3$d."
 msgstr ""
+"Az '%1$s' fakultatív emléknapját dec. 12-ről aug. 12-re helyezték át 2002 "
+"óta (%2$s), %3$d évére vonatkozóan."
 
 #. translators: 1: LiturgicalEvent name, 2: Source of the information, 3: Requested calendar year
-#: src/Handlers/CalendarHandler.php:2764
+#: src/Handlers/CalendarHandler.php:2756
 #, php-format
 msgid ""
 "The optional memorial '%1$s', which would have been superseded this year by "
 "a Sunday or Solemnity were it on Dec. 12, has however been transferred to "
 "Aug. 12 since the year 2002 (%2$s), applicable to the year %3$d."
 msgstr ""
+"Az '%1$s' fakultatív emléknapja, amelyet idén felülmúlt volna egy vasárnap "
+"vagy ünnepélyesség dec. 12-én, azonban 2002 óta átkerült aug. 12-re (%2$s), "
+"%3$d évére vonatkozóan."
 
 #. translators: 1: LiturgicalEvent name, 2: Source of the information, 3: Requested calendar year, 4: Coinciding LiturgicalEvent grade, 5: Coinciding LiturgicalEvent name
-#: src/Handlers/CalendarHandler.php:2782
+#: src/Handlers/CalendarHandler.php:2774
 #, php-format
 msgid ""
 "The optional memorial '%1$s' has been transferred from Dec. 12 to Aug. 12 "
 "since the year 2002 (%2$s), applicable to the year %3$d. However, it is "
 "superseded by the %4$s '%5$s' in the year %3$d."
 msgstr ""
+"Az '%1$s' fakultatív emléknapot áthelyezték december 12-éről augusztus 12-"
+"ére 2002 óta (%2$s), a %3$d évre alkalmazandó. Azonban az %4$s '%5$s' "
+"felülírja az %3$d évben."
 
 #. translators: 1: LiturgicalEvent name, 2: Source of the information
-#: src/Handlers/CalendarHandler.php:2821
+#: src/Handlers/CalendarHandler.php:2813
 #, php-format
 msgid ""
 "The Feast '%1$s' would have been suppressed this year ( 2009 ) since it "
@@ -1023,35 +1062,61 @@ msgid ""
 "%2$s it has been reinstated so that local churches can optionally celebrate "
 "the memorial."
 msgstr ""
+"A '%1$s' ünnep idén (2009) elmaradt volna, mivel vasárnapra esik, azonban a "
+"Pál Apostol Évéhez kapcsolódóan a %2$s alapján visszaállították, hogy a "
+"helyi egyházak szabadon ünnepelhessék az emléknapot."
 
-#: src/Handlers/CalendarHandler.php:2873
+#: src/Handlers/CalendarHandler.php:2865
 #, php-format
 msgid "of the %s Week of Easter"
-msgstr ""
+msgstr "Húsvét %s hetében"
 
-#: src/Handlers/CalendarHandler.php:2945 src/Handlers/CalendarHandler.php:2993
+#: src/Handlers/CalendarHandler.php:2937 src/Handlers/CalendarHandler.php:2985
 #, php-format
 msgid "of the %s Week of Ordinary Time"
-msgstr ""
+msgstr "Évközi idő %s hetében"
 
-#: src/Handlers/CalendarHandler.php:3036
+#: src/Handlers/CalendarHandler.php:3028
 msgid "Saturday Memorial of the Blessed Virgin Mary"
-msgstr ""
+msgstr "Szűz Mária szombati emléknapja"
 
 #. translators: 1: wider_region, 2: metadata, 3: calendar_id
-#: src/Handlers/CalendarHandler.php:3111
+#: src/Handlers/CalendarHandler.php:3103
 #, php-format
 msgid ""
 "Could not find a %1$s property in the %2$s for the National Calendar %3$s."
 msgstr ""
+"Nem találtunk %1$s tulajdonságot a %2$s-ben a nemzeti naptár %3$s számára."
 
 #. translators: 1: Event key, 2: Original date, 3: New date, 4: Requested calendar year
-#: src/Handlers/CalendarHandler.php:3153
+#: src/Handlers/CalendarHandler.php:3133
 #, php-format
 msgid ""
 "The liturgical event '%1$s' has been moved from %2$s to %3$s due to "
 "conditional rules in the year %4$d."
 msgstr ""
+"A '%1$s' liturgikus esemény áthelyezésre került %2$s-ról %3$s-ra a "
+"feltételes szabályok miatt az %4$d évben."
+
+#. translators:
+#.  1. Grade of the liturgical event
+#.  2. Name of the liturgical event
+#.  3. Date on which the liturgical event is usually celebrated
+#.  4. Grade of the superseding liturgical event
+#.  5. Name of the superseding liturgical event
+#.  6. Requested calendar year
+#.  7. National or wider region calendar
+#.
+#: src/Handlers/CalendarHandler.php:3196
+#, php-format
+msgid ""
+"The %1$s '%2$s', usually celebrated on %3$s, was suppressed by the %4$s "
+"'%5$s' in the year %6$d, however being elevated to a Patronal festivity for "
+"the Calendar %7$s, it has been reinstated."
+msgstr ""
+"A %1$s '%2$s', amelyet általában %3$s-en ünnepelnek, elnyomta a %4$s '%5$s' "
+"%6$d-ban, azonban a naptár %7$s számára védőszent ünneppé emelve, "
+"visszaállították."
 
 #. translators:
 #.  1. Grade of the liturgical event
@@ -1066,26 +1131,12 @@ msgstr ""
 #, php-format
 msgid ""
 "The %1$s '%2$s', usually celebrated on %3$s, was suppressed by the %4$s "
-"'%5$s' in the year %6$d, however being elevated to a Patronal festivity for "
-"the Calendar %7$s, it has been reinstated."
-msgstr ""
-
-#. translators:
-#.  1. Grade of the liturgical event
-#.  2. Name of the liturgical event
-#.  3. Date on which the liturgical event is usually celebrated
-#.  4. Grade of the superseding liturgical event
-#.  5. Name of the superseding liturgical event
-#.  6. Requested calendar year
-#.  7. National or wider region calendar
-#.
-#: src/Handlers/CalendarHandler.php:3236
-#, php-format
-msgid ""
-"The %1$s '%2$s', usually celebrated on %3$s, was suppressed by the %4$s "
 "'%5$s' in the year %6$d, and though it would be elevated to a Patronal "
 "festivity for the Calendar %7$s, it has not been reinstated."
 msgstr ""
+"A %1$s '%2$s', amelyet általában %3$s-en ünnepelnek, elnyomta a %4$s '%5$s' "
+"%6$d-ban, és bár a naptár %7$s számára védőszent ünneppé emelték volna, nem "
+"állították vissza."
 
 #. translators:
 #.  1. Name of the first coinciding Memorial
@@ -1093,56 +1144,70 @@ msgstr ""
 #.  3. Requested calendar year
 #.  4. Source of the information
 #.
-#: src/Handlers/CalendarHandler.php:3320
+#: src/Handlers/CalendarHandler.php:3300
 #, php-format
 msgid ""
 "The Memorial '%1$s' coincides with another Memorial '%2$s' in the year %3$d. "
 "They are both reduced in rank to optional memorials."
 msgstr ""
+"A '%1$s' emléknap egy másik '%2$s' emléknappal egybeesik %3$d-ben. "
+"Mindkettőt csökkentették fakultatív emléknap rangra."
 
 #. translators: 1. LiturgicalEvent name, 2. LiturgicalEvent date, 3. Coinciding liturgical event name, 4. Requested calendar year
-#: src/Handlers/CalendarHandler.php:3343
+#: src/Handlers/CalendarHandler.php:3323
 #, php-format
 msgid ""
 "The Feast '%1$s', usually celebrated on %2$s, coincides with another Feast "
 "'%3$s' in the year %4$d! Does something need to be done about this?"
 msgstr ""
+"A '%1$s' ünnep, amelyet általában %2$s-en ünnepelnek, egy másik '%3$s' "
+"ünneppel esik egybe %4$d-ben! Kell valamit tenni ez ügyben?"
 
 #. translators: 1. LiturgicalEvent name, 2. LiturgicalEvent date, 3. Coinciding liturgical event name, 4. Requested calendar year
-#: src/Handlers/CalendarHandler.php:3363
+#: src/Handlers/CalendarHandler.php:3343
 #, php-format
 msgid ""
 "The Solemnity '%1$s', usually celebrated on %2$s, coincides with the Sunday "
 "or Solemnity '%3$s' in the year %4$d! Does something need to be done about "
 "this?"
 msgstr ""
+"A '%1$s' ünnepélyessége, amelyet általában %2$s-en ünnepelnek, egy másik "
+"'%3$s' vasárnap vagy ünnepélyességgel esik egybe %4$d-ban! Kell valamit "
+"tenni ez ügyben?"
 
-#: src/Handlers/CalendarHandler.php:3403
+#: src/Handlers/CalendarHandler.php:3383
 #, php-format
 msgid ""
 "Cannot create liturgical event with key \"%1$s\": the day (%2$d) of the "
 "liturgical event is greater than the number of days (%3$d) in the month "
 "(%4$d) of the liturgical event year (%5$d)."
 msgstr ""
+"Nem lehet létrehozni '%1$s' kódú liturgikus eseményt: a liturgikus esemény "
+"napja (%2$d) nagyobb, mint a hónap (%3$d) napjainak száma (%4$d) a "
+"liturgikus esemény évében (%5$d)."
 
-#: src/Handlers/CalendarHandler.php:3428
+#: src/Handlers/CalendarHandler.php:3408
 msgid ""
 "We should be creating a new liturgical event, however we do not seem to have "
 "the correct date information in order to proceed"
 msgstr ""
+"Létre kellene hoznunk egy új liturgikus eseményt, azonban úgy tűnik, "
+"nincsenek meg a megfelelő dátumadataink ahhoz, hogy folytassuk"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
 #.  2. Name of the liturgical event
-#.  3. Day and month of the liturgical event
+#.  3. Date of the liturgical event (localized date for fixed events, or mobile date expression for some mobile events)
 #.  4. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3502
+#: src/Handlers/CalendarHandler.php:3466
 #, php-format
 msgid ""
 "The %1$s '%2$s' was not added to the calendar on %3$s because it conflicts "
 "with an existing liturgical event in the year %4$d."
 msgstr ""
+"A %1$s '%2$s' nem került be a naptárba %3$s-én, mert ütközik egy meglévő "
+"liturgikus eseménnyel az %4$d évben."
 
 #. translators:
 #.  1. Liturgical grade
@@ -1152,12 +1217,14 @@ msgstr ""
 #.  5. Year from which the name has been changed
 #.  6. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3571
+#: src/Handlers/CalendarHandler.php:3535
 #, php-format
 msgid ""
 "The name of the %1$s '%2$s' has been changed to '%3$s' in the national "
 "calendar '%4$s' since the year %5$d, applicable to the year %6$d."
 msgstr ""
+"A %1$s '%2$s' nevét '%3$s' névre változtatták a nemzeti naptárban '%4$s' "
+"%5$d-tól kezdve, %6$d évére vonatkozóan."
 
 #. translators:
 #.  1. Event key of the liturgical event
@@ -1166,13 +1233,16 @@ msgstr ""
 #.  4. Year from which the name has been changed
 #.  5. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3589
+#: src/Handlers/CalendarHandler.php:3553
 #, php-format
 msgid ""
 "The name of the celebration '%1$s' has been changed to '%2$s' in the "
 "national calendar '%3$s' since the year %4$d, but could not be applied to "
 "the year %5$d because the celebration was not found."
 msgstr ""
+"A '%1$s' ünnep nevét '%2$s' névre változtatták a nemzeti naptárban '%3$s' "
+"%4$d-tól kezdve, de nem lehetett alkalmazni %5$d évben, mert az ünnep nem "
+"volt megtalálható."
 
 #. translators:
 #.  1. Original liturgical grade
@@ -1183,12 +1253,14 @@ msgstr ""
 #.  6. Source of the information
 #.  7. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3616
+#: src/Handlers/CalendarHandler.php:3580
 #, php-format
 msgid ""
 "The grade of the %1$s '%2$s' has been changed to '%3$s' in the national "
 "calendar '%4$s' since the year %5$d (%6$s), applicable to the year %7$d."
 msgstr ""
+"A %1$s '%2$s' rangja '%3$s' kategóriára lett változtatva a %4$s nemzeti "
+"naptárban az %5$d év óta (%6$s), alkalmazható az %7$d évre."
 
 #. translators:
 #.  1. Event key of the liturgical event
@@ -1197,13 +1269,16 @@ msgstr ""
 #.  4. Year from which the name has been changed
 #.  5. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3635
+#: src/Handlers/CalendarHandler.php:3599
 #, php-format
 msgid ""
 "The grade of the celebration '%1$s' has been changed to '%2$s' in the "
 "national calendar '%3$s' since the year %4$d (%5$s), but could not be "
 "applied to the year %6$d because the celebration was not found."
 msgstr ""
+"A '%1$s' ünnep rangja '%2$s' kategóriára lett változtatva a %3$s nemzeti "
+"naptárban az %4$d év óta (%5$s), de nem lehetett alkalmazni az %6$d évre, "
+"mert nem találták meg az ünnepet."
 
 #. translators:
 #.  1. Liturgical grade
@@ -1214,12 +1289,14 @@ msgstr ""
 #.  6. ID of the national calendar
 #.  7. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3670
+#: src/Handlers/CalendarHandler.php:3634
 #, php-format
 msgid ""
 "The %1$s '%2$s' has been moved from %3$s to %4$s since the year %5$d in the "
 "national calendar '%6$s', applicable to the year %7$d."
 msgstr ""
+"A %1$s '%2$s' dátuma %3$s-ról %4$s-ra került át a %5$d-tól kezdődően a "
+"nemzeti naptár '%6$s' keretében, %7$d évére vonatkozóan."
 
 #. translators:
 #.  1. Name of the liturgical event
@@ -1228,13 +1305,16 @@ msgstr ""
 #.  4. ID of the national calendar
 #.  5. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3689
+#: src/Handlers/CalendarHandler.php:3653
 #, php-format
 msgid ""
 "The liturgical event '%1$s' has been moved to %2$s since the year %3$d in "
 "the national calendar '%4$s', but cannot be applied in the year %5$d simply "
 "because we could not find the data for it from the Roman Missal events."
 msgstr ""
+"A '%1$s' liturgikus eseményt %2$s-re mozdították %3$d-tól kezdődően a "
+"nemzeti naptár '%4$s' keretében, de nem alkalmazható %5$d évben, egyszerűen "
+"azért, mert nem találtuk meg az adatot a Római Missale eseményei között."
 
 #. translators:
 #.  1. event_key of the liturgical event
@@ -1243,7 +1323,7 @@ msgstr ""
 #.  4. ID of the national calendar
 #.  5. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3708
+#: src/Handlers/CalendarHandler.php:3672
 #, php-format
 msgid ""
 "The liturgical event '%1$s' has been moved to %2$s since the year %3$d in "
@@ -1251,18 +1331,21 @@ msgid ""
 "since the new date %2$s seems to be a Sunday or a liturgical event of "
 "greater rank."
 msgstr ""
+"A '%1$s' liturgikus esemény áthelyezésre került %2$s-ra az %3$d évtől a %4$s "
+"nemzeti naptárban, de ez nem valósult meg az %5$d évben, mivel az új dátum "
+"%2$s úgy tűnik, vasárnap vagy magasabb rangú liturgikus esemény."
 
 #. translators: 1. Country name, 2. List of missals
-#: src/Handlers/CalendarHandler.php:3747
+#: src/Handlers/CalendarHandler.php:3711
 #, php-format
 msgid "Found Missals for region %1$s: %2$s."
-msgstr ""
+msgstr "Misszálékat találtunk a %1$s régióhoz: %2$s."
 
 #. translators: Name of the Roman Missal
-#: src/Handlers/CalendarHandler.php:3771
+#: src/Handlers/CalendarHandler.php:3735
 #, php-format
 msgid "Found a sanctorale data file for %s"
-msgstr ""
+msgstr "Találtunk egy szentektári fájlt %s-ra vonatkozóan"
 
 #. translators:
 #.  1. LiturgicalEvent grade
@@ -1273,90 +1356,116 @@ msgstr ""
 #.  6. Superseding liturgical event name
 #.  7. Requested calendar year
 #.
-#: src/Handlers/CalendarHandler.php:3807
+#: src/Handlers/CalendarHandler.php:3771
 #, php-format
 msgid ""
 "The %1$s '%2$s' (%3$s), added to the national calendar in the %4$s, is "
 "superseded by the %5$s '%6$s' in the year %7$d"
 msgstr ""
+"A %1$s '%2$s' (%3$s), amelyet hozzáadtak a nemzeti naptárhoz a %4$s-ban, "
+"átveszi a %5$s '%6$s' %7$d-ban"
 
 #. translators: Name of the Roman Missal
-#: src/Handlers/CalendarHandler.php:3821
+#: src/Handlers/CalendarHandler.php:3785
 #, php-format
 msgid "Could not find a sanctorale data file for %s"
-msgstr ""
+msgstr "Nem találtunk szentektári fájlt %s-hez"
 
 #. translators: 1. LiturgicalEvent grade, 2. LiturgicalEvent name, 3. New liturgical event name, 4: Requested calendar year, 5. Old date, 6. New date
-#: src/Handlers/CalendarHandler.php:3913
+#: src/Handlers/CalendarHandler.php:3861
 #, php-format
 msgid ""
 "The %1$s '%2$s' is transferred from %5$s to %6$s as per the %7$s, to make "
 "room for '%3$s': applicable to the year %4$d."
 msgstr ""
+"A %1$s '%2$s' áthelyezésre kerül %5$s-ról %6$s-ra a %7$s értelmében, hogy "
+"helyet adjon a '%3$s' számára: a %4$d évre vonatkozik."
 
 #. translators: 1. LiturgicalEvent grade, 2. LiturgicalEvent name, 3. Old date, 4. New date, 5. Source of the information, 6. New liturgical event name, 7. Superseding liturgical event grade, 8. Superseding liturgical event name, 9: Requested calendar year
-#: src/Handlers/CalendarHandler.php:3937
+#: src/Handlers/CalendarHandler.php:3879
 #, php-format
 msgid ""
 "The %1$s '%2$s' would have been transferred from %3$s to %4$s as per the "
 "%5$s, to make room for '%6$s', however it is suppressed by the %7$s '%8$s' "
 "in the year %9$d."
 msgstr ""
+"A %1$s '%2$s' áthelyezésre került volna %3$s-ról %4$s-ra a %5$s szerint, "
+"hogy helyet adjon a '%6$s' számára, azonban elnyomja a %7$s '%8$s' a %9$d "
+"évben."
 
 #. translators: 1. Name of the mobile liturgical event being created, 2. Name of the liturgical event that it is relative to
-#: src/Handlers/CalendarHandler.php:4126
+#: src/Handlers/CalendarHandler.php:4068
 #, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s' relative to liturgical event "
 "with key '%2$s', liturgical event does not exist."
 msgstr ""
+"Nem lehet létrehozni mobil liturgikus eseményt '%1$s' a '%2$s' kulcsú "
+"liturgikus eseményhez viszonyítva, a liturgikus esemény nem létezik."
 
 #. translators: 1. Name of the mobile liturgical event being created, 2. event_key of the liturgical event that it is relative to, 3. List of valid keywords
-#: src/Handlers/CalendarHandler.php:4142
+#: src/Handlers/CalendarHandler.php:4084
 #, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s': the `strtotime.relative_time` "
 "property can only express relativity to the liturgical event with key '%2$s' "
 "using keywords %3$s."
 msgstr ""
+"Nem lehet létrehozni a mozgó liturgikus eseményt '%1$s': a `strtotime."
+"relative_time` tulajdonság csak a '%2$s' kulcsú liturgikus eseményre "
+"vonatkozó relatív időt tud kifejezni a %3$s kulcsszavak használatával."
 
 #. translators: Do not translate 'strtotime'! 1. Name of the mobile liturgical event being created
-#: src/Handlers/CalendarHandler.php:4220
+#: src/Handlers/CalendarHandler.php:4162
 #, php-format
 msgid ""
 "Cannot create mobile liturgical event '%1$s': 'strtotime' property must be "
 "either an object or a string, instead it is of type '%2$s'."
 msgstr ""
+"Nem hozható létre a '%1$s' mobil liturgikus esemény: a 'strtotime' "
+"tulajdonságnak objektumnak vagy szövegnek kell lennie, ehelyett a típusa "
+"'%2$s'."
 
 #. translators: 1: LiturgicalEvent name, 2: Name of the diocese, 3: LiturgicalEvent date, 4: Coinciding liturgical event name, 5: Requested calendar year
-#: src/Handlers/CalendarHandler.php:4300
+#: src/Handlers/CalendarHandler.php:4242
 #, php-format
 msgid ""
 "The Solemnity '%1$s', proper to the calendar of the %2$s and usually "
 "celebrated on %3$s, coincides with the Sunday or Solemnity '%4$s' in the "
 "year %5$d! Does something need to be done about this?"
 msgstr ""
+"A '%1$s' ünnepe, mely az %2$s liturgikus naptárához tartozik és általában "
+"%3$s-én kerül megünneplésre, egybeesik a '%4$s' vasárnappal vagy ünneppel az "
+"%5$d évben! Ezzel valamit kezdeni kellene?"
 
 #. translators: 1: LiturgicalEvent grade, 2: LiturgicalEvent name, 3: Name of the diocese, 4: LiturgicalEvent date, 5: Coinciding liturgical event name, 6: Requested calendar year
-#: src/Handlers/CalendarHandler.php:4325
+#: src/Handlers/CalendarHandler.php:4267
 #, php-format
 msgid ""
 "The %1$s '%2$s', proper to the calendar of the %3$s and usually celebrated "
 "on %4$s, is suppressed by the %5$s %6$s in the year %7$d."
 msgstr ""
 
-#: src/Handlers/CalendarHandler.php:4530
+#: src/Handlers/CalendarHandler.php:4444
 msgid "Error converting Liturgical Calendar to XML."
-msgstr ""
+msgstr "Hiba a liturgikus naptár XML-re konvertálásakor."
 
-#: src/Handlers/CalendarHandler.php:4565
+#: src/Handlers/CalendarHandler.php:4479
 #, php-format
 msgid "Error receiving or parsing info from GitHub about latest release: %s."
 msgstr ""
+"Hiba a GitHub-ról érkező információk fogadásában vagy elemzésében a legújabb "
+"kiadásról: %s."
 
-#: src/Handlers/CalendarHandler.php:4576
+#: src/Handlers/CalendarHandler.php:4490
 msgid "Error serializing Liturgical Calendar."
-msgstr ""
+msgstr "Hiba a liturgikus naptár sorosításánál."
+
+#. translators: Christmas weekday name pattern
+#: src/LocaleDateFormatter.php:169
+#, php-format
+msgid "%s - Christmas Weekday"
+msgstr "%s - Karácsony hétköznapja"
 
 #: src/Models/Calendar/LitCommons.php:200
 msgid "From the Common"
@@ -1365,11 +1474,11 @@ msgstr ""
 #. translators: in reference to the cycle of liturgical years (A, B, C; I, II)
 #: src/Models/Calendar/LiturgicalEventCollection.php:172
 msgid "YEAR"
-msgstr ""
+msgstr "ÉV"
 
 #: src/Models/Calendar/LiturgicalEventCollection.php:173
 msgid "Vigil Mass"
-msgstr ""
+msgstr "Vigilézis mise"
 
 #: src/Models/Calendar/LiturgicalEventCollection.php:1467
 #, php-format
@@ -1378,6 +1487,9 @@ msgid ""
 "year %5$d. As per %6$s, the first has precedence, therefore the Vigil Mass "
 "is confirmed as are I Vespers."
 msgstr ""
+"A %1$s '%2$s' vigíliás miséje egybeesik a %3$s '%4$s' ünnepével az %5$d "
+"évben. Az %6$s értelmében az elsőnek van elsőbbsége, ezért a vigíliás mise "
+"megerősítve van, ahogy az I-vesperák is."
 
 #: src/Models/Calendar/LiturgicalEventCollection.php:1482
 #, php-format
@@ -1387,6 +1499,10 @@ msgid ""
 "and a vigil Mass, whereas the last Solemnity will not have either Vespers II "
 "or an evening Mass."
 msgstr ""
+"A %1$s '%2$s' vigíliás miséje egybeesik a %3$s '%4$s' ünnepével az %5$d "
+"évben. Mivel az első ünnepnek van elsőbbsége, lesz neki Veszperasa I és egy "
+"vigíliás mise, míg az utolsó ünnepnek nem lesz sem Veszperasa II, sem esti "
+"mise."
 
 #: src/Models/Calendar/LiturgicalEventCollection.php:1492
 #, php-format
@@ -1396,6 +1512,10 @@ msgid ""
 "Vespers II and an evening Mass, while the first Solemnity will not have a "
 "Vigil Mass or Vespers I."
 msgstr ""
+"A %1$s '%2$s' vigíliás miséje egybeesik a %3$s '%4$s' ünnepével az %5$d "
+"évben. Ez az utolsó ünnep elsőbbséget élvez, ezért megtartja a Veszperasa II-"
+"t és az esti misét, míg az első ünnepnek nem lesz vigíliás miséje vagy "
+"Veszperasa I."
 
 #: src/Models/Calendar/LiturgicalEventCollection.php:1577
 #, php-format
@@ -1404,6 +1524,16 @@ msgid ""
 "year %5$d. We should ask the Dicastery for Divine Worship and the Discipline "
 "of the Sacraments what to do about this!"
 msgstr ""
+"A %1$s '%2$s' virrasztó mise egybeesik a %3$s '%4$s' eseménnyel a %5$d "
+"évben. Meg kellene kérdeznünk az Istentiszteleti és Szentségi Fegyelmi "
+"Dikasztériumot, mit tegyünk ebben az ügyben!"
+
+#~ msgid ""
+#~ "The %1$s '%2$s', added on %3$s since the year %4$d (%5$s), is however "
+#~ "superseded by a %6$s '%7$s' in the year %8$d."
+#~ msgstr ""
+#~ "A %1$s '%2$s', amelyet %3$s-án adtak hozzá az év %4$d (%5$s) óta, azonban "
+#~ "egy %6$s '%7$s' megelőzi az év %8$d-ben."
 
 #~ msgid "pink"
 #~ msgstr "rózsaszín"

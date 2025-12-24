@@ -12,12 +12,12 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * RFC 9110–aware negotiation helpers for:
  *  - Accept
- *  - Accept-Language
+ *  - Accept-Language (with RFC 5646/PHP locale normalization)
  *  - Accept-Encoding
  *
  * Usage (PSR-7):
  *   $mime = Negotiator::pickMediaType($request->getHeaderLine('Accept'), ['application/json', 'text/html']);
- *   $lang = Negotiator::pickLanguage($request->getHeaderLine('Accept-Language'), ['it-IT','en-US','en'], 'en');
+ *   $lang = Negotiator::pickLanguage($request, ['it-IT','en-US','en'], 'en'); // accepts both hyphens and underscores
  *   $enc  = Negotiator::pickEncoding($request->getHeaderLine('Accept-Encoding'), ['br','gzip','identity']);
  */
 final class Negotiator
@@ -323,12 +323,13 @@ final class Negotiator
                 continue;
             }
 
-            $tagNorm = strtolower(trim($tag)); // language tags are case-insensitive for matching
+            // Normalize: lowercase + hyphens to underscores (RFC 5646 uses hyphens, PHP locales use underscores)
+            $tagNorm = str_replace('-', '_', strtolower(trim($tag)));
             $q       = self::parseQ($params['q'] ?? null);
             unset($params['q']);
 
-            // Specificity: number of subtags (en-us → 2) ; '*' → 0
-            $specificity = ( $tagNorm === '*' ) ? 0 : substr_count($tagNorm, '-') + 1;
+            // Specificity: number of subtags (en_us → 2) ; '*' → 0
+            $specificity = ( $tagNorm === '*' ) ? 0 : substr_count($tagNorm, '_') + 1;
 
             $out[] = [
                 'raw'         => $raw,
@@ -348,10 +349,12 @@ final class Negotiator
     }
 
     /**
-     * Pick best language tag from supported (e.g., ['it-IT','en-US','en']).
+     * Pick best language tag from supported (e.g., ['it-IT','en-US','en'] or ['it_IT','en_US','en']).
+     * Accepts both RFC 5646 format (hyphens) and PHP locale format (underscores).
+     * Normalizes all tags to underscores for consistent matching.
      * Matching rules:
-     *  - Exact match wins over prefix match (en-US vs en).
-     *  - Prefix match: requested 'en' matches 'en-US' and 'en' (more specific supported preferred).
+     *  - Exact match wins over prefix match (en_US vs en).
+     *  - Prefix match: requested 'en' matches 'en_US' and 'en' (more specific supported preferred).
      *  - '*' matches anything.
      * @param string[] $supported
      */
@@ -359,11 +362,22 @@ final class Negotiator
     {
         $acceptLangHeader = $request->getHeaderLine('Accept-Language');
         if (empty($supported)) {
-            $supportedLocales = LitLocale::$AllAvailableLocales;
+            // Ensure we initialize LitLocale to load all available locales
+            LitLocale::init();
+            // Combine manually defined locales (like Latin) with ICU-based locales
+            $supported = array_values(array_unique(array_merge(LitLocale::$values, LitLocale::$AllAvailableLocales)));
+            // Normalize for comparison: lowercase + hyphens to underscores
+            $supportedLocales = array_map(
+                function (string $v): string {
+                    return str_replace('-', '_', strtolower($v));
+                },
+                $supported
+            );
         } else {
             $lowercaseSupported = array_map(
                 function (string $v): string {
-                    return strtolower($v);
+                    // Normalize: lowercase + hyphens to underscores for consistent matching
+                    return str_replace('-', '_', strtolower($v));
                 },
                 $supported
             );
@@ -395,13 +409,13 @@ final class Negotiator
                     if ($sup === $acc['tag']) {
                         $matchSpecificity = 100; // stronger than any prefix
                     } else {
-                        // Prefix match: 'en' matches 'en-US' (supported more specific)
-                        if (str_starts_with($sup, $acc['tag'] . '-')) {
+                        // Prefix match: 'en' matches 'en_US' (supported more specific)
+                        if (str_starts_with($sup, $acc['tag'] . '_')) {
                             // higher specificity if supported has more subtags
-                            $matchSpecificity = substr_count($sup, '-'); // en-us-x → 2, etc.
+                            $matchSpecificity = substr_count($sup, '_'); // en_us_x → 2, etc.
                         }
-                        // Or requested more specific than supported: 'en-US' vs 'en'
-                        if ($matchSpecificity < 0 && str_starts_with($acc['tag'], $sup . '-')) {
+                        // Or requested more specific than supported: 'en_US' vs 'en'
+                        if ($matchSpecificity < 0 && str_starts_with($acc['tag'], $sup . '_')) {
                             $matchSpecificity = 1; // weak match (server more generic)
                         }
                     }

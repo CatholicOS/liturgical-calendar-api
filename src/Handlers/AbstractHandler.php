@@ -42,6 +42,13 @@ abstract class AbstractHandler implements RequestHandlerInterface
     /** @var string[] */
     protected array $requestPathParams;
 
+    /**
+     * When true, the server will send Access-Control-Allow-Credentials: true
+     * and will not use wildcard for Access-Control-Allow-Origin.
+     * Required for cross-origin requests that include cookies.
+     */
+    protected bool $allowCredentials = false;
+
     abstract public function handle(ServerRequestInterface $request): ResponseInterface;
 
 
@@ -68,59 +75,6 @@ abstract class AbstractHandler implements RequestHandlerInterface
     public function setAllowedOrigins(array $origins): static
     {
         $this->allowedOrigins = $origins;
-
-        return $this;
-    }
-
-    /**
-     * @param string $originsFile The path to the file that defines the allowed origins.
-     */
-    public function setAllowedOriginsFromFile(string $originsFile): static
-    {
-        if (!file_exists($originsFile)) {
-            $projectFolder = __DIR__;
-            $level         = 0;
-            while (true) {
-                if (file_exists($projectFolder . DIRECTORY_SEPARATOR . $originsFile)) {
-                    $originsFile = $projectFolder . DIRECTORY_SEPARATOR . $originsFile;
-                    break;
-                }
-
-                // Don't look more than 4 levels up
-                if ($level > 4) {
-                    $originsFile = '';
-                    break;
-                }
-
-                $parentDir = dirname($projectFolder);
-                if ($parentDir === $projectFolder) { // reached the system root!
-                    $originsFile = '';
-                    break;
-                }
-
-                $projectFolder = $parentDir;
-                ++$level;
-            }
-        }
-
-        if ('' === $originsFile) {
-            throw new \RuntimeException("Allowed origins file '{$originsFile}' not found.");
-        }
-
-        $originsFileContents = file($originsFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (false === $originsFileContents) {
-            throw new \RuntimeException("Allowed origins file '{$originsFile}' could not be read.");
-        }
-
-        /** @var string[] $trimmedOriginsFileContents */
-        $trimmedOriginsFileContents = array_map(
-            function (string $v): string {
-                return trim($v);
-            },
-            $originsFileContents
-        );
-
-        $this->setAllowedOrigins($trimmedOriginsFileContents);
 
         return $this;
     }
@@ -204,11 +158,27 @@ abstract class AbstractHandler implements RequestHandlerInterface
     }
 
     /**
+     * Enable credentials support for cross-origin requests.
+     *
+     * When enabled, the server will send Access-Control-Allow-Credentials: true
+     * and will echo the requesting origin (not use wildcard) in Access-Control-Allow-Origin.
+     * Required for cross-origin requests that include cookies.
+     *
+     * @param bool $allow Whether to allow credentials
+     */
+    public function setAllowCredentials(bool $allow = true): static
+    {
+        $this->allowCredentials = $allow;
+        return $this;
+    }
+
+    /**
      * Handles CORS preflight OPTIONS requests
      * and sets the Access-Control-Allow-Origin header
      * based on the allowed origins set by the endpoint.
      *
-     * If the only allowed origin is '*', the header is set to allow all origins.
+     * If the only allowed origin is '*', the header is set to allow all origins
+     * (unless credentials are enabled, in which case the specific origin is echoed).
      * If the request origin is in the list of allowed origins,
      *   the header is set to allow that specific origin.
      * Otherwise, the header is set to allow only the server's domain (only same domain requests allowed).
@@ -218,45 +188,53 @@ abstract class AbstractHandler implements RequestHandlerInterface
         $originHeader = $request->getHeaderLine('Origin');
 
         if ($originHeader !== '') {
+            $allowedOrigin = null;
+
             // If setAllowedOrigins was never called, the default value is to allow all origins,
             // so as to allow for CORS requests from any origin
             if (count($this->allowedOrigins) === 1 && $this->allowedOrigins[0] === '*') {
-                return $response->withHeader('Access-Control-Allow-Origin', '*');
-            }
-
-            // If instead the allowed origins were explicitly set,
-            // then check if the request origin is in the list of allowed origins
-            if ($this->isAllowedOrigin($originHeader)) {
-                return $response->withHeader('Access-Control-Allow-Origin', $originHeader);
-            }
-
-            // If the request origin is not in the list of allowed origins,
-            // then we allow only the server's domain (same domain requests)
-            if (
-                ( isset($_SERVER['REQUEST_SCHEME']) && !empty($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] == 'https' )
-                || ( isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' )
-                || ( isset($_SERVER['SERVER_PORT']) && !empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443' )
-            ) {
-                $server_request_scheme = 'https';
+                // When credentials are enabled, we can't use wildcard - must echo the specific origin
+                $allowedOrigin = $this->allowCredentials ? $originHeader : '*';
+            } elseif ($this->isAllowedOrigin($originHeader)) {
+                // If instead the allowed origins were explicitly set,
+                // then check if the request origin is in the list of allowed origins
+                $allowedOrigin = $originHeader;
             } else {
-                $server_request_scheme = 'http';
+                // If the request origin is not in the list of allowed origins,
+                // then we allow only the server's domain (same domain requests)
+                if (
+                    ( isset($_SERVER['REQUEST_SCHEME']) && !empty($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] == 'https' )
+                    || ( isset($_SERVER['HTTPS']) && !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' )
+                    || ( isset($_SERVER['SERVER_PORT']) && !empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443' )
+                ) {
+                    $server_request_scheme = 'https';
+                } else {
+                    $server_request_scheme = 'http';
+                }
+
+                $serverPort = isset($_SERVER['SERVER_PORT']) && is_string($_SERVER['SERVER_PORT']) && !in_array($_SERVER['SERVER_PORT'], ['80', '443'])
+                    ? ':' . $_SERVER['SERVER_PORT']
+                    : '';
+
+                $allowedOrigin = $server_request_scheme . '://localhost' . $serverPort;
+                if (isset($_SERVER['SERVER_NAME']) && is_string($_SERVER['SERVER_NAME'])) {
+                    $allowedOrigin = $server_request_scheme . '://' . $_SERVER['SERVER_NAME'] . $serverPort;
+                } elseif (isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])) {
+                    // on localhost this should already include the port in typical setups / default PHP internal server
+                    $allowedOrigin = $server_request_scheme . '://' . $_SERVER['HTTP_HOST'];
+                } elseif (isset($_SERVER['SERVER_ADDR']) && is_string($_SERVER['SERVER_ADDR'])) {
+                    $allowedOrigin = $server_request_scheme . '://' . $_SERVER['SERVER_ADDR'] . $serverPort;
+                }
             }
 
-            $serverPort = isset($_SERVER['SERVER_PORT']) && is_string($_SERVER['SERVER_PORT']) && !in_array($_SERVER['SERVER_PORT'], ['80', '443'])
-                ? ':' . $_SERVER['SERVER_PORT']
-                : '';
+            $response = $response->withHeader('Access-Control-Allow-Origin', $allowedOrigin);
 
-            $origin = $server_request_scheme . '://localhost' . $serverPort;
-            if (isset($_SERVER['SERVER_NAME']) && is_string($_SERVER['SERVER_NAME'])) {
-                $origin = $server_request_scheme . '://' . $_SERVER['SERVER_NAME'] . $serverPort;
-            } elseif (isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST'])) {
-                // on localhost this should already include the port in typical setups / default PHP internal server
-                $origin = $server_request_scheme . '://' . $_SERVER['HTTP_HOST'];
-            } elseif (isset($_SERVER['SERVER_ADDR']) && is_string($_SERVER['SERVER_ADDR'])) {
-                $origin = $server_request_scheme . '://' . $_SERVER['SERVER_ADDR'] . $serverPort;
+            // Add credentials header when credentials are enabled (required for cross-origin cookie requests)
+            if ($this->allowCredentials) {
+                $response = $this->setAccessControlAllowCredentialsHeader($response);
             }
 
-            return $response->withHeader('Access-Control-Allow-Origin', $origin);
+            return $response;
         }
 
         return $response;
@@ -314,12 +292,10 @@ abstract class AbstractHandler implements RequestHandlerInterface
      *
      * @link https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Allow-Credentials
      */
-    /*
-    private function setAccessControlAllowCredentialsHeader(ResponseInterface $response): ResponseInterface
+    protected function setAccessControlAllowCredentialsHeader(ResponseInterface $response): ResponseInterface
     {
         return $response->withHeader('Access-Control-Allow-Credentials', 'true');
     }
-    */
 
     private function setAccessControlMaxAgeHeader(ResponseInterface $response): ResponseInterface
     {
@@ -347,8 +323,7 @@ abstract class AbstractHandler implements RequestHandlerInterface
                                  ->withAddedHeader('Vary', 'Access-Control-Request-Headers');
             $response = $this->setAccessControlAllowMethodsHeader($request, $response);
             $response = $this->setAccessControlAllowHeadersHeader($request, $response);
-            // Since in the current implementation of the API we do not request credentials for any requests, we should omit this header.
-            // $response = $this->setAccessControlAllowCredentialsHeader($response);
+            // Note: credentials header is handled in setAccessControlAllowOriginHeader when $allowCredentials is true
             $response = $this->setAccessControlMaxAgeHeader($response);
         } else {
             $response = $response->withHeader('Allow', implode(',', array_column($this->allowedRequestMethods, 'value')));
@@ -360,24 +335,37 @@ abstract class AbstractHandler implements RequestHandlerInterface
      * Checks if the request Origin is allowed based on the list of allowed Origins.
      *
      * This function returns true if the request Origin is allowed, false otherwise.
+     * Note: Wildcard ('*') handling is done in setAccessControlAllowOriginHeader()
+     * before this method is called.
      *
      * @return bool True if the request Origin is allowed, false otherwise.
      */
     protected function isAllowedOrigin(string $origin): bool
     {
-        return $origin !== '' && in_array($origin, $this->allowedOrigins);
+        return $origin !== '' && in_array($origin, $this->allowedOrigins, true);
     }
 
     /**
      * Checks if the request Referer is allowed based on the list of allowed Referers.
      *
      * This function returns true if the request Referer is allowed, false otherwise.
+     * Unlike isAllowedOrigin(), this method handles wildcard ('*') internally since
+     * referer validation is strict-matching-only by design (no CORS header echoing).
+     *
+     * Note: This method is currently unused but provided for future use cases
+     * where referer validation may be needed (e.g., API key restrictions).
      *
      * @return bool True if the request Referer is allowed, false otherwise.
      */
     protected function isAllowedReferer(): bool
     {
-        return in_array($_SERVER['HTTP_REFERER'], $this->allowedReferers);
+        // If wildcard is set, all referers are allowed
+        if (count($this->allowedReferers) === 1 && $this->allowedReferers[0] === '*') {
+            return true;
+        }
+
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        return $referer !== '' && in_array($referer, $this->allowedReferers, true);
     }
 
 
