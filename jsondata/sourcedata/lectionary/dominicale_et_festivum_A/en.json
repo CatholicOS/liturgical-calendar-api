@@ -29,11 +29,11 @@
     },
     "Christmas": {
         "vigil": {
-            "first_reading": "",
-            "responsorial_psalm": "",
-            "second_reading": "",
+            "first_reading": "Isaiah 62:1-5",
+            "responsorial_psalm": "Psalm 89:4-5, 16-17, 27, 29",
+            "second_reading": "Acts 13:16-17, 22-25",
             "gospel_acclamation": "",
-            "gospel": ""
+            "gospel": "Matthew 1:1-25"
         },
         "night": {
             "first_reading": "",
