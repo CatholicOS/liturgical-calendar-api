@@ -4,13 +4,14 @@
 # Lovro <development.lovro@gmail.com>, 2025.
 # "John R. D'Orazio" <priest@johnromanodorazio.com>, 2025.
 # OpenAI <noreply-mt-openai@weblate.org>, 2025.
+# Weblate Admin <admin@example.com>, 2025.
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: priest@johnromanodorazio.com\n"
 "POT-Creation-Date: 2025-12-16 13:42+0000\n"
-"PO-Revision-Date: 2025-12-01 19:37+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2025-12-19 19:23+0000\n"
+"Last-Translator: Weblate Admin <admin@example.com>\n"
 "Language-Team: Croatian <https://translate.johnromanodorazio.com/projects/"
 "liturgical-calendar/liturgical-calendar-api/api-strings/hr/>\n"
 "Language: hr\n"
@@ -54,7 +55,7 @@ msgstr ""
 #. translators: context = from the Common of the Dedication of a Church
 #: src/Enum/LitCommon.php:168
 msgid "Dedication of a Church"
-msgstr ""
+msgstr "Posveta crkve"
 
 #. translators: context = from the Common of the Blessed Virgin Mary
 #: src/Enum/LitCommon.php:170
