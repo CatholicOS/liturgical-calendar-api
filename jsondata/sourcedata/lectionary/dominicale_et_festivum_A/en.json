@@ -58,11 +58,11 @@
         }
     },
     "HolyFamily": {
-        "first_reading": "",
-        "responsorial_psalm": "",
-        "second_reading": "",
-        "gospel_acclamation": "",
-        "gospel": ""
+        "first_reading": "Sirach 3:2-6, 12-14",
+        "responsorial_psalm": "Psalm 128:1-2, 3, 4-5",
+        "second_reading": "Colossians 3:12-21|12-17",
+        "gospel_acclamation": "Colossians 3:15, 16",
+        "gospel": "Matthew 2:13-15, 19-23"
     },
     "MaryMotherOfGod": {
         "first_reading": "Numbers 6:22-27",
