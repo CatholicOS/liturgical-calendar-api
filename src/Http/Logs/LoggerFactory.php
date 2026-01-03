@@ -16,6 +16,12 @@ class LoggerFactory
     private static array $apiLoggers = [];
     private static string $logsFolder;
 
+    /**
+     * Ensure the provided path points to an existing, writable directory.
+     *
+     * @param string $logsFolder Filesystem path to validate as the logs directory.
+     * @throws \InvalidArgumentException If the path is empty, does not exist as a directory, or is not writable.
+     */
     private static function validateLogsFolder(string $logsFolder): void
     {
         if (empty($logsFolder) || !is_dir($logsFolder) || !is_writable($logsFolder)) {
@@ -23,6 +29,36 @@ class LoggerFactory
         }
     }
 
+    /**
+     * Determine the filesystem base path used to resolve the logs directory.
+     *
+     * If Router::$apiFilePath has been initialized, that value is returned;
+     * otherwise the package root directory (three levels up from this file) is returned.
+     *
+     * @return string The resolved base filesystem path for log files.
+     */
+    private static function getBasePath(): string
+    {
+        $reflection = new \ReflectionProperty(Router::class, 'apiFilePath');
+        if ($reflection->isInitialized(null)) {
+            return Router::$apiFilePath;
+        }
+        // Fall back to package root directory (3 levels up from this file)
+        return dirname(__DIR__, 3) . DIRECTORY_SEPARATOR;
+    }
+
+    /**
+     * Determine and return the filesystem path to the logs folder, creating it if necessary.
+     *
+     * If a path is provided it will be validated and used. If no path is provided the method
+     * uses a previously stored value if present; otherwise it derives a default logs directory
+     * from the package base path and attempts to create it.
+     *
+     * @param string|null $logsFolder Optional explicit logs folder path to use.
+     * @return string The resolved logs folder path.
+     * @throws \RuntimeException If the default logs directory cannot be created.
+     * @throws \InvalidArgumentException If the provided or stored logs folder is invalid or not writable.
+     */
     private static function resolveLogsFolder(?string $logsFolder): string
     {
         if (is_string($logsFolder)) {
@@ -32,7 +68,9 @@ class LoggerFactory
             $logsFolder = self::$logsFolder;
             self::validateLogsFolder($logsFolder);
         } else {
-            self::$logsFolder = Router::$apiFilePath . 'logs';
+            // Try to get path from Router, fall back to deriving from package directory
+            $basePath         = self::getBasePath();
+            self::$logsFolder = $basePath . 'logs';
             if (!is_dir(self::$logsFolder)) {
                 if (!@mkdir(self::$logsFolder, 0755, true) && !is_dir(self::$logsFolder)) {
                     throw new \RuntimeException('Failed to create logs directory: ' . self::$logsFolder);
