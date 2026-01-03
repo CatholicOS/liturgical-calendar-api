@@ -374,11 +374,11 @@ data validation via WebSocket backend.
 
 ## Git Workflow
 
-- **Main branch:** `master` (stable releases)
-- **Development branch:** `development` (active development and testing)
-- **Feature branches:** Always branch off `development`, not `master`
-- **Pull requests:** Always target `development` branch, never `master` directly
-- **Release flow:** Changes merge from feature branches → `development` → `master` after community testing
+- **Stable branch:** `stable` (stable releases)
+- **Development branch:** `development` (active development and testing, default branch)
+- **Feature branches:** Always branch off `development`, not `stable`
+- **Pull requests:** Always target `development` branch, never `stable` directly
+- **Release flow:** Changes merge from feature branches → `development` → `stable` after community testing
 - Test locally before submitting PR
 
 **Creating a feature branch:**

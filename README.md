@@ -9,11 +9,11 @@
     <tbody>
         <tr>
             <th style="text-align: center; background-color: lightgray; color: black;" scope="row">
-                <a href="https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/tree/master">stable branch</a>
+                <a href="https://github.com/Liturgical-Calendar/LiturgicalCalendarAPI/tree/stable">stable branch</a>
             </th>
             <td style="text-align:center; background-color: whitesmoke;">
-                <a href="https://www.codefactor.io/repository/github/liturgical-calendar/liturgicalcalendarapi/overview/master">
-                    <img src="https://www.codefactor.io/repository/github/liturgical-calendar/liturgicalcalendarapi/badge/master" title="CodeFactor" alt="CodeFactor" />
+                <a href="https://www.codefactor.io/repository/github/liturgical-calendar/liturgicalcalendarapi/overview/stable">
+                    <img src="https://www.codefactor.io/repository/github/liturgical-calendar/liturgicalcalendarapi/badge/stable" title="CodeFactor" alt="CodeFactor" />
                 </a>
             </td>
             <td rowspan="2" style="text-align:center; background-color: whitesmoke;">
@@ -22,8 +22,8 @@
                 </a>
             </td>
             <td style="text-align:center; background-color: whitesmoke;">
-                <a href="https://validator.swagger.io/validator?url=https://raw.githubusercontent.com/Liturgical-Calendar/LiturgicalCalendarAPI/master/jsondata/schemas/openapi.json">
-                    <img src="https://validator.swagger.io/validator?url=https://raw.githubusercontent.com/Liturgical-Calendar/LiturgicalCalendarAPI/master/jsondata/schemas/openapi.json"
+                <a href="https://validator.swagger.io/validator?url=https://raw.githubusercontent.com/Liturgical-Calendar/LiturgicalCalendarAPI/stable/jsondata/schemas/openapi.json">
+                    <img src="https://validator.swagger.io/validator?url=https://raw.githubusercontent.com/Liturgical-Calendar/LiturgicalCalendarAPI/stable/jsondata/schemas/openapi.json"
                          alt="OpenAPI validation result" />
                 </a>
             </td>
