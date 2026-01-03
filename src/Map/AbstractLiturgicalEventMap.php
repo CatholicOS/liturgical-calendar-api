@@ -19,6 +19,14 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
     protected array $eventMap = [];
 
     /**
+     * @var LiturgicalEvent[]|null Merged collection of events (indexed array).
+     *
+     * When set, this takes precedence over $eventMap for toCollection() output.
+     * Used when merging liturgical years to preserve duplicate event_keys with different dates.
+     */
+    protected ?array $mergedCollection = null;
+
+    /**
      * Adds a LiturgicalEvent to the map.
      *
      * @param LiturgicalEvent $event The event to add.
@@ -155,11 +163,14 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
     /**
      * Returns the event map as a collection.
      *
-     * @return LiturgicalEvent[] The event map.
+     * If a merged collection exists (from mergeCollections()), returns that instead.
+     * This preserves events with duplicate event_keys but different dates.
+     *
+     * @return LiturgicalEvent[] The event collection.
      */
     public function toCollection(): array
     {
-        return array_values($this->eventMap);
+        return $this->mergedCollection ?? array_values($this->eventMap);
     }
 
     /**
@@ -205,10 +216,14 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * Sorts the event map by date and liturgical grade.
      *
      * The sort order is by date, and for events with the same date, by liturgical grade.
+     * If a merged collection exists, it is also sorted.
      */
     public function sort(): void
     {
         uasort($this->eventMap, [self::class, 'compDateAndGrade']);
+        if ($this->mergedCollection !== null) {
+            usort($this->mergedCollection, [self::class, 'compDateAndGrade']);
+        }
     }
 
     /**
@@ -260,6 +275,25 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
     public function merge(AbstractLiturgicalEventMap $litEvents): void
     {
         $this->eventMap = array_merge($this->eventMap, $litEvents->getEvents());
+    }
+
+    /**
+     * Merges events as indexed collections, preserving duplicate event_keys with different dates.
+     *
+     * This method is used when combining two civil year calendars into a single liturgical year.
+     * Unlike merge(), this method preserves events with the same event_key but different dates
+     * (e.g., St. Andrew Apostle appearing on Nov 30 in both civil years of a liturgical year).
+     *
+     * The merged result is stored separately and returned by toCollection() instead of the eventMap.
+     *
+     * @param AbstractLiturgicalEventMap $litEvents The map of events to merge with the current map.
+     * @return void
+     */
+    public function mergeCollections(AbstractLiturgicalEventMap $litEvents): void
+    {
+        // Get both as indexed arrays (collections) and merge them
+        // array_merge on indexed arrays appends rather than overwrites
+        $this->mergedCollection = array_merge($this->toCollection(), $litEvents->toCollection());
     }
 
     /**
