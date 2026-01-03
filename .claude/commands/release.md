@@ -47,10 +47,10 @@ Add a new entry at the top of the changelog (after any commented unreleased sect
 
 ## Step 4: Open Pull Request
 
-Create a PR from `development` to `master`:
+Create a PR from `development` to `stable`:
 
 ```bash
-gh pr create --base master --head development --title "Release vX.Y" --body "$(cat <<'EOF'
+gh pr create --base stable --head development --title "Release vX.Y" --body "$(cat <<'EOF'
 ## Release vX.Y
 
 [Summary of changes from the changelog]
