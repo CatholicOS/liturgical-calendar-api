@@ -23,6 +23,22 @@ class LoggerFactory
         }
     }
 
+    /**
+     * Gets the base path for logs, checking if Router::$apiFilePath is initialized.
+     *
+     * Falls back to package root directory if Router hasn't been instantiated
+     * (e.g., when running in WebSocket server context).
+     */
+    private static function getBasePath(): string
+    {
+        $reflection = new \ReflectionProperty(Router::class, 'apiFilePath');
+        if ($reflection->isInitialized(null)) {
+            return Router::$apiFilePath;
+        }
+        // Fall back to package root directory (3 levels up from this file)
+        return dirname(__DIR__, 3) . DIRECTORY_SEPARATOR;
+    }
+
     private static function resolveLogsFolder(?string $logsFolder): string
     {
         if (is_string($logsFolder)) {
@@ -32,7 +48,9 @@ class LoggerFactory
             $logsFolder = self::$logsFolder;
             self::validateLogsFolder($logsFolder);
         } else {
-            self::$logsFolder = Router::$apiFilePath . 'logs';
+            // Try to get path from Router, fall back to deriving from package directory
+            $basePath         = self::getBasePath();
+            self::$logsFolder = $basePath . 'logs';
             if (!is_dir(self::$logsFolder)) {
                 if (!@mkdir(self::$logsFolder, 0755, true) && !is_dir(self::$logsFolder)) {
                     throw new \RuntimeException('Failed to create logs directory: ' . self::$logsFolder);
