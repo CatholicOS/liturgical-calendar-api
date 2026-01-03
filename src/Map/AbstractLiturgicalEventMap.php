@@ -55,9 +55,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param string $key The key of the event to retrieve.
      * @return LiturgicalEvent|null The event if found, null otherwise.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function getEvent(string $key): ?LiturgicalEvent
     {
+        $this->assertNotMerged(__METHOD__);
         return $this->eventMap[$key] ?? null;
     }
 
@@ -66,9 +68,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param DateTime $date The date of the event to retrieve.
      * @return LiturgicalEvent|null The event if found, null otherwise.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function getEventByDate(DateTime $date): ?LiturgicalEvent
     {
+        $this->assertNotMerged(__METHOD__);
         return array_find($this->eventMap, fn ($el) => $el->date == $date);
     }
 
@@ -104,9 +108,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * Returns the number of events in the map.
      *
      * @return int The number of events.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function countEvents(): int
     {
+        $this->assertNotMerged(__METHOD__);
         return count($this->eventMap);
     }
 
@@ -114,9 +120,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * Checks if the event map is empty.
      *
      * @return bool True if the map is empty, false otherwise.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function isEmpty(): bool
     {
+        $this->assertNotMerged(__METHOD__);
         return empty($this->eventMap);
     }
 
@@ -125,9 +133,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param string $key The key of the event to check.
      * @return bool True if the event exists, false otherwise.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function hasEvent(string $key): bool
     {
+        $this->assertNotMerged(__METHOD__);
         return isset($this->eventMap[$key]);
     }
 
@@ -136,9 +146,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param DateTime $date The date to check for events.
      * @return bool True if an event occurs on the given date, false otherwise.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function hasDate(DateTime $date): bool
     {
+        $this->assertNotMerged(__METHOD__);
         // important: DateTime objects cannot use strict comparison!
         return array_find($this->eventMap, fn ($el) => $el->date == $date) !== null;
     }
@@ -148,9 +160,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param string $key The key to check.
      * @return bool True if the key exists, false otherwise.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function hasKey(string $key): bool
     {
+        $this->assertNotMerged(__METHOD__);
         return array_key_exists($key, $this->eventMap);
     }
 
@@ -158,9 +172,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * Retrieves all LiturgicalEvent objects in the map.
      *
      * @return array<string,LiturgicalEvent> An array of LiturgicalEvent objects.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function getEvents(): array
     {
+        $this->assertNotMerged(__METHOD__);
         return $this->eventMap;
     }
 
@@ -172,9 +188,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param DateTime $date The date for which to retrieve events.
      * @return array<string,LiturgicalEvent> An array of events occurring on the specified date.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function getEventsByDate(DateTime $date): array
     {
+        $this->assertNotMerged(__METHOD__);
         // important: DateTime objects cannot use strict comparison!
         return array_filter($this->eventMap, fn ($el) => $el->date == $date);
     }
@@ -197,9 +215,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param DateTime $date The date for which to find the event key.
      * @return string|null The key of the event at the given date, or null if no event exists.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function getEventKeyByDate(DateTime $date): ?string
     {
+        $this->assertNotMerged(__METHOD__);
         // important: DateTime objects cannot use strict comparison!
         return array_find_key($this->eventMap, fn ($el) => $el->date == $date);
     }
@@ -227,9 +247,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * Returns an array of keys for the events in the map.
      *
      * @return string[] An array of event keys.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function getKeys(): array
     {
+        $this->assertNotMerged(__METHOD__);
         return array_keys($this->eventMap);
     }
 
@@ -328,9 +350,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * Returns an iterator for the events in the map.
      *
      * @return \Traversable<string,LiturgicalEvent> An iterator for the events in the map.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function getIterator(): \Traversable
     {
+        $this->assertNotMerged(__METHOD__);
         return new \ArrayIterator($this->eventMap);
     }
 
