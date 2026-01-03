@@ -32,12 +32,21 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
     protected ?array $mergedCollection = null;
 
     /**
+     * @var bool Whether the map has entered merged state via mergeCollections().
+     *
+     * Once true, mutation methods will throw LogicException to prevent inconsistency.
+     */
+    protected bool $isMerged = false;
+
+    /**
      * Adds a LiturgicalEvent to the map.
      *
      * @param LiturgicalEvent $event The event to add.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function addEvent(LiturgicalEvent $event): void
     {
+        $this->assertNotMerged(__METHOD__);
         $this->eventMap[$event->event_key] = $event;
     }
 
@@ -68,9 +77,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param string $key The key of the event to remove.
      * @return bool True if the event was removed, false if it did not exist.
+     * @throws \LogicException If called after mergeCollections().
      */
     public function removeEvent(string $key): bool
     {
+        $this->assertNotMerged(__METHOD__);
         if (isset($this->eventMap[$key])) {
             unset($this->eventMap[$key]);
             return true;
@@ -80,9 +91,12 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
 
     /**
      * Clears the event map.
+     *
+     * @throws \LogicException If called after mergeCollections().
      */
     public function clearEvents(): void
     {
+        $this->assertNotMerged(__METHOD__);
         $this->eventMap = [];
     }
 
@@ -199,9 +213,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * @param string $key The key of the event to update.
      * @param DateTime $date The new date for the event.
      * @return void
+     * @throws \LogicException If called after mergeCollections().
      */
     public function moveEventDateByKey(string $key, DateTime $date): void
     {
+        $this->assertNotMerged(__METHOD__);
         if (array_key_exists($key, $this->eventMap)) {
             $this->eventMap[$key]->date = $date;
         }
@@ -276,9 +292,11 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      *
      * @param AbstractLiturgicalEventMap $litEvents The map of events to merge with the current map.
      * @return void
+     * @throws \LogicException If called after mergeCollections().
      */
     public function merge(AbstractLiturgicalEventMap $litEvents): void
     {
+        $this->assertNotMerged(__METHOD__);
         $this->eventMap = array_merge($this->eventMap, $litEvents->getEvents());
     }
 
@@ -290,6 +308,7 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * (e.g., St. Andrew Apostle appearing on Nov 30 in both civil years of a liturgical year).
      *
      * The merged result is stored separately and returned by toCollection() instead of the eventMap.
+     * After this call, the map enters merged state and should not be modified further.
      *
      * @param AbstractLiturgicalEventMap $litEvents The map of events to merge with the current map.
      * @return void
@@ -302,6 +321,7 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
             array_values($this->eventMap),
             array_values($litEvents->getEvents())
         );
+        $this->isMerged         = true;
     }
 
     /**
@@ -312,5 +332,18 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
     public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->eventMap);
+    }
+
+    /**
+     * Throws an exception if the map is in merged state.
+     *
+     * @param string $method The name of the method that was called.
+     * @throws \LogicException If the map has been merged.
+     */
+    protected function assertNotMerged(string $method): void
+    {
+        if ($this->isMerged) {
+            throw new \LogicException("Cannot call {$method}() after mergeCollections() has been called");
+        }
     }
 }
