@@ -16,6 +16,12 @@ class LoggerFactory
     private static array $apiLoggers = [];
     private static string $logsFolder;
 
+    /**
+     * Ensure the provided path points to an existing, writable directory.
+     *
+     * @param string $logsFolder Filesystem path to validate as the logs directory.
+     * @throws \InvalidArgumentException If the path is empty, does not exist as a directory, or is not writable.
+     */
     private static function validateLogsFolder(string $logsFolder): void
     {
         if (empty($logsFolder) || !is_dir($logsFolder) || !is_writable($logsFolder)) {
@@ -24,10 +30,12 @@ class LoggerFactory
     }
 
     /**
-     * Gets the base path for logs, checking if Router::$apiFilePath is initialized.
+     * Determine the filesystem base path used to resolve the logs directory.
      *
-     * Falls back to package root directory if Router hasn't been instantiated
-     * (e.g., when running in WebSocket server context).
+     * If Router::$apiFilePath has been initialized, that value is returned;
+     * otherwise the package root directory (three levels up from this file) is returned.
+     *
+     * @return string The resolved base filesystem path for log files.
      */
     private static function getBasePath(): string
     {
@@ -39,6 +47,18 @@ class LoggerFactory
         return dirname(__DIR__, 3) . DIRECTORY_SEPARATOR;
     }
 
+    /**
+     * Determine and return the filesystem path to the logs folder, creating it if necessary.
+     *
+     * If a path is provided it will be validated and used. If no path is provided the method
+     * uses a previously stored value if present; otherwise it derives a default logs directory
+     * from the package base path and attempts to create it.
+     *
+     * @param string|null $logsFolder Optional explicit logs folder path to use.
+     * @return string The resolved logs folder path.
+     * @throws \RuntimeException If the default logs directory cannot be created.
+     * @throws \InvalidArgumentException If the provided or stored logs folder is invalid or not writable.
+     */
     private static function resolveLogsFolder(?string $logsFolder): string
     {
         if (is_string($logsFolder)) {
