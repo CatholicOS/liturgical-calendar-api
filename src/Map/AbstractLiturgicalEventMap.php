@@ -296,9 +296,12 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      */
     public function mergeCollections(AbstractLiturgicalEventMap $litEvents): void
     {
-        // Get both as indexed arrays (collections) and merge them
+        // Always merge from raw eventMap arrays to avoid recursion/duplication on repeated calls
         // array_merge on indexed arrays appends rather than overwrites
-        $this->mergedCollection = array_merge($this->toCollection(), $litEvents->toCollection());
+        $this->mergedCollection = array_merge(
+            array_values($this->eventMap),
+            array_values($litEvents->getEvents())
+        );
     }
 
     /**
