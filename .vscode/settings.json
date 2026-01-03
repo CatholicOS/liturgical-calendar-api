@@ -4,6 +4,7 @@
     "phpcs.ignorePatterns": [
         "**/vendor/*"
     ],
+    "phpcs.phpcbfOnSave": true,
     "json.schemas": [
         {
             "fileMatch": [

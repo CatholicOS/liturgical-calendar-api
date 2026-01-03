@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "bmewburn.vscode-intelephense-client",
-        "davidanson.vscode-markdownlint"
+        "davidanson.vscode-markdownlint",
+        "johnrdorazio.vscode-phpcs"
     ]
 }
