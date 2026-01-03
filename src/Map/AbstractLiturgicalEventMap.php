@@ -9,6 +9,11 @@ use LiturgicalCalendar\Api\DateTime;
  * Abstract class for liturgical event maps.
  *
  * Maps event keys to LiturgicalEvent objects.
+ *
+ * Lifecycle: After calling mergeCollections(), the map enters a merged state.
+ * In this state, toCollection() returns the merged collection and the map
+ * should not be modified further (addEvent, removeEvent, etc.).
+ *
  * @implements \IteratorAggregate<string,LiturgicalEvent>
  */
 abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
