@@ -1965,6 +1965,10 @@ final class LiturgicalEventCollection
      * Christmas and Lent, weekdays of Epiphany, solemnities of Lord and BVM,
      * Sundays of Advent, Lent, and Easter.
      *
+     * For the main liturgicalEvents map, this uses mergeCollections() to preserve events with
+     * the same event_key but different dates (e.g., St. Andrew Apostle on Nov 30 appearing
+     * twice when a liturgical year spans two civil years).
+     *
      * @param LiturgicalEventCollection $litEvents The LiturgicalEventCollection to merge with the current one.
      * @return void
      */
@@ -1985,7 +1989,8 @@ final class LiturgicalEventCollection
         $this->weekdaysLent->merge($litEvents->weekdaysLent);
         $this->weekdaysEpiphany->merge($litEvents->weekdaysEpiphany);
         $this->weekdaysOrdinary->merge($litEvents->weekdaysOrdinary);
-        $this->liturgicalEvents->merge($litEvents->liturgicalEvents);
+        // Use mergeCollections() to preserve duplicate event_keys with different dates
+        $this->liturgicalEvents->mergeCollections($litEvents->liturgicalEvents);
         $this->suppressedEvents->merge($litEvents->suppressedEvents);
         $this->reinstatedEvents->merge($litEvents->reinstatedEvents);
     }
