@@ -18,6 +18,7 @@ use LiturgicalCalendar\Api\Handlers\RegionalDataHandler;
 use LiturgicalCalendar\Api\Handlers\MissalsHandler;
 use LiturgicalCalendar\Api\Handlers\DecreesHandler;
 use LiturgicalCalendar\Api\Handlers\SchemasHandler;
+use LiturgicalCalendar\Api\Handlers\TemporaleHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\LoginHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\LogoutHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\MeHandler;
@@ -395,6 +396,38 @@ class Router
                 ]);
                 $this->handler = $testsHandler;
                 break;
+            case 'temporale':
+                $temporaleHandler = new TemporaleHandler($requestPathParts);
+                if (count($requestPathParts) === 0) {
+                    // /temporale - list all, create/replace, update
+                    $temporaleHandler->setAllowedRequestMethods([
+                        RequestMethod::GET,
+                        RequestMethod::POST,
+                        RequestMethod::PUT,
+                        RequestMethod::PATCH
+                    ]);
+                } elseif (count($requestPathParts) === 1) {
+                    // /temporale/{event_key} - delete specific event
+                    $temporaleHandler->setAllowedRequestMethods([RequestMethod::DELETE]);
+                } else {
+                    $temporaleHandler->setAllowedRequestMethods([]);
+                }
+                $temporaleHandler->setAllowedRequestContentTypes([
+                    RequestContentType::JSON,
+                    RequestContentType::YAML,
+                    RequestContentType::FORMDATA
+                ])->setAllowedAcceptHeaders([
+                    AcceptHeader::JSON,
+                    AcceptHeader::YAML
+                ]);
+                if (
+                    in_array($this->request->getMethod(), [ RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value ], true)
+                    && false === Router::isLocalhost()
+                ) {
+                    $temporaleHandler->setAllowedOrigins($allowedOrigins);
+                }
+                $this->handler = $temporaleHandler;
+                break;
             default:
                 $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
                 $this->emitResponse();
@@ -411,7 +444,7 @@ class Router
 
         // Apply JWT authentication middleware for protected routes
         if (
-            in_array($route, ['data', 'tests'], true)
+            in_array($route, ['data', 'tests', 'temporale'], true)
             && in_array($this->request->getMethod(), [RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value], true)
         ) {
             $pipeline->pipe(new JwtAuthMiddleware());

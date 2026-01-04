@@ -94,6 +94,31 @@ enum JsonData: string
     case MISSAL_LECTIONARY_FILE = JsonDataConstants::MISSAL_LECTIONARY_FILE;
 
     /**
+     * The folder containing Proprium de Tempore (temporale) data.
+     * Evaluates to 'jsondata/sourcedata/missals/propriumdetempore'.
+     */
+    case TEMPORALE_FOLDER = JsonDataConstants::TEMPORALE_FOLDER;
+
+    /**
+     * The file containing the Proprium de Tempore (temporale) data.
+     * Evaluates to 'jsondata/sourcedata/missals/propriumdetempore/propriumdetempore.json'.
+     */
+    case TEMPORALE_FILE = JsonDataConstants::TEMPORALE_FILE;
+
+    /**
+     * The folder containing i18n files for Proprium de Tempore (temporale).
+     * Evaluates to 'jsondata/sourcedata/missals/propriumdetempore/i18n'.
+     */
+    case TEMPORALE_I18N_FOLDER = JsonDataConstants::TEMPORALE_I18N_FOLDER;
+
+    /**
+     * The file containing the i18n data for Proprium de Tempore (temporale),
+     * with a placeholder for the locale.
+     * Evaluates to 'jsondata/sourcedata/missals/propriumdetempore/i18n/{locale}.json'.
+     */
+    case TEMPORALE_I18N_FILE = JsonDataConstants::TEMPORALE_I18N_FILE;
+
+    /**
      * The folder containing readings from the lectionary for every possible liturgical event in the General Roman Calendar.
      * Evaluates to 'jsondata/sourcedata/lectionarium'.
      */
