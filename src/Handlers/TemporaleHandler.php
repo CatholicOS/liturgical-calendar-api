@@ -12,6 +12,7 @@ use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\InternalServerErrorException;
 use LiturgicalCalendar\Api\Http\Exception\MethodNotAllowedException;
 use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
+use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Http\Negotiator;
@@ -66,6 +67,9 @@ final class TemporaleHandler extends AbstractHandler
             $files = glob($i18nFolder . '/*.json');
             if ($files !== false) {
                 foreach ($files as $file) {
+                    if (!is_readable($file)) {
+                        continue;
+                    }
                     $locale                   = basename($file, '.json');
                     $this->availableLocales[] = $locale;
                 }
@@ -220,6 +224,9 @@ final class TemporaleHandler extends AbstractHandler
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
+        // Invalidate APCu cache for the temporale file
+        Utilities::invalidateJsonFileCache($temporaleFile);
+
         // Log the operation
         $this->auditLogger->info('Temporale data replaced', [
             'operation' => 'PUT',
@@ -314,6 +321,9 @@ final class TemporaleHandler extends AbstractHandler
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
+        // Invalidate APCu cache for the temporale file
+        Utilities::invalidateJsonFileCache($temporaleFile);
+
         // Log the operation
         $this->auditLogger->info('Temporale data updated', [
             'operation' => 'PATCH',
@@ -380,6 +390,12 @@ final class TemporaleHandler extends AbstractHandler
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
+        // Invalidate APCu cache for the temporale file
+        Utilities::invalidateJsonFileCache($temporaleFile);
+
+        // Remove from all i18n files
+        $this->removeEventKeyFromI18nFiles($eventKey);
+
         // Log the operation
         $this->auditLogger->info('Temporale event deleted', [
             'operation' => 'DELETE',
@@ -393,6 +409,73 @@ final class TemporaleHandler extends AbstractHandler
             'message'   => "Temporale event '{$eventKey}' deleted successfully",
             'event_key' => $eventKey
         ], StatusCode::OK);
+    }
+
+    /**
+     * Remove an event_key from all i18n translation files.
+     *
+     * @param string $eventKey The event key to remove from translation files.
+     */
+    private function removeEventKeyFromI18nFiles(string $eventKey): void
+    {
+        $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
+        if (!is_dir($i18nFolder)) {
+            return;
+        }
+
+        foreach ($this->availableLocales as $locale) {
+            $i18nFile = strtr(JsonData::TEMPORALE_I18N_FILE->path(), ['{locale}' => $locale]);
+            if (!file_exists($i18nFile) || !is_file($i18nFile)) {
+                continue;
+            }
+
+            try {
+                $i18nData = Utilities::jsonFileToObject($i18nFile);
+            } catch (\JsonException | ServiceUnavailableException $e) {
+                $this->auditLogger->warning("Failed to read i18n file for locale '{$locale}'", [
+                    'event_key' => $eventKey,
+                    'locale'    => $locale,
+                    'file'      => $i18nFile,
+                    'error'     => $e->getMessage()
+                ]);
+                continue;
+            } catch (\Throwable $e) {
+                $this->auditLogger->warning("Unexpected error reading i18n file for locale '{$locale}'", [
+                    'event_key' => $eventKey,
+                    'locale'    => $locale,
+                    'file'      => $i18nFile,
+                    'error'     => $e->getMessage()
+                ]);
+                continue;
+            }
+
+            if (!property_exists($i18nData, $eventKey)) {
+                continue;
+            }
+
+            unset($i18nData->{$eventKey});
+
+            $jsonContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            if ($jsonContent === false) {
+                $this->auditLogger->warning("Failed to encode i18n data for locale '{$locale}'", [
+                    'event_key' => $eventKey,
+                    'locale'    => $locale
+                ]);
+                continue;
+            }
+
+            $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+            if ($result === false) {
+                $this->auditLogger->warning("Failed to write i18n file for locale '{$locale}'", [
+                    'event_key' => $eventKey,
+                    'locale'    => $locale,
+                    'file'      => $i18nFile
+                ]);
+            } else {
+                // Invalidate APCu cache for this file
+                Utilities::invalidateJsonFileCache($i18nFile);
+            }
+        }
     }
 
     /**

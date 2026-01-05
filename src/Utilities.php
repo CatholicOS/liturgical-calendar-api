@@ -599,7 +599,8 @@ class Utilities
      *
      * @param string $filename The path to the JSON file.
      * @return \stdClass The decoded JSON data as an object.
-     * @throws \JsonException If the file does not exist, is not readable, contains invalid JSON, or does not contain an object.
+     * @throws ServiceUnavailableException If the file does not exist or is not readable.
+     * @throws \JsonException If the file contains invalid JSON or does not contain an object.
      */
     public static function jsonFileToObject(string $filename): \stdClass
     {
@@ -626,6 +627,30 @@ class Utilities
         }
 
         return $jsonObj;
+    }
+
+    /**
+     * Invalidate APCu cache entries for a JSON file.
+     *
+     * Removes both object and object-array cache entries for the given file
+     * to ensure subsequent reads fetch fresh data from disk.
+     *
+     * @param string $filename The path to the JSON file whose cache should be invalidated.
+     */
+    public static function invalidateJsonFileCache(string $filename): void
+    {
+        if (!extension_loaded('apcu') || !function_exists('apcu_delete')) {
+            return;
+        }
+
+        $fileHash            = md5($filename);
+        $objectCacheKey      = 'jsoncache_object_' . $fileHash;
+        $objectArrayCacheKey = 'jsoncache_objectarray_' . $fileHash;
+        $arrayCacheKey       = 'jsoncache_array_' . $fileHash;
+
+        apcu_delete($objectCacheKey);
+        apcu_delete($objectArrayCacheKey);
+        apcu_delete($arrayCacheKey);
     }
 
     /**
