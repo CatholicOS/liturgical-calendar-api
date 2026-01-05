@@ -3242,6 +3242,45 @@
           }
         }
       },
+      "post": {
+        "tags": [
+          "Temporale"
+        ],
+        "security": [
+          {}
+        ],
+        "summary": "Retrieve all Proprium de Tempore (temporale) events (POST alias)",
+        "operationId": "temporalePOST",
+        "description": "Read-only alias of GET. Returns all temporale events with translated names based on the Accept-Language header. Temporale events are liturgical events that don't have fixed dates (Easter, Pentecost, etc.).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK: array of temporale events with translated names",
+            "headers": {
+              "X-Litcal-Temporale-Locale": {
+                "description": "The locale used for translating event names",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./PropriumDeTempore.json"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound404"
+          }
+        }
+      },
       "put": {
         "tags": [
           "Temporale"
