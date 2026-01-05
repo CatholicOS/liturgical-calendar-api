@@ -180,4 +180,57 @@ final class TemporaleTest extends ApiTestCase
         $data = json_decode((string) $response->getBody());
         $this->assertIsArray($data, 'Response should be a JSON array');
     }
+
+    public function testDeleteTemporaleWithoutAuthReturns401(): void
+    {
+        // DELETE requires JWT authentication
+        $response = self::$http->delete('/temporale/Easter', [
+            'http_errors' => false
+        ]);
+        $this->assertSame(
+            401,
+            $response->getStatusCode(),
+            'DELETE without authentication should return 401 Unauthorized'
+        );
+    }
+
+    public function testPutTemporaleWithoutAuthReturns401(): void
+    {
+        // PUT requires JWT authentication
+        $response = self::$http->put('/temporale', [
+            'http_errors' => false,
+            'json'        => []
+        ]);
+        $this->assertSame(
+            401,
+            $response->getStatusCode(),
+            'PUT without authentication should return 401 Unauthorized'
+        );
+    }
+
+    public function testPatchTemporaleWithoutAuthReturns401(): void
+    {
+        // PATCH requires JWT authentication
+        $response = self::$http->patch('/temporale', [
+            'http_errors' => false,
+            'json'        => []
+        ]);
+        $this->assertSame(
+            401,
+            $response->getStatusCode(),
+            'PATCH without authentication should return 401 Unauthorized'
+        );
+    }
+
+    public function testGetTemporaleWithUnsupportedLocaleDefaultsToLatin(): void
+    {
+        // Unsupported locale should default to Latin (la)
+        $response = self::$http->get('/temporale', [
+            'headers' => ['Accept-Language' => 'xyz']
+        ]);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $localeHeader = $response->getHeaderLine('X-Litcal-Temporale-Locale');
+        $this->assertSame('la', $localeHeader, 'Unsupported locale should default to Latin (la)');
+    }
 }
