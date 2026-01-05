@@ -255,6 +255,18 @@ final class TemporaleHandler extends AbstractHandler
 
         $existingData = Utilities::jsonFileToObjectArray($temporaleFile);
 
+        // Check for duplicate event_keys in the payload
+        /** @var array<string,bool> $seenEventKeys */
+        $seenEventKeys = [];
+        foreach ($payload as $event) {
+            if ($event instanceof \stdClass && property_exists($event, 'event_key') && is_string($event->event_key)) {
+                if (isset($seenEventKeys[$event->event_key])) {
+                    throw new ValidationException("Duplicate event_key '{$event->event_key}' in payload");
+                }
+                $seenEventKeys[$event->event_key] = true;
+            }
+        }
+
         // Build a map of existing events by event_key
         /** @var array<string,int> $eventKeyToIndex */
         $eventKeyToIndex = [];
