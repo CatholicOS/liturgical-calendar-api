@@ -480,10 +480,17 @@ class Utilities
     }
 
     /**
-     * @param int $num
-     * @param string $locale
-     * @param \NumberFormatter $formatter
-     * @param string[] $latinOrdinals
+     * Returns the ordinal representation of a number for a given locale.
+     *
+     * Handles special cases for Latin (using a lookup array) and English (using ordSuffix),
+     * and falls back to the NumberFormatter for other locales.
+     *
+     * @param int $num The number to convert to ordinal form.
+     * @param string $locale The locale to use for formatting.
+     * @param \NumberFormatter $formatter The NumberFormatter instance for non-special locales.
+     * @param string[] $latinOrdinals Array of Latin ordinal strings indexed by number.
+     * @return string The ordinal representation of the number.
+     * @throws ServiceUnavailableException If the formatter fails to format the number.
      */
     public static function getOrdinal(int $num, string $locale, \NumberFormatter $formatter, array $latinOrdinals): string
     {

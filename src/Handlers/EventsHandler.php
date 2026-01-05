@@ -52,15 +52,12 @@ final class EventsHandler extends AbstractHandler
     private EventsParams $EventsParams;
 
     /**
-     * @param string[] $requestPathParams the path parameters from the request
+     * Initializes the EventsHandler.
      *
-     * Initializes the Events class.
+     * Calls the parent constructor and initializes an empty LiturgicalEventMap
+     * to hold the liturgical events that will be populated during request handling.
      *
-     * This method will:
-     * - Initialize the instance of the Core class
-     * - Set the request path parts
-     * - Initialize a new EventsParams object
-     * - Initialize the WorldDioceses object from the world_dioceses.json file
+     * @param string[] $requestPathParams The path parameters from the request.
      */
     public function __construct(array $requestPathParams = [])
     {

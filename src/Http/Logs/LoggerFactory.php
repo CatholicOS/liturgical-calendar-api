@@ -84,10 +84,10 @@ class LoggerFactory
     /**
      * Creates (or retrieves if already created) a Monolog logger instance for the API.
      *
-     * @param bool $debug Whether to enable debug level logging.
-     * @param string $logName The base name for the log files (e.g., 'api' will create 'api.log', and 'api.json.log' if $includeJsonHandler is true).
+     * @param string $logName The base name for the log files (e.g., 'api' creates 'api.log', and 'api.json.log' if $includeJsonHandler is true).
      * @param string|null $logsFolder The folder where log files will be stored. If null, defaults to 'logs' directory in project root.
      * @param int $maxFiles The maximum number of log files to keep (for rotation).
+     * @param bool $debug Whether to enable debug level logging.
      * @param bool $includeJsonHandler Whether to include a JSON formatted log handler.
      * @param bool $includeProcessors Whether to include processors for adding extra context to log entries.
      * @return Logger The configured Monolog logger instance.
