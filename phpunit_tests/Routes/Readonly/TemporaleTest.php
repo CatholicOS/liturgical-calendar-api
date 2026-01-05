@@ -6,6 +6,11 @@ namespace LiturgicalCalendar\Tests\Routes\Readonly;
 
 use LiturgicalCalendar\Tests\ApiTestCase;
 
+/**
+ * Integration tests for the /temporale API endpoint.
+ *
+ * @group slow
+ */
 final class TemporaleTest extends ApiTestCase
 {
     public function testGetTemporaleReturnsJson(): void
