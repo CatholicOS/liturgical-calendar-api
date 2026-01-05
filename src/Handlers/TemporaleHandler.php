@@ -405,6 +405,9 @@ final class TemporaleHandler extends AbstractHandler
         if (!property_exists($event, 'event_key') || !is_string($event->event_key)) {
             throw new ValidationException('Event must have a string event_key property');
         }
+        if ($event->event_key === '') {
+            throw new ValidationException('Event event_key cannot be empty');
+        }
 
         if (!property_exists($event, 'grade') || !is_int($event->grade)) {
             throw new ValidationException('Event must have an integer grade property');

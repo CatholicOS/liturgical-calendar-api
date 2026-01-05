@@ -41,6 +41,39 @@ final class TemporaleTest extends ApiTestCase
     }
 
     /**
+     * Test that authenticated PUT with empty event_key returns 400.
+     */
+    public function testAuthenticatedPutWithEmptyEventKeyReturns400(): void
+    {
+        $token = self::getJwtToken();
+        $this->assertNotNull($token, 'Failed to obtain JWT token for authenticated test');
+
+        $invalidPayload = [
+            [
+                'event_key' => '',
+                'grade'     => 3,
+                'type'      => 'mobile',
+                'color'     => ['white']
+            ]
+        ];
+
+        $response = self::$http->put('/temporale', [
+            'headers'     => array_merge(
+                self::authHeaders($token),
+                ['Content-Type' => 'application/json']
+            ),
+            'body'        => json_encode($invalidPayload),
+            'http_errors' => false
+        ]);
+
+        $this->assertSame(
+            400,
+            $response->getStatusCode(),
+            'PUT with empty event_key should return 400'
+        );
+    }
+
+    /**
      * Test that authenticated PUT with invalid event structure returns 400.
      */
     public function testAuthenticatedPutWithInvalidEventReturns400(): void
