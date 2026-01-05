@@ -100,6 +100,12 @@ final class TemporaleTest extends ApiTestCase
 
         $data = json_decode((string) $response->getBody());
         $this->assertIsArray($data);
+
+        // Validate translated content
+        $easter = array_find($data, fn($event) => $event->event_key === 'Easter');
+        $this->assertNotNull($easter, 'Easter event should exist');
+        $this->assertObjectHasProperty('name', $easter, 'Event should have translated name');
+        $this->assertIsString($easter->name, 'name should be a string');
     }
 
     public function testGetTemporaleWithItalianLocale(): void
@@ -111,6 +117,15 @@ final class TemporaleTest extends ApiTestCase
 
         $localeHeader = $response->getHeaderLine('X-Litcal-Temporale-Locale');
         $this->assertSame('it', $localeHeader, 'Locale header should be "it"');
+
+        $data = json_decode((string) $response->getBody());
+        $this->assertIsArray($data);
+
+        // Validate translated content
+        $easter = array_find($data, fn($event) => $event->event_key === 'Easter');
+        $this->assertNotNull($easter, 'Easter event should exist');
+        $this->assertObjectHasProperty('name', $easter, 'Event should have translated name');
+        $this->assertIsString($easter->name, 'name should be a string');
     }
 
     public function testGetTemporaleContainsKnownEvents(): void
