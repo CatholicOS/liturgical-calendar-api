@@ -214,7 +214,7 @@ final class TemporaleHandler extends AbstractHandler
             throw new ValidationException('Failed to encode temporale data as JSON');
         }
 
-        $result = file_put_contents($temporaleFile, $jsonContent);
+        $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
             throw new ValidationException('Failed to write temporale data to file');
         }
@@ -308,7 +308,7 @@ final class TemporaleHandler extends AbstractHandler
             throw new ValidationException('Failed to encode temporale data as JSON');
         }
 
-        $result = file_put_contents($temporaleFile, $jsonContent);
+        $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
             throw new ValidationException('Failed to write temporale data to file');
         }
@@ -374,7 +374,7 @@ final class TemporaleHandler extends AbstractHandler
             throw new ValidationException('Failed to encode temporale data as JSON');
         }
 
-        $result = file_put_contents($temporaleFile, $jsonContent);
+        $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
             throw new ValidationException('Failed to write temporale data to file');
         }
