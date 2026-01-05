@@ -17,6 +17,53 @@ use LiturgicalCalendar\Tests\ApiTestCase;
 final class TemporaleTest extends ApiTestCase
 {
     /**
+     * Test that unauthenticated DELETE returns 401.
+     */
+    public function testDeleteTemporaleWithoutAuthReturns401(): void
+    {
+        $response = self::$http->delete('/temporale/Easter', [
+            'http_errors' => false
+        ]);
+        $this->assertSame(
+            401,
+            $response->getStatusCode(),
+            'DELETE without authentication should return 401 Unauthorized'
+        );
+    }
+
+    /**
+     * Test that unauthenticated PUT returns 401.
+     */
+    public function testPutTemporaleWithoutAuthReturns401(): void
+    {
+        $response = self::$http->put('/temporale', [
+            'http_errors' => false,
+            'json'        => []
+        ]);
+        $this->assertSame(
+            401,
+            $response->getStatusCode(),
+            'PUT without authentication should return 401 Unauthorized'
+        );
+    }
+
+    /**
+     * Test that unauthenticated PATCH returns 401.
+     */
+    public function testPatchTemporaleWithoutAuthReturns401(): void
+    {
+        $response = self::$http->patch('/temporale', [
+            'http_errors' => false,
+            'json'        => []
+        ]);
+        $this->assertSame(
+            401,
+            $response->getStatusCode(),
+            'PATCH without authentication should return 401 Unauthorized'
+        );
+    }
+
+    /**
      * Test that authenticated PUT with invalid payload (not an array) returns 400.
      */
     public function testAuthenticatedPutWithInvalidPayloadReturns400(): void

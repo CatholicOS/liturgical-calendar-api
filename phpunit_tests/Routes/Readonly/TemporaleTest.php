@@ -181,47 +181,6 @@ final class TemporaleTest extends ApiTestCase
         $this->assertIsArray($data, 'Response should be a JSON array');
     }
 
-    public function testDeleteTemporaleWithoutAuthReturns401(): void
-    {
-        // DELETE requires JWT authentication
-        $response = self::$http->delete('/temporale/Easter', [
-            'http_errors' => false
-        ]);
-        $this->assertSame(
-            401,
-            $response->getStatusCode(),
-            'DELETE without authentication should return 401 Unauthorized'
-        );
-    }
-
-    public function testPutTemporaleWithoutAuthReturns401(): void
-    {
-        // PUT requires JWT authentication
-        $response = self::$http->put('/temporale', [
-            'http_errors' => false,
-            'json'        => []
-        ]);
-        $this->assertSame(
-            401,
-            $response->getStatusCode(),
-            'PUT without authentication should return 401 Unauthorized'
-        );
-    }
-
-    public function testPatchTemporaleWithoutAuthReturns401(): void
-    {
-        // PATCH requires JWT authentication
-        $response = self::$http->patch('/temporale', [
-            'http_errors' => false,
-            'json'        => []
-        ]);
-        $this->assertSame(
-            401,
-            $response->getStatusCode(),
-            'PATCH without authentication should return 401 Unauthorized'
-        );
-    }
-
     public function testGetTemporaleWithUnsupportedLocaleDefaultsToLatin(): void
     {
         // Unsupported locale should default to Latin (la)
