@@ -9,6 +9,7 @@ use LiturgicalCalendar\Api\Handlers\Auth\ClientIpTrait;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
+use LiturgicalCalendar\Api\Http\Exception\InternalServerErrorException;
 use LiturgicalCalendar\Api\Http\Exception\MethodNotAllowedException;
 use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
@@ -216,7 +217,7 @@ final class TemporaleHandler extends AbstractHandler
 
         $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
-            throw new ValidationException('Failed to write temporale data to file');
+            throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
         // Log the operation
@@ -310,7 +311,7 @@ final class TemporaleHandler extends AbstractHandler
 
         $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
-            throw new ValidationException('Failed to write temporale data to file');
+            throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
         // Log the operation
@@ -376,7 +377,7 @@ final class TemporaleHandler extends AbstractHandler
 
         $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
-            throw new ValidationException('Failed to write temporale data to file');
+            throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
         // Log the operation

@@ -46,6 +46,7 @@ final class TemporaleTest extends ApiTestCase
 
         $data = json_decode((string) $response->getBody());
         $this->assertIsArray($data);
+        $this->assertNotEmpty($data, 'Expected at least one event in response');
 
         // Check at least one event has the expected structure
         $event = $data[0];
