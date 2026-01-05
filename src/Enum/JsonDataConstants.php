@@ -92,6 +92,31 @@ class JsonDataConstants
     public const MISSAL_LECTIONARY_FILE = JsonDataConstants::MISSAL_LECTIONARY_FOLDER . '/{locale}.json';
 
     /**
+     * The folder containing Proprium de Tempore (temporale) data.
+     * Evaluates to 'jsondata/sourcedata/missals/propriumdetempore'.
+     */
+    public const TEMPORALE_FOLDER = JsonDataConstants::MISSALS_FOLDER . '/propriumdetempore';
+
+    /**
+     * The file containing the Proprium de Tempore (temporale) data.
+     * Evaluates to 'jsondata/sourcedata/missals/propriumdetempore/propriumdetempore.json'.
+     */
+    public const TEMPORALE_FILE = JsonDataConstants::TEMPORALE_FOLDER . '/propriumdetempore.json';
+
+    /**
+     * The folder containing i18n files for Proprium de Tempore (temporale).
+     * Evaluates to 'jsondata/sourcedata/missals/propriumdetempore/i18n'.
+     */
+    public const TEMPORALE_I18N_FOLDER = JsonDataConstants::TEMPORALE_FOLDER . '/i18n';
+
+    /**
+     * The file containing the i18n data for Proprium de Tempore (temporale),
+     * with a placeholder for the locale.
+     * Evaluates to 'jsondata/sourcedata/missals/propriumdetempore/i18n/{locale}.json'.
+     */
+    public const TEMPORALE_I18N_FILE = JsonDataConstants::TEMPORALE_I18N_FOLDER . '/{locale}.json';
+
+    /**
      * The folder containing readings from the lectionary for every possible liturgical event in the General Roman Calendar.
      * Evaluates to 'jsondata/sourcedata/lectionarium'.
      */
