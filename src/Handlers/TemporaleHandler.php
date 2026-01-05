@@ -410,6 +410,11 @@ final class TemporaleHandler extends AbstractHandler
             throw new ValidationException('Event must have an integer grade property');
         }
 
+        // Validate grade is within canonical range (0=WEEKDAY to 7=HIGHER_SOLEMNITY)
+        if ($event->grade < 0 || $event->grade > 7) {
+            throw new ValidationException("Event grade must be between 0 and 7, got {$event->grade}");
+        }
+
         if (!property_exists($event, 'type') || !is_string($event->type)) {
             throw new ValidationException('Event must have a string type property');
         }
