@@ -380,6 +380,9 @@ final class TemporaleHandler extends AbstractHandler
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
+        // Remove from all i18n files
+        $this->removeEventKeyFromI18nFiles($eventKey);
+
         // Log the operation
         $this->auditLogger->info('Temporale event deleted', [
             'operation' => 'DELETE',
@@ -393,6 +396,51 @@ final class TemporaleHandler extends AbstractHandler
             'message'   => "Temporale event '{$eventKey}' deleted successfully",
             'event_key' => $eventKey
         ], StatusCode::OK);
+    }
+
+    /**
+     * Remove an event_key from all i18n translation files.
+     *
+     * @param string $eventKey The event key to remove from translation files.
+     */
+    private function removeEventKeyFromI18nFiles(string $eventKey): void
+    {
+        $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
+        if (!is_dir($i18nFolder)) {
+            return;
+        }
+
+        foreach ($this->availableLocales as $locale) {
+            $i18nFile = strtr(JsonData::TEMPORALE_I18N_FILE->path(), ['{locale}' => $locale]);
+            if (!file_exists($i18nFile)) {
+                continue;
+            }
+
+            $i18nData = Utilities::jsonFileToObject($i18nFile);
+            if (!property_exists($i18nData, $eventKey)) {
+                continue;
+            }
+
+            unset($i18nData->{$eventKey});
+
+            $jsonContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            if ($jsonContent === false) {
+                $this->auditLogger->warning("Failed to encode i18n data for locale '{$locale}'", [
+                    'event_key' => $eventKey,
+                    'locale'    => $locale
+                ]);
+                continue;
+            }
+
+            $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+            if ($result === false) {
+                $this->auditLogger->warning("Failed to write i18n file for locale '{$locale}'", [
+                    'event_key' => $eventKey,
+                    'locale'    => $locale,
+                    'file'      => $i18nFile
+                ]);
+            }
+        }
     }
 
     /**
