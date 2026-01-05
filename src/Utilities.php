@@ -599,7 +599,8 @@ class Utilities
      *
      * @param string $filename The path to the JSON file.
      * @return \stdClass The decoded JSON data as an object.
-     * @throws \JsonException If the file does not exist, is not readable, contains invalid JSON, or does not contain an object.
+     * @throws ServiceUnavailableException If the file does not exist or is not readable.
+     * @throws \JsonException If the file contains invalid JSON or does not contain an object.
      */
     public static function jsonFileToObject(string $filename): \stdClass
     {
@@ -642,11 +643,14 @@ class Utilities
             return;
         }
 
-        $objectCacheKey      = 'jsoncache_object_' . md5($filename);
-        $objectArrayCacheKey = 'jsoncache_objectarray_' . md5($filename);
+        $fileHash            = md5($filename);
+        $objectCacheKey      = 'jsoncache_object_' . $fileHash;
+        $objectArrayCacheKey = 'jsoncache_objectarray_' . $fileHash;
+        $arrayCacheKey       = 'jsoncache_array_' . $fileHash;
 
         apcu_delete($objectCacheKey);
         apcu_delete($objectArrayCacheKey);
+        apcu_delete($arrayCacheKey);
     }
 
     /**

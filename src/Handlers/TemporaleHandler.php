@@ -12,6 +12,7 @@ use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\InternalServerErrorException;
 use LiturgicalCalendar\Api\Http\Exception\MethodNotAllowedException;
 use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
+use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Http\Negotiator;
@@ -428,7 +429,26 @@ final class TemporaleHandler extends AbstractHandler
                 continue;
             }
 
-            $i18nData = Utilities::jsonFileToObject($i18nFile);
+            try {
+                $i18nData = Utilities::jsonFileToObject($i18nFile);
+            } catch (\JsonException | ServiceUnavailableException $e) {
+                $this->auditLogger->warning("Failed to read i18n file for locale '{$locale}'", [
+                    'event_key' => $eventKey,
+                    'locale'    => $locale,
+                    'file'      => $i18nFile,
+                    'error'     => $e->getMessage()
+                ]);
+                continue;
+            } catch (\Throwable $e) {
+                $this->auditLogger->warning("Unexpected error reading i18n file for locale '{$locale}'", [
+                    'event_key' => $eventKey,
+                    'locale'    => $locale,
+                    'file'      => $i18nFile,
+                    'error'     => $e->getMessage()
+                ]);
+                continue;
+            }
+
             if (!property_exists($i18nData, $eventKey)) {
                 continue;
             }
