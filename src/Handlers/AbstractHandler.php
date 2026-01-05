@@ -80,11 +80,13 @@ abstract class AbstractHandler implements RequestHandlerInterface
     }
 
     /**
-     * Sets the allowed referers for Cross-Origin Resource Sharing (CORS).
+     * Sets the allowed referers for API access control.
      *
      * This function updates the list of referers that are permitted to access
-     * resources on the server. The allowed referers are used to determine which
-     * Referer headers are permitted in CORS requests.
+     * resources on the server. This can be used for additional access control
+     * beyond CORS (e.g., API key restrictions based on referring page).
+     *
+     * Note: Referer validation is not part of CORS; it's a separate access control mechanism.
      *
      * @param string[] $referers An array of allowed referer URLs.
      */
@@ -96,11 +98,13 @@ abstract class AbstractHandler implements RequestHandlerInterface
     }
 
     /**
-     * Sets the allowed accept headers for Cross-Origin Resource Sharing (CORS).
+     * Sets the allowed Accept headers for content negotiation.
      *
-     * This function updates the list of accept headers that are permitted to access
-     * resources on the server. The allowed accept headers are used to determine which
-     * Accept headers are permitted in CORS requests.
+     * This function updates the list of Accept header values (MIME types) that the
+     * endpoint supports for response content. Used to determine which response
+     * formats (e.g., JSON, YAML, XML) the endpoint can produce.
+     *
+     * Note: This is for content negotiation, not CORS.
      *
      * @param AcceptHeader[] $acceptHeaders An array of allowed accept headers.
      */
@@ -119,7 +123,7 @@ abstract class AbstractHandler implements RequestHandlerInterface
     /**
      * Sets the allowed request methods, determining whether the endpoint will be readonly or read/write capable.
      *
-     * Restrict the list of request methods that an incoming client `HTTP Rrequest` is permitted to use
+     * Restricts the list of HTTP methods that incoming requests are permitted to use
      * to access resources on the server.
      *
      * @param RequestMethod[] $requestMethods An array of allowed request methods.
@@ -137,11 +141,13 @@ abstract class AbstractHandler implements RequestHandlerInterface
     }
 
     /**
-     * Sets the allowed request content types for Cross-Origin Resource Sharing (CORS).
+     * Sets the allowed request Content-Type headers for request body validation.
      *
-     * This function updates the list of request content types that are permitted to access
-     * resources on the server. The allowed request content types are used to determine which
-     * request content types are permitted in CORS requests.
+     * This function updates the list of Content-Type values that the endpoint accepts
+     * for request bodies. Used to validate that incoming requests with bodies (POST, PUT, PATCH)
+     * use a supported content format (e.g., JSON, YAML, form data).
+     *
+     * Note: This is for request body validation, not CORS.
      *
      * @param RequestContentType[] $requestContentTypes An array of allowed request content types.
      */
@@ -173,9 +179,11 @@ abstract class AbstractHandler implements RequestHandlerInterface
     }
 
     /**
-     * Handles CORS preflight OPTIONS requests
-     * and sets the Access-Control-Allow-Origin header
-     * based on the allowed origins set by the endpoint.
+     * Sets the Access-Control-Allow-Origin header for non-preflight requests.
+     *
+     * Note: CORS preflight OPTIONS requests are handled separately by handlePreflightRequest().
+     * This method is called for regular requests (GET, POST, PUT, PATCH, DELETE, etc.)
+     * to set the appropriate CORS origin header.
      *
      * If the only allowed origin is '*', the header is set to allow all origins
      * (unless credentials are enabled, in which case the specific origin is echoed).
@@ -241,9 +249,10 @@ abstract class AbstractHandler implements RequestHandlerInterface
     }
 
     /**
-     * Handles CORS preflight OPTIONS requests
-     * and sets the Access-Control-Allow-Methods header,
-     * if the request has the Access-Control-Request-Method header set.
+     * Sets the Access-Control-Allow-Methods header for CORS preflight responses.
+     *
+     * This is a helper method called by handlePreflightRequest(). It sets the header
+     * only if the request includes an Access-Control-Request-Method header.
      */
     private function setAccessControlAllowMethodsHeader(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
@@ -255,9 +264,11 @@ abstract class AbstractHandler implements RequestHandlerInterface
     }
 
     /**
-     * Handles CORS preflight OPTIONS requests
-     * and sets the Access-Control-Allow-Headers header,
-     * if the request has the Access-Control-Request-Headers header set.
+     * Sets the Access-Control-Allow-Headers header for CORS preflight responses.
+     *
+     * This is a helper method called by handlePreflightRequest(). It sets the header
+     * only if the request includes an Access-Control-Request-Headers header, echoing
+     * back only the subset of requested headers that are allowed.
      */
     private function setAccessControlAllowHeadersHeader(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
@@ -297,11 +308,28 @@ abstract class AbstractHandler implements RequestHandlerInterface
         return $response->withHeader('Access-Control-Allow-Credentials', 'true');
     }
 
+    /**
+     * Sets the Access-Control-Max-Age header for CORS preflight caching.
+     */
     private function setAccessControlMaxAgeHeader(ResponseInterface $response): ResponseInterface
     {
         return $response->withHeader('Access-Control-Max-Age', '86400'); // cache for 1 day
     }
 
+    /**
+     * Handles CORS preflight OPTIONS requests and regular OPTIONS requests.
+     *
+     * For CORS preflight requests (OPTIONS with Origin and Access-Control-Request-Method headers),
+     * this method returns a 204 No Content response with appropriate CORS headers:
+     * - Access-Control-Allow-Origin
+     * - Access-Control-Allow-Methods
+     * - Access-Control-Allow-Headers
+     * - Access-Control-Max-Age
+     * - Vary headers for cache optimization
+     *
+     * For regular OPTIONS requests, it returns a 200 OK with an Allow header listing
+     * the HTTP methods supported by the endpoint.
+     */
     protected function handlePreflightRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         // if method == OPTIONS and "Origin" in headers and "Access-Control-Request-Method" in headers:
