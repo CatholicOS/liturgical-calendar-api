@@ -66,6 +66,9 @@ final class TemporaleHandler extends AbstractHandler
             $files = glob($i18nFolder . '/*.json');
             if ($files !== false) {
                 foreach ($files as $file) {
+                    if (!is_readable($file)) {
+                        continue;
+                    }
                     $locale                   = basename($file, '.json');
                     $this->availableLocales[] = $locale;
                 }
@@ -220,6 +223,9 @@ final class TemporaleHandler extends AbstractHandler
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
+        // Invalidate APCu cache for the temporale file
+        Utilities::invalidateJsonFileCache($temporaleFile);
+
         // Log the operation
         $this->auditLogger->info('Temporale data replaced', [
             'operation' => 'PUT',
@@ -314,6 +320,9 @@ final class TemporaleHandler extends AbstractHandler
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
+        // Invalidate APCu cache for the temporale file
+        Utilities::invalidateJsonFileCache($temporaleFile);
+
         // Log the operation
         $this->auditLogger->info('Temporale data updated', [
             'operation' => 'PATCH',
@@ -380,6 +389,9 @@ final class TemporaleHandler extends AbstractHandler
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
 
+        // Invalidate APCu cache for the temporale file
+        Utilities::invalidateJsonFileCache($temporaleFile);
+
         // Remove from all i18n files
         $this->removeEventKeyFromI18nFiles($eventKey);
 
@@ -439,6 +451,9 @@ final class TemporaleHandler extends AbstractHandler
                     'locale'    => $locale,
                     'file'      => $i18nFile
                 ]);
+            } else {
+                // Invalidate APCu cache for this file
+                Utilities::invalidateJsonFileCache($i18nFile);
             }
         }
     }

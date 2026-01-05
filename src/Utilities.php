@@ -629,6 +629,27 @@ class Utilities
     }
 
     /**
+     * Invalidate APCu cache entries for a JSON file.
+     *
+     * Removes both object and object-array cache entries for the given file
+     * to ensure subsequent reads fetch fresh data from disk.
+     *
+     * @param string $filename The path to the JSON file whose cache should be invalidated.
+     */
+    public static function invalidateJsonFileCache(string $filename): void
+    {
+        if (!extension_loaded('apcu') || !function_exists('apcu_delete')) {
+            return;
+        }
+
+        $objectCacheKey      = 'jsoncache_object_' . md5($filename);
+        $objectArrayCacheKey = 'jsoncache_objectarray_' . md5($filename);
+
+        apcu_delete($objectCacheKey);
+        apcu_delete($objectArrayCacheKey);
+    }
+
+    /**
      * Reads a JSON file and converts its contents to an array of objects.
      *
      * @param string $filename The path to the JSON file.
