@@ -425,7 +425,7 @@ final class TemporaleHandler extends AbstractHandler
 
         foreach ($this->availableLocales as $locale) {
             $i18nFile = strtr(JsonData::TEMPORALE_I18N_FILE->path(), ['{locale}' => $locale]);
-            if (!file_exists($i18nFile)) {
+            if (!file_exists($i18nFile) || !is_file($i18nFile)) {
                 continue;
             }
 
