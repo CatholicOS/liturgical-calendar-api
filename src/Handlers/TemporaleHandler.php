@@ -3,6 +3,7 @@
 namespace LiturgicalCalendar\Api\Handlers;
 
 use LiturgicalCalendar\Api\Enum\JsonData;
+use LiturgicalCalendar\Api\Enum\LitColor;
 use LiturgicalCalendar\Api\Enum\LitLocale;
 use LiturgicalCalendar\Api\Handlers\Auth\ClientIpTrait;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
@@ -189,12 +190,22 @@ final class TemporaleHandler extends AbstractHandler
             throw new ValidationException('Request body must be an array of temporale events');
         }
 
-        // Validate each event in the payload
+        // Validate each event in the payload and check for duplicate event_keys
+        /** @var array<string,bool> $seenEventKeys */
+        $seenEventKeys = [];
         foreach ($payload as $event) {
             if (!( $event instanceof \stdClass )) {
                 throw new ValidationException('Each event must be an object');
             }
             $this->validateTemporaleEvent($event);
+
+            // Check for duplicate event_keys (event_key is validated as string by validateTemporaleEvent)
+            /** @var string $eventKey */
+            $eventKey = $event->event_key;
+            if (isset($seenEventKeys[$eventKey])) {
+                throw new ValidationException("Duplicate event_key '{$eventKey}' in payload");
+            }
+            $seenEventKeys[$eventKey] = true;
         }
 
         $temporaleFile = JsonData::TEMPORALE_FILE->path();
@@ -399,9 +410,13 @@ final class TemporaleHandler extends AbstractHandler
             throw new ValidationException('Event must have an array color property');
         }
 
+        $validColors = LitColor::values();
         foreach ($event->color as $color) {
             if (!is_string($color)) {
                 throw new ValidationException('Each color must be a string');
+            }
+            if (!in_array($color, $validColors, true)) {
+                throw new ValidationException("Invalid color '{$color}'. Valid colors are: " . implode(', ', $validColors));
             }
         }
     }
