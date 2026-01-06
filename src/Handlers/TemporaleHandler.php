@@ -411,7 +411,7 @@ final class TemporaleHandler extends AbstractHandler
             }
         }
 
-        $payload = $this->parseBodyPayload($request, true);
+        $payload = $this->parseBodyPayload($request, false);
 
         if (!( $payload instanceof \stdClass )) {
             throw new ValidationException('Request body must be an object with events, locales, and i18n properties');
@@ -558,7 +558,7 @@ final class TemporaleHandler extends AbstractHandler
      */
     private function handlePatchRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $payload = $this->parseBodyPayload($request, true);
+        $payload = $this->parseBodyPayload($request, false);
 
         if (!( $payload instanceof \stdClass )) {
             throw new ValidationException('Request body must be an object with events property');
