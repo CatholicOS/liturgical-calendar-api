@@ -108,6 +108,16 @@ final class TemporaleHandler extends AbstractHandler
                     }
                     $locale                             = basename($file, '.json');
                     $this->availableLectionaryLocales[] = $locale;
+
+                    // Diagnostic: verify locale exists in Year B and C folders
+                    $yearBFile = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_B_FILE->path(), ['{locale}' => $locale]);
+                    $yearCFile = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_C_FILE->path(), ['{locale}' => $locale]);
+                    if (!file_exists($yearBFile)) {
+                        $this->auditLogger->warning("Lectionary locale '{$locale}' exists in Year A but missing in Year B");
+                    }
+                    if (!file_exists($yearCFile)) {
+                        $this->auditLogger->warning("Lectionary locale '{$locale}' exists in Year A but missing in Year C");
+                    }
                 }
             }
         }
@@ -505,8 +515,14 @@ final class TemporaleHandler extends AbstractHandler
         if (!property_exists($payload, 'events') || !is_array($payload->events)) {
             throw new ValidationException('Payload must have an "events" array property');
         }
+        if (count($payload->events) === 0) {
+            throw new ValidationException('Events array must contain at least one event');
+        }
         if (!property_exists($payload, 'locales') || !is_array($payload->locales)) {
             throw new ValidationException('Payload must have a "locales" array property');
+        }
+        if (count($payload->locales) === 0) {
+            throw new ValidationException('Locales array must contain at least one locale');
         }
         if (!property_exists($payload, 'i18n') || !( $payload->i18n instanceof \stdClass )) {
             throw new ValidationException('Payload must have an "i18n" object property');
