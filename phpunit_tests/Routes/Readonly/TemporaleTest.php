@@ -82,16 +82,18 @@ final class TemporaleTest extends ApiTestCase
         $advent1 = array_find($data->events, fn($event) => $event->event_key === 'Advent1');
         $this->assertNotNull($advent1, 'Advent1 event should exist');
 
-        // Check for lectionary readings in all three year cycles
-        $this->assertObjectHasProperty('annum_a', $advent1, 'Advent1 should have annum_a (Year A) readings');
-        $this->assertObjectHasProperty('annum_b', $advent1, 'Advent1 should have annum_b (Year B) readings');
-        $this->assertObjectHasProperty('annum_c', $advent1, 'Advent1 should have annum_c (Year C) readings');
+        // Check for readings property containing all three year cycles
+        $this->assertObjectHasProperty('readings', $advent1, 'Advent1 should have readings property');
+        $this->assertIsObject($advent1->readings, 'readings should be an object');
+        $this->assertObjectHasProperty('annum_a', $advent1->readings, 'readings should have annum_a (Year A)');
+        $this->assertObjectHasProperty('annum_b', $advent1->readings, 'readings should have annum_b (Year B)');
+        $this->assertObjectHasProperty('annum_c', $advent1->readings, 'readings should have annum_c (Year C)');
 
         // Verify the structure of one year's readings
-        $this->assertIsObject($advent1->annum_a, 'annum_a should be an object');
-        $this->assertObjectHasProperty('first_reading', $advent1->annum_a, 'Year A should have first_reading');
-        $this->assertObjectHasProperty('responsorial_psalm', $advent1->annum_a, 'Year A should have responsorial_psalm');
-        $this->assertObjectHasProperty('gospel', $advent1->annum_a, 'Year A should have gospel');
+        $this->assertIsObject($advent1->readings->annum_a, 'annum_a should be an object');
+        $this->assertObjectHasProperty('first_reading', $advent1->readings->annum_a, 'Year A should have first_reading');
+        $this->assertObjectHasProperty('responsorial_psalm', $advent1->readings->annum_a, 'Year A should have responsorial_psalm');
+        $this->assertObjectHasProperty('gospel', $advent1->readings->annum_a, 'Year A should have gospel');
     }
 
     public function testGetTemporaleLectionaryReadingsStructure(): void
@@ -106,10 +108,11 @@ final class TemporaleTest extends ApiTestCase
         // Find Advent1 which should have straightforward readings
         $advent1 = array_find($data->events, fn($event) => $event->event_key === 'Advent1');
         $this->assertNotNull($advent1, 'Advent1 event should exist');
-        $this->assertObjectHasProperty('annum_a', $advent1, 'Advent1 should have Year A readings');
+        $this->assertObjectHasProperty('readings', $advent1, 'Advent1 should have readings property');
+        $this->assertObjectHasProperty('annum_a', $advent1->readings, 'readings should have Year A');
 
         // Check all expected reading properties
-        $yearA = $advent1->annum_a;
+        $yearA = $advent1->readings->annum_a;
         $this->assertObjectHasProperty('first_reading', $yearA, 'Should have first_reading');
         $this->assertObjectHasProperty('responsorial_psalm', $yearA, 'Should have responsorial_psalm');
         $this->assertObjectHasProperty('second_reading', $yearA, 'Should have second_reading');
@@ -121,7 +124,7 @@ final class TemporaleTest extends ApiTestCase
         $this->assertIsString($yearA->gospel, 'gospel should be a string');
     }
 
-    public function testImmaculateHeartHasLectionaryFromSanctorum(): void
+    public function testImmaculateHeartHasReadingsFromSanctorum(): void
     {
         // ImmaculateHeart is a special case: it's in temporale but its readings are in sanctorum
         $response = self::$http->get('/temporale', [
@@ -135,18 +138,18 @@ final class TemporaleTest extends ApiTestCase
         $immaculateHeart = array_find($data->events, fn($event) => $event->event_key === 'ImmaculateHeart');
         $this->assertNotNull($immaculateHeart, 'ImmaculateHeart event should exist');
 
-        // ImmaculateHeart should have 'lectionary' property (not annum_a/b/c)
-        $this->assertObjectHasProperty('lectionary', $immaculateHeart, 'ImmaculateHeart should have lectionary property');
-        $this->assertIsObject($immaculateHeart->lectionary, 'lectionary should be an object');
+        // ImmaculateHeart should have 'readings' property directly (not with annum_a/b/c children)
+        $this->assertObjectHasProperty('readings', $immaculateHeart, 'ImmaculateHeart should have readings property');
+        $this->assertIsObject($immaculateHeart->readings, 'readings should be an object');
 
         // It should NOT have year-cycle readings (since it's the same every year)
-        $this->assertObjectNotHasProperty('annum_a', $immaculateHeart, 'ImmaculateHeart should not have annum_a');
-        $this->assertObjectNotHasProperty('annum_b', $immaculateHeart, 'ImmaculateHeart should not have annum_b');
-        $this->assertObjectNotHasProperty('annum_c', $immaculateHeart, 'ImmaculateHeart should not have annum_c');
+        $this->assertObjectNotHasProperty('annum_a', $immaculateHeart->readings, 'readings should not have annum_a');
+        $this->assertObjectNotHasProperty('annum_b', $immaculateHeart->readings, 'readings should not have annum_b');
+        $this->assertObjectNotHasProperty('annum_c', $immaculateHeart->readings, 'readings should not have annum_c');
 
-        // Check the lectionary structure
-        $this->assertObjectHasProperty('first_reading', $immaculateHeart->lectionary, 'Should have first_reading');
-        $this->assertObjectHasProperty('gospel', $immaculateHeart->lectionary, 'Should have gospel');
+        // Check the readings structure (flat, not nested under year cycles)
+        $this->assertObjectHasProperty('first_reading', $immaculateHeart->readings, 'Should have first_reading');
+        $this->assertObjectHasProperty('gospel', $immaculateHeart->readings, 'Should have gospel');
     }
 
     public function testGetTemporaleReturnsLocaleHeader(): void

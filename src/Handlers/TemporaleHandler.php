@@ -275,23 +275,35 @@ final class TemporaleHandler extends AbstractHandler
 
                 // Special case: ImmaculateHeart readings are in sanctorum, not year-cycle based
                 if ($key === 'ImmaculateHeart' && $sanctorumData !== null && property_exists($sanctorumData, $key)) {
-                    $temporaleRows[$idx]->lectionary = $sanctorumData->{$key};
+                    $temporaleRows[$idx]->readings = $sanctorumData->{$key};
                     continue;
                 }
 
+                // Build readings object with year cycles
+                $readings    = new \stdClass();
+                $hasReadings = false;
+
                 // Add Year A readings
                 if (isset($lectionaryData['A']) && property_exists($lectionaryData['A'], $key)) {
-                    $temporaleRows[$idx]->annum_a = $lectionaryData['A']->{$key};
+                    $readings->annum_a = $lectionaryData['A']->{$key};
+                    $hasReadings       = true;
                 }
 
                 // Add Year B readings
                 if (isset($lectionaryData['B']) && property_exists($lectionaryData['B'], $key)) {
-                    $temporaleRows[$idx]->annum_b = $lectionaryData['B']->{$key};
+                    $readings->annum_b = $lectionaryData['B']->{$key};
+                    $hasReadings       = true;
                 }
 
                 // Add Year C readings
                 if (isset($lectionaryData['C']) && property_exists($lectionaryData['C'], $key)) {
-                    $temporaleRows[$idx]->annum_c = $lectionaryData['C']->{$key};
+                    $readings->annum_c = $lectionaryData['C']->{$key};
+                    $hasReadings       = true;
+                }
+
+                // Only add readings property if at least one year cycle has data
+                if ($hasReadings) {
+                    $temporaleRows[$idx]->readings = $readings;
                 }
             }
         }
