@@ -355,46 +355,24 @@ final class TemporaleHandler extends AbstractHandler
     private function loadLectionaryData(string $locale): array
     {
         $lectionaryData = [];
+        $yearMappings   = [
+            'A' => JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_A_FILE,
+            'B' => JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_B_FILE,
+            'C' => JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_C_FILE,
+        ];
 
-        // Year A
-        $fileA = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_A_FILE->path(), ['{locale}' => $locale]);
-        if (file_exists($fileA)) {
-            try {
-                $lectionaryData['A'] = Utilities::jsonFileToObject($fileA);
-            } catch (\JsonException | ServiceUnavailableException $e) {
-                // Skip if file cannot be parsed or is unavailable
-                $this->auditLogger->debug("Failed to load Year A lectionary for locale '{$locale}'", [
-                    'file'  => $fileA,
-                    'error' => $e->getMessage()
-                ]);
-            }
-        }
-
-        // Year B
-        $fileB = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_B_FILE->path(), ['{locale}' => $locale]);
-        if (file_exists($fileB)) {
-            try {
-                $lectionaryData['B'] = Utilities::jsonFileToObject($fileB);
-            } catch (\JsonException | ServiceUnavailableException $e) {
-                // Skip if file cannot be parsed or is unavailable
-                $this->auditLogger->debug("Failed to load Year B lectionary for locale '{$locale}'", [
-                    'file'  => $fileB,
-                    'error' => $e->getMessage()
-                ]);
-            }
-        }
-
-        // Year C
-        $fileC = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_C_FILE->path(), ['{locale}' => $locale]);
-        if (file_exists($fileC)) {
-            try {
-                $lectionaryData['C'] = Utilities::jsonFileToObject($fileC);
-            } catch (\JsonException | ServiceUnavailableException $e) {
-                // Skip if file cannot be parsed or is unavailable
-                $this->auditLogger->debug("Failed to load Year C lectionary for locale '{$locale}'", [
-                    'file'  => $fileC,
-                    'error' => $e->getMessage()
-                ]);
+        foreach ($yearMappings as $year => $jsonDataEnum) {
+            $file = strtr($jsonDataEnum->path(), ['{locale}' => $locale]);
+            if (file_exists($file)) {
+                try {
+                    $lectionaryData[$year] = Utilities::jsonFileToObject($file);
+                } catch (\JsonException | ServiceUnavailableException $e) {
+                    // Skip if file cannot be parsed or is unavailable
+                    $this->auditLogger->debug("Failed to load Year {$year} lectionary for locale '{$locale}'", [
+                        'file'  => $file,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             }
         }
 
@@ -944,6 +922,21 @@ final class TemporaleHandler extends AbstractHandler
     }
 
     /**
+     * Ensure the i18n folder exists, creating it if necessary.
+     *
+     * @throws InternalServerErrorException If unable to create the directory.
+     */
+    private function ensureI18nFolderExists(): void
+    {
+        $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
+        if (!is_dir($i18nFolder)) {
+            if (!@mkdir($i18nFolder, 0755, true) && !is_dir($i18nFolder)) {
+                throw new InternalServerErrorException('Failed to create i18n directory: ' . $i18nFolder);
+            }
+        }
+    }
+
+    /**
      * Write i18n data to locale files (for PUT - full replacement).
      *
      * @param \stdClass $i18n Object with locale keys and translation maps.
@@ -951,14 +944,7 @@ final class TemporaleHandler extends AbstractHandler
      */
     private function writeI18nFiles(\stdClass $i18n): void
     {
-        $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
-
-        // Ensure i18n folder exists
-        if (!is_dir($i18nFolder)) {
-            if (!@mkdir($i18nFolder, 0755, true) && !is_dir($i18nFolder)) {
-                throw new InternalServerErrorException('Failed to create i18n directory: ' . $i18nFolder);
-            }
-        }
+        $this->ensureI18nFolderExists();
 
         /** @var array<string,\stdClass> $i18nArray */
         $i18nArray = get_object_vars($i18n);
@@ -1012,14 +998,7 @@ final class TemporaleHandler extends AbstractHandler
      */
     private function updateI18nFiles(\stdClass $i18n): void
     {
-        $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
-
-        // Ensure i18n folder exists
-        if (!is_dir($i18nFolder)) {
-            if (!@mkdir($i18nFolder, 0755, true) && !is_dir($i18nFolder)) {
-                throw new InternalServerErrorException('Failed to create i18n directory: ' . $i18nFolder);
-            }
-        }
+        $this->ensureI18nFolderExists();
 
         /** @var array<string,\stdClass> $i18nArray */
         $i18nArray = get_object_vars($i18n);
@@ -1107,7 +1086,10 @@ final class TemporaleHandler extends AbstractHandler
             if ($modified) {
                 $jsonContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                 if ($jsonContent === false) {
-                    $this->auditLogger->warning("Failed to encode i18n data for locale '{$locale}' during consistency check");
+                    $this->auditLogger->warning("Failed to encode i18n data for locale '{$locale}' during consistency check", [
+                        'file'       => $i18nFile,
+                        'event_keys' => $eventKeys
+                    ]);
                     continue;
                 }
 
