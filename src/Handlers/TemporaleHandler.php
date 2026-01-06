@@ -117,6 +117,55 @@ final class TemporaleHandler extends AbstractHandler
     }
 
     /**
+     * Select and validate a locale for temporale data.
+     *
+     * Checks if the locale (or its base form) is available in the temporale translations.
+     * For Accept-Language derived locales, falls back to Latin if not available.
+     * For explicit query parameter locales, throws an exception if not available.
+     *
+     * @param string $locale The locale to select
+     * @param bool $throwOnUnavailable Whether to throw an exception if locale is unavailable
+     * @return string The selected locale
+     * @throws ValidationException If the locale is invalid or unavailable (when $throwOnUnavailable is true)
+     */
+    private function selectLocale(string $locale, bool $throwOnUnavailable = false): string
+    {
+        $canonicalized = \Locale::canonicalize($locale);
+        if (null === $canonicalized || '' === $canonicalized) {
+            if ($throwOnUnavailable) {
+                throw new ValidationException("Invalid locale value: '{$locale}'");
+            }
+            return LitLocale::LATIN_PRIMARY_LANGUAGE;
+        }
+
+        if (!LitLocale::isValid($canonicalized)) {
+            if ($throwOnUnavailable) {
+                throw new ValidationException(
+                    "Invalid value '{$locale}' for param `locale`, valid values are: la, la_VA, "
+                    . implode(', ', LitLocale::$AllAvailableLocales)
+                );
+            }
+            return LitLocale::LATIN_PRIMARY_LANGUAGE;
+        }
+
+        $baseLocale = $this->getBaseLocale($canonicalized);
+        if (in_array($canonicalized, $this->availableLocales, true)) {
+            return $canonicalized;
+        } elseif (in_array($baseLocale, $this->availableLocales, true)) {
+            return $baseLocale;
+        }
+
+        if ($throwOnUnavailable) {
+            throw new ValidationException(
+                "Locale '{$locale}' is not available for temporale data. "
+                . 'Available locales: ' . implode(', ', $this->availableLocales)
+            );
+        }
+
+        return LitLocale::LATIN_PRIMARY_LANGUAGE;
+    }
+
+    /**
      * Determines the lectionary locale to use based on the current locale.
      * Falls back to base locale, then Latin if the exact locale is not available.
      *
@@ -176,48 +225,14 @@ final class TemporaleHandler extends AbstractHandler
 
         $response = $response->withHeader('Content-Type', $mime);
 
-        // Check Accept-Language header for locale
-        $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
-        if ($locale && LitLocale::isValid($locale)) {
-            // Check if we have a translation file for this locale
-            $baseLocale = $this->getBaseLocale($locale);
-            if (in_array($locale, $this->availableLocales, true)) {
-                $this->locale = $locale;
-            } elseif (in_array($baseLocale, $this->availableLocales, true)) {
-                $this->locale = $baseLocale;
-            } else {
-                $this->locale = LitLocale::LATIN_PRIMARY_LANGUAGE;
-            }
-        } else {
-            $this->locale = LitLocale::LATIN_PRIMARY_LANGUAGE;
-        }
+        // Check Accept-Language header for locale (fallback to Latin if unavailable)
+        $locale       = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
+        $this->locale = $locale ? $this->selectLocale($locale, false) : LitLocale::LATIN_PRIMARY_LANGUAGE;
 
-        // Check for locale query parameter (overrides Accept-Language header)
+        // Check for locale query parameter (overrides Accept-Language header, throws on invalid)
         $queryParams = $request->getQueryParams();
         if (array_key_exists('locale', $queryParams) && is_string($queryParams['locale'])) {
-            $queryLocale = \Locale::canonicalize($queryParams['locale']);
-            if (null === $queryLocale || '' === $queryLocale) {
-                throw new ValidationException("Invalid value '{$queryParams['locale']}' for param `locale`");
-            }
-            if (LitLocale::isValid($queryLocale)) {
-                // Check if we have a translation file for this locale
-                $baseLocale = $this->getBaseLocale($queryLocale);
-                if (in_array($queryLocale, $this->availableLocales, true)) {
-                    $this->locale = $queryLocale;
-                } elseif (in_array($baseLocale, $this->availableLocales, true)) {
-                    $this->locale = $baseLocale;
-                } else {
-                    throw new ValidationException(
-                        "Locale '{$queryParams['locale']}' is not available for temporale data. "
-                        . 'Available locales: ' . implode(', ', $this->availableLocales)
-                    );
-                }
-            } else {
-                throw new ValidationException(
-                    "Invalid value '{$queryParams['locale']}' for param `locale`, valid values are: la, la_VA, "
-                    . implode(', ', LitLocale::$AllAvailableLocales)
-                );
-            }
+            $this->locale = $this->selectLocale($queryParams['locale'], true);
         }
 
         // Capture client IP for audit logging
@@ -788,17 +803,20 @@ final class TemporaleHandler extends AbstractHandler
 
         $existingData = Utilities::jsonFileToObjectArray($temporaleFile);
 
-        // Find and remove the event
-        $foundEvent = array_find(
-            $existingData,
-            fn($event) => property_exists($event, 'event_key') && $event->event_key === $eventKey
-        );
-
-        if ($foundEvent === null) {
-            throw new NotFoundException("Temporale event with key '{$eventKey}' not found");
+        // Find the event index in a single pass.
+        // Note: Using foreach instead of array_find() + array_search() to avoid traversing
+        // the array twice - array_find returns the value but we need the index for array_splice.
+        $foundIndex = null;
+        foreach ($existingData as $idx => $event) {
+            if (property_exists($event, 'event_key') && $event->event_key === $eventKey) {
+                $foundIndex = $idx;
+                break;
+            }
         }
 
-        $foundIndex = array_search($foundEvent, $existingData, true);
+        if ($foundIndex === null) {
+            throw new NotFoundException("Temporale event with key '{$eventKey}' not found");
+        }
 
         // Remove the event
         array_splice($existingData, (int) $foundIndex, 1);
