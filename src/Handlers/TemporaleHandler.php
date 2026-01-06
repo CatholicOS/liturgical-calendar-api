@@ -318,8 +318,8 @@ final class TemporaleHandler extends AbstractHandler
         if (file_exists($fileA)) {
             try {
                 $lectionaryData['A'] = Utilities::jsonFileToObject($fileA);
-            } catch (\Throwable $e) {
-                // Skip if file cannot be parsed
+            } catch (\JsonException | ServiceUnavailableException $e) {
+                // Skip if file cannot be parsed or is unavailable
             }
         }
 
@@ -328,8 +328,8 @@ final class TemporaleHandler extends AbstractHandler
         if (file_exists($fileB)) {
             try {
                 $lectionaryData['B'] = Utilities::jsonFileToObject($fileB);
-            } catch (\Throwable $e) {
-                // Skip if file cannot be parsed
+            } catch (\JsonException | ServiceUnavailableException $e) {
+                // Skip if file cannot be parsed or is unavailable
             }
         }
 
@@ -338,8 +338,8 @@ final class TemporaleHandler extends AbstractHandler
         if (file_exists($fileC)) {
             try {
                 $lectionaryData['C'] = Utilities::jsonFileToObject($fileC);
-            } catch (\Throwable $e) {
-                // Skip if file cannot be parsed
+            } catch (\JsonException | ServiceUnavailableException $e) {
+                // Skip if file cannot be parsed or is unavailable
             }
         }
 
@@ -361,8 +361,8 @@ final class TemporaleHandler extends AbstractHandler
         if (file_exists($file)) {
             try {
                 return Utilities::jsonFileToObject($file);
-            } catch (\Throwable $e) {
-                // Skip if file cannot be parsed
+            } catch (\JsonException | ServiceUnavailableException $e) {
+                // Skip if file cannot be parsed or is unavailable
             }
         }
         return null;
