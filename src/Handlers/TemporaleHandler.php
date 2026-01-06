@@ -204,9 +204,16 @@ final class TemporaleHandler extends AbstractHandler
         // Check if temporale data already exists - PUT only allowed for initial creation
         $temporaleFile = JsonData::TEMPORALE_FILE->path();
         if (file_exists($temporaleFile)) {
-            $existingData = Utilities::jsonFileToObjectArray($temporaleFile);
-            if (count($existingData) > 0) {
-                throw new ConflictException('Temporale data already exists. Use PATCH to update existing data.');
+            try {
+                $existingData = Utilities::jsonFileToObjectArray($temporaleFile);
+                if (count($existingData) > 0) {
+                    throw new ConflictException('Temporale data already exists. Use PATCH to update existing data.');
+                }
+            } catch (\JsonException $e) {
+                // Empty or malformed file - treat as no existing data, continue with PUT
+            } catch (ServiceUnavailableException $e) {
+                // Propagate service errors (e.g., file read failure)
+                throw $e;
             }
         }
 
