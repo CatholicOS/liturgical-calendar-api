@@ -105,6 +105,18 @@ final class TemporaleHandler extends AbstractHandler
     }
 
     /**
+     * Extract base locale from a locale string (e.g., 'en' from 'en_US' or 'en-US').
+     *
+     * @param string $locale The locale string to parse
+     * @return string The base locale (first segment before _ or -)
+     */
+    private function getBaseLocale(string $locale): string
+    {
+        $localeParts = preg_split('/[_-]/', $locale);
+        return is_array($localeParts) ? $localeParts[0] : $locale;
+    }
+
+    /**
      * Determines the lectionary locale to use based on the current locale.
      * Falls back to base locale, then Latin if the exact locale is not available.
      *
@@ -118,8 +130,7 @@ final class TemporaleHandler extends AbstractHandler
         }
 
         // Try base locale (e.g., 'en' from 'en_US')
-        $localeParts = preg_split('/[_-]/', $this->locale);
-        $baseLocale  = is_array($localeParts) ? $localeParts[0] : $this->locale;
+        $baseLocale = $this->getBaseLocale($this->locale);
         if (in_array($baseLocale, $this->availableLectionaryLocales, true)) {
             return $baseLocale;
         }
@@ -169,8 +180,7 @@ final class TemporaleHandler extends AbstractHandler
         $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
         if ($locale && LitLocale::isValid($locale)) {
             // Check if we have a translation file for this locale
-            $localeParts = preg_split('/[_-]/', $locale);
-            $baseLocale  = is_array($localeParts) ? $localeParts[0] : $locale;
+            $baseLocale = $this->getBaseLocale($locale);
             if (in_array($locale, $this->availableLocales, true)) {
                 $this->locale = $locale;
             } elseif (in_array($baseLocale, $this->availableLocales, true)) {
@@ -191,8 +201,7 @@ final class TemporaleHandler extends AbstractHandler
             }
             if (LitLocale::isValid($queryLocale)) {
                 // Check if we have a translation file for this locale
-                $localeParts = preg_split('/[_-]/', $queryLocale);
-                $baseLocale  = is_array($localeParts) ? $localeParts[0] : $queryLocale;
+                $baseLocale = $this->getBaseLocale($queryLocale);
                 if (in_array($queryLocale, $this->availableLocales, true)) {
                     $this->locale = $queryLocale;
                 } elseif (in_array($baseLocale, $this->availableLocales, true)) {
@@ -268,6 +277,7 @@ final class TemporaleHandler extends AbstractHandler
         if ($lectionaryLocale !== null) {
             $lectionaryData = $this->loadLectionaryData($lectionaryLocale);
             $sanctorumData  = $this->loadSanctorumLectionaryData($lectionaryLocale);
+            $ferialData     = $this->loadFerialLectionaryData($lectionaryLocale);
 
             /** @var array<int,\stdClass&object{event_key:string,grade:int,type:string,color:string[]}> $temporaleRows */
             foreach ($temporaleRows as $idx => $row) {
@@ -279,7 +289,13 @@ final class TemporaleHandler extends AbstractHandler
                     continue;
                 }
 
-                // Build readings object with year cycles
+                // Check ferial lectionaries (Lent/Easter weekdays) - flat structure, no year cycles
+                if (property_exists($ferialData, $key)) {
+                    $temporaleRows[$idx]->readings = $ferialData->{$key};
+                    continue;
+                }
+
+                // Build readings object with year cycles (for Sundays/Solemnities)
                 $readings    = new \stdClass();
                 $hasReadings = false;
 
@@ -381,6 +397,48 @@ final class TemporaleHandler extends AbstractHandler
     }
 
     /**
+     * Load ferial (weekday) lectionary data from Lent and Easter seasons.
+     *
+     * These contain readings for weekday events like Ash Wednesday, Holy Week days,
+     * and Easter Octave days that are not in the Sunday/Solemnity lectionary.
+     *
+     * @param string $locale The locale for the lectionary files
+     * @return \stdClass Combined ferial lectionary data from all seasons
+     */
+    private function loadFerialLectionaryData(string $locale): \stdClass
+    {
+        $ferialData = new \stdClass();
+
+        // Lent weekdays (includes Ash Wednesday, Holy Week days)
+        $lentFile = strtr(JsonData::LECTIONARY_WEEKDAYS_LENT_FILE->path(), ['{locale}' => $locale]);
+        if (file_exists($lentFile)) {
+            try {
+                $lentData = Utilities::jsonFileToObject($lentFile);
+                foreach (get_object_vars($lentData) as $key => $value) {
+                    $ferialData->{$key} = $value;
+                }
+            } catch (\JsonException | ServiceUnavailableException $e) {
+                // Skip if file cannot be parsed or is unavailable
+            }
+        }
+
+        // Easter weekdays (includes Easter Octave days)
+        $easterFile = strtr(JsonData::LECTIONARY_WEEKDAYS_EASTER_FILE->path(), ['{locale}' => $locale]);
+        if (file_exists($easterFile)) {
+            try {
+                $easterData = Utilities::jsonFileToObject($easterFile);
+                foreach (get_object_vars($easterData) as $key => $value) {
+                    $ferialData->{$key} = $value;
+                }
+            } catch (\JsonException | ServiceUnavailableException $e) {
+                // Skip if file cannot be parsed or is unavailable
+            }
+        }
+
+        return $ferialData;
+    }
+
+    /**
      * Handle PUT requests to create the entire temporale data.
      *
      * PUT is only allowed when NO temporale data exists (initial creation only).
@@ -451,8 +509,7 @@ final class TemporaleHandler extends AbstractHandler
         $this->validateI18n($i18n);
 
         // Determine Accept-Language locale (base locale only)
-        $localeParts  = preg_split('/[_-]/', $this->locale);
-        $acceptLocale = is_array($localeParts) ? $localeParts[0] : $this->locale;
+        $acceptLocale = $this->getBaseLocale($this->locale);
 
         // Validate that i18n contains the Accept-Language locale
         if (!property_exists($i18n, $acceptLocale)) {
@@ -616,8 +673,7 @@ final class TemporaleHandler extends AbstractHandler
         $newEventKeys = [];
 
         // Determine Accept-Language locale (base locale only)
-        $localeParts  = preg_split('/[_-]/', $this->locale);
-        $acceptLocale = is_array($localeParts) ? $localeParts[0] : $this->locale;
+        $acceptLocale = $this->getBaseLocale($this->locale);
 
         // Process each event in the payload
         foreach ($events as $event) {

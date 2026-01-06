@@ -152,6 +152,55 @@ final class TemporaleTest extends ApiTestCase
         $this->assertObjectHasProperty('gospel', $immaculateHeart->readings, 'Should have gospel');
     }
 
+    public function testFerialEventsHaveReadingsFromWeekdayLectionaries(): void
+    {
+        // Ferial events (weekdays) have readings from feriale lectionaries, not year-cycle based
+        $response = self::$http->get('/temporale', [
+            'headers' => ['Accept-Language' => 'en']
+        ]);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string) $response->getBody());
+
+        // Check Ash Wednesday (from Lent weekday lectionary)
+        $ashWednesday = array_find($data->events, fn($event) => $event->event_key === 'AshWednesday');
+        $this->assertNotNull($ashWednesday, 'AshWednesday event should exist');
+        $this->assertObjectHasProperty('readings', $ashWednesday, 'AshWednesday should have readings property');
+        $this->assertIsObject($ashWednesday->readings, 'readings should be an object');
+        $this->assertObjectNotHasProperty('annum_a', $ashWednesday->readings, 'ferial readings should not have annum_a');
+
+        // Check Monday of Holy Week (from Lent weekday lectionary)
+        $monHolyWeek = array_find($data->events, fn($event) => $event->event_key === 'MonHolyWeek');
+        $this->assertNotNull($monHolyWeek, 'MonHolyWeek event should exist');
+        $this->assertObjectHasProperty('readings', $monHolyWeek, 'MonHolyWeek should have readings property');
+
+        // Check Monday of Easter Octave (from Easter weekday lectionary)
+        $monOctaveEaster = array_find($data->events, fn($event) => $event->event_key === 'MonOctaveEaster');
+        $this->assertNotNull($monOctaveEaster, 'MonOctaveEaster event should exist');
+        $this->assertObjectHasProperty('readings', $monOctaveEaster, 'MonOctaveEaster should have readings property');
+    }
+
+    public function testAllTemporaleEventsHaveReadings(): void
+    {
+        $response = self::$http->get('/temporale', [
+            'headers' => ['Accept-Language' => 'en']
+        ]);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string) $response->getBody());
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('events', $data);
+
+        // Every event should have a readings property
+        foreach ($data->events as $event) {
+            $this->assertObjectHasProperty(
+                'readings',
+                $event,
+                "Event '{$event->event_key}' should have readings property"
+            );
+        }
+    }
+
     public function testGetTemporaleReturnsLocaleHeader(): void
     {
         $response = self::$http->get('/temporale', []);
