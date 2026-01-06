@@ -28,15 +28,19 @@ final class TemporaleTest extends ApiTestCase
         );
     }
 
-    public function testGetTemporaleReturnsArrayOfEvents(): void
+    public function testGetTemporaleReturnsObjectWithEvents(): void
     {
         $response = self::$http->get('/temporale', []);
         $this->assertSame(200, $response->getStatusCode());
 
         $data = json_decode((string) $response->getBody());
         $this->assertSame(JSON_ERROR_NONE, json_last_error(), 'Invalid JSON: ' . json_last_error_msg());
-        $this->assertIsArray($data, 'Response should be a JSON array');
-        $this->assertNotEmpty($data, 'Response array should not be empty');
+        $this->assertIsObject($data, 'Response should be a JSON object');
+        $this->assertObjectHasProperty('events', $data, 'Response should have events property');
+        $this->assertObjectHasProperty('locale', $data, 'Response should have locale property');
+        $this->assertIsArray($data->events, 'events should be an array');
+        $this->assertNotEmpty($data->events, 'events array should not be empty');
+        $this->assertIsString($data->locale, 'locale should be a string');
     }
 
     public function testGetTemporaleEventStructure(): void
@@ -45,11 +49,12 @@ final class TemporaleTest extends ApiTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $data = json_decode((string) $response->getBody());
-        $this->assertIsArray($data);
-        $this->assertNotEmpty($data, 'Expected at least one event in response');
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('events', $data);
+        $this->assertNotEmpty($data->events, 'Expected at least one event in response');
 
         // Check at least one event has the expected structure
-        $event = $data[0];
+        $event = $data->events[0];
         $this->assertIsObject($event, 'Each event should be an object');
         $this->assertObjectHasProperty('event_key', $event, 'Event should have event_key property');
         $this->assertIsString($event->event_key, 'event_key should be a string');
@@ -80,10 +85,11 @@ final class TemporaleTest extends ApiTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $data = json_decode((string) $response->getBody());
-        $this->assertIsArray($data);
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('events', $data);
 
         // Find Easter event and check it has a translated name
-        $easter = array_find($data, fn($event) => $event->event_key === 'Easter');
+        $easter = array_find($data->events, fn($event) => $event->event_key === 'Easter');
         $this->assertNotNull($easter, 'Easter event should exist');
         $this->assertObjectHasProperty('name', $easter, 'Event should have translated name');
         $this->assertIsString($easter->name, 'name should be a string');
@@ -100,10 +106,11 @@ final class TemporaleTest extends ApiTestCase
         $this->assertSame('la', $localeHeader, 'Locale header should be "la"');
 
         $data = json_decode((string) $response->getBody());
-        $this->assertIsArray($data);
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('events', $data);
 
         // Validate translated content
-        $easter = array_find($data, fn($event) => $event->event_key === 'Easter');
+        $easter = array_find($data->events, fn($event) => $event->event_key === 'Easter');
         $this->assertNotNull($easter, 'Easter event should exist');
         $this->assertObjectHasProperty('name', $easter, 'Event should have translated name');
         $this->assertIsString($easter->name, 'name should be a string');
@@ -120,10 +127,11 @@ final class TemporaleTest extends ApiTestCase
         $this->assertSame('it', $localeHeader, 'Locale header should be "it"');
 
         $data = json_decode((string) $response->getBody());
-        $this->assertIsArray($data);
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('events', $data);
 
         // Validate translated content
-        $easter = array_find($data, fn($event) => $event->event_key === 'Easter');
+        $easter = array_find($data->events, fn($event) => $event->event_key === 'Easter');
         $this->assertNotNull($easter, 'Easter event should exist');
         $this->assertObjectHasProperty('name', $easter, 'Event should have translated name');
         $this->assertIsString($easter->name, 'name should be a string');
@@ -135,10 +143,11 @@ final class TemporaleTest extends ApiTestCase
         $this->assertSame(200, $response->getStatusCode());
 
         $data = json_decode((string) $response->getBody());
-        $this->assertIsArray($data);
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('events', $data);
 
         // Extract event keys
-        $eventKeys = array_map(fn($event) => $event->event_key, $data);
+        $eventKeys = array_map(fn($event) => $event->event_key, $data->events);
 
         // Check for known temporale events
         $knownEvents = ['Easter', 'Christmas', 'Pentecost', 'Advent1', 'Lent1', 'HolyThurs', 'GoodFri'];
@@ -179,7 +188,9 @@ final class TemporaleTest extends ApiTestCase
         );
 
         $data = json_decode((string) $response->getBody());
-        $this->assertIsArray($data, 'Response should be a JSON array');
+        $this->assertIsObject($data, 'Response should be a JSON object');
+        $this->assertObjectHasProperty('events', $data, 'Response should have events property');
+        $this->assertIsArray($data->events, 'events should be an array');
     }
 
     public function testGetTemporaleWithUnsupportedLocaleDefaultsToLatin(): void

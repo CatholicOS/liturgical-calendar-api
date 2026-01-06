@@ -9,6 +9,7 @@ use LiturgicalCalendar\Api\Handlers\Auth\ClientIpTrait;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
+use LiturgicalCalendar\Api\Http\Exception\ConflictException;
 use LiturgicalCalendar\Api\Http\Exception\InternalServerErrorException;
 use LiturgicalCalendar\Api\Http\Exception\MethodNotAllowedException;
 use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
@@ -179,42 +180,136 @@ final class TemporaleHandler extends AbstractHandler
         }
 
         $response = $response->withHeader('X-Litcal-Temporale-Locale', $this->locale);
-        return $this->encodeResponseBody($response, $temporaleRows);
+        return $this->encodeResponseBody($response, [
+            'events' => $temporaleRows,
+            'locale' => $this->locale
+        ]);
     }
 
     /**
-     * Handle PUT requests to replace the entire temporale data.
+     * Handle PUT requests to create the entire temporale data.
      *
+     * PUT is only allowed when NO temporale data exists (initial creation only).
      * Requires JWT authentication (handled by middleware).
+     *
+     * Expected payload structure:
+     * {
+     *   "events": [...],
+     *   "locales": ["en", "la", "de", ...],
+     *   "i18n": { "en": { "Easter": "Easter Sunday", ... } }
+     * }
      */
     private function handlePutRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $payload = $this->parseBodyPayload($request, false);
-
-        if (!is_array($payload)) {
-            throw new ValidationException('Request body must be an array of temporale events');
+        // Check if temporale data already exists - PUT only allowed for initial creation
+        $temporaleFile = JsonData::TEMPORALE_FILE->path();
+        if (file_exists($temporaleFile)) {
+            $existingData = Utilities::jsonFileToObjectArray($temporaleFile);
+            if (count($existingData) > 0) {
+                throw new ConflictException('Temporale data already exists. Use PATCH to update existing data.');
+            }
         }
 
-        // Validate each event in the payload and check for duplicate event_keys
+        $payload = $this->parseBodyPayload($request, true);
+
+        if (!( $payload instanceof \stdClass )) {
+            throw new ValidationException('Request body must be an object with events, locales, and i18n properties');
+        }
+
+        // Validate required properties
+        if (!property_exists($payload, 'events') || !is_array($payload->events)) {
+            throw new ValidationException('Payload must have an "events" array property');
+        }
+        if (!property_exists($payload, 'locales') || !is_array($payload->locales)) {
+            throw new ValidationException('Payload must have a "locales" array property');
+        }
+        if (!property_exists($payload, 'i18n') || !( $payload->i18n instanceof \stdClass )) {
+            throw new ValidationException('Payload must have an "i18n" object property');
+        }
+
+        /** @var array<int,mixed> $events */
+        $events = $payload->events;
+
+        /** @var array<int,mixed> $locales */
+        $locales = $payload->locales;
+
+        /** @var \stdClass $i18n */
+        $i18n = $payload->i18n;
+
+        // Validate locales are base locale strings
+        foreach ($locales as $locale) {
+            if (!is_string($locale) || empty($locale)) {
+                throw new ValidationException('Each locale must be a non-empty string');
+            }
+            if (str_contains($locale, '_') || str_contains($locale, '-')) {
+                throw new ValidationException("Locale '{$locale}' must be a base locale without regional identifiers");
+            }
+        }
+
+        // Validate i18n structure
+        $this->validateI18n($i18n);
+
+        // Determine Accept-Language locale (base locale only)
+        $acceptLocale = explode('_', $this->locale)[0];
+
+        // Validate that i18n contains the Accept-Language locale
+        if (!property_exists($i18n, $acceptLocale)) {
+            throw new ValidationException("i18n must contain translations for the Accept-Language locale '{$acceptLocale}'");
+        }
+
+        // Validate each event and collect event_keys
         /** @var array<string,bool> $seenEventKeys */
         $seenEventKeys = [];
-        foreach ($payload as $event) {
+        /** @var string[] $eventKeys */
+        $eventKeys = [];
+        foreach ($events as $event) {
             if (!( $event instanceof \stdClass )) {
                 throw new ValidationException('Each event must be an object');
             }
             $this->validateTemporaleEvent($event);
 
-            // Check for duplicate event_keys (event_key is validated as string by validateTemporaleEvent)
             /** @var string $eventKey */
             $eventKey = $event->event_key;
             if (isset($seenEventKeys[$eventKey])) {
                 throw new ValidationException("Duplicate event_key '{$eventKey}' in payload");
             }
             $seenEventKeys[$eventKey] = true;
+            $eventKeys[]              = $eventKey;
         }
 
-        $temporaleFile = JsonData::TEMPORALE_FILE->path();
-        $jsonContent   = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        // Validate that i18n[acceptLocale] contains ALL event_keys
+        /** @var \stdClass $acceptLocaleI18n */
+        $acceptLocaleI18n = $i18n->{$acceptLocale};
+        foreach ($eventKeys as $eventKey) {
+            if (!property_exists($acceptLocaleI18n, $eventKey)) {
+                throw new ValidationException(
+                    "i18n.{$acceptLocale} must contain translation for event_key '{$eventKey}'"
+                );
+            }
+        }
+
+        // Build i18n data for all locales
+        $i18nToWrite = new \stdClass();
+        /** @var string $locale */
+        foreach ($locales as $locale) {
+            $i18nToWrite->{$locale} = new \stdClass();
+            /** @var \stdClass|null $localeTranslations */
+            $localeTranslations = property_exists($i18n, $locale) ? $i18n->{$locale} : null;
+            foreach ($eventKeys as $eventKey) {
+                if ($localeTranslations instanceof \stdClass && property_exists($localeTranslations, $eventKey)) {
+                    $i18nToWrite->{$locale}->{$eventKey} = $localeTranslations->{$eventKey};
+                } else {
+                    // Empty string placeholder for missing translations
+                    $i18nToWrite->{$locale}->{$eventKey} = '';
+                }
+            }
+        }
+
+        // Write i18n files for each locale
+        $this->writeI18nFiles($i18nToWrite);
+
+        // Write events to main temporale file
+        $jsonContent = json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if ($jsonContent === false) {
             throw new ValidationException('Failed to encode temporale data as JSON');
         }
@@ -227,32 +322,61 @@ final class TemporaleHandler extends AbstractHandler
         // Invalidate APCu cache for the temporale file
         Utilities::invalidateJsonFileCache($temporaleFile);
 
+        // Update available locales list
+        /** @var string[] $localesArray */
+        $localesArray           = $locales;
+        $this->availableLocales = array_values(array_unique(array_merge($this->availableLocales, $localesArray)));
+
         // Log the operation
-        $this->auditLogger->info('Temporale data replaced', [
-            'operation' => 'PUT',
-            'client_ip' => $this->clientIp,
-            'file'      => $temporaleFile,
-            'events'    => count($payload)
+        $this->auditLogger->info('Temporale data created', [
+            'operation'    => 'PUT',
+            'client_ip'    => $this->clientIp,
+            'file'         => $temporaleFile,
+            'events'       => count($events),
+            'i18n_locales' => $locales
         ]);
 
         return $this->encodeResponseBody($response, [
             'success' => true,
-            'message' => 'Temporale data replaced successfully',
-            'events'  => count($payload)
-        ], StatusCode::OK);
+            'message' => 'Temporale data created successfully',
+            'events'  => count($events)
+        ], StatusCode::CREATED);
     }
 
     /**
      * Handle PATCH requests to update specific temporale events.
      *
      * Requires JWT authentication (handled by middleware).
+     *
+     * Expected payload structure:
+     * {
+     *   "events": [...],
+     *   "i18n": { "en": { "NewEvent": "New Event Name", ... } }  // optional
+     * }
      */
     private function handlePatchRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $payload = $this->parseBodyPayload($request, false);
+        $payload = $this->parseBodyPayload($request, true);
 
-        if (!is_array($payload)) {
-            throw new ValidationException('Request body must be an array of temporale events to update');
+        if (!( $payload instanceof \stdClass )) {
+            throw new ValidationException('Request body must be an object with events property');
+        }
+
+        // Validate required properties
+        if (!property_exists($payload, 'events') || !is_array($payload->events)) {
+            throw new ValidationException('Payload must have an "events" array property');
+        }
+
+        /** @var array<int,mixed> $events */
+        $events = $payload->events;
+
+        // i18n is optional for PATCH
+        $hasI18n = property_exists($payload, 'i18n') && $payload->i18n instanceof \stdClass;
+        /** @var \stdClass|null $i18n */
+        $i18n = $hasI18n ? $payload->i18n : null;
+
+        if ($i18n !== null) {
+            $this->validateI18n($i18n);
         }
 
         // Load existing data
@@ -266,7 +390,7 @@ final class TemporaleHandler extends AbstractHandler
         // Check for duplicate event_keys in the payload
         /** @var array<string,bool> $seenEventKeys */
         $seenEventKeys = [];
-        foreach ($payload as $event) {
+        foreach ($events as $event) {
             if ($event instanceof \stdClass && property_exists($event, 'event_key') && is_string($event->event_key)) {
                 if (isset($seenEventKeys[$event->event_key])) {
                     throw new ValidationException("Duplicate event_key '{$event->event_key}' in payload");
@@ -276,19 +400,24 @@ final class TemporaleHandler extends AbstractHandler
         }
 
         // Build a map of existing events by event_key
-        /** @var array<string,int> $eventKeyToIndex */
-        $eventKeyToIndex = [];
+        /** @var array<string,int> $existingEventKeyToIndex */
+        $existingEventKeyToIndex = [];
         foreach ($existingData as $idx => $event) {
             if (property_exists($event, 'event_key') && is_string($event->event_key)) {
-                $eventKeyToIndex[$event->event_key] = (int) $idx;
+                $existingEventKeyToIndex[$event->event_key] = (int) $idx;
             }
         }
 
         $updatedCount = 0;
         $addedCount   = 0;
+        /** @var string[] $newEventKeys */
+        $newEventKeys = [];
+
+        // Determine Accept-Language locale (base locale only)
+        $acceptLocale = explode('_', $this->locale)[0];
 
         // Process each event in the payload
-        foreach ($payload as $event) {
+        foreach ($events as $event) {
             if (!( $event instanceof \stdClass )) {
                 throw new ValidationException('Each event must be an object');
             }
@@ -300,15 +429,50 @@ final class TemporaleHandler extends AbstractHandler
 
             /** @var string $eventKey */
             $eventKey = $event->event_key;
-            if (isset($eventKeyToIndex[$eventKey])) {
+            if (isset($existingEventKeyToIndex[$eventKey])) {
                 // Update existing event
-                $existingData[$eventKeyToIndex[$eventKey]] = $event;
+                $existingData[$existingEventKeyToIndex[$eventKey]] = $event;
                 $updatedCount++;
             } else {
                 // Add new event
                 $existingData[] = $event;
+                $newEventKeys[] = $eventKey;
                 $addedCount++;
             }
+        }
+
+        // For new event_keys, require i18n for Accept-Language locale
+        if (count($newEventKeys) > 0) {
+            if ($i18n === null) {
+                throw new ValidationException(
+                    'i18n property is required when adding new events. ' .
+                    'Missing translations for new event_keys: ' . implode(', ', $newEventKeys)
+                );
+            }
+            if (!property_exists($i18n, $acceptLocale)) {
+                throw new ValidationException(
+                    "i18n must contain translations for Accept-Language locale '{$acceptLocale}' for new events"
+                );
+            }
+            /** @var \stdClass $acceptLocaleI18n */
+            $acceptLocaleI18n = $i18n->{$acceptLocale};
+            foreach ($newEventKeys as $eventKey) {
+                if (!property_exists($acceptLocaleI18n, $eventKey)) {
+                    throw new ValidationException(
+                        "i18n.{$acceptLocale} must contain translation for new event_key '{$eventKey}'"
+                    );
+                }
+            }
+        }
+
+        // Update i18n files if i18n provided
+        if ($i18n !== null) {
+            $this->updateI18nFiles($i18n);
+        }
+
+        // Ensure all new event_keys have entries in all i18n files (empty string placeholder)
+        if (count($newEventKeys) > 0) {
+            $this->ensureI18nConsistency($newEventKeys, $acceptLocale);
         }
 
         $jsonContent = json_encode(array_values($existingData), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -325,12 +489,14 @@ final class TemporaleHandler extends AbstractHandler
         Utilities::invalidateJsonFileCache($temporaleFile);
 
         // Log the operation
+        $i18nLocales = $i18n !== null ? array_keys(get_object_vars($i18n)) : [];
         $this->auditLogger->info('Temporale data updated', [
-            'operation' => 'PATCH',
-            'client_ip' => $this->clientIp,
-            'file'      => $temporaleFile,
-            'updated'   => $updatedCount,
-            'added'     => $addedCount
+            'operation'    => 'PATCH',
+            'client_ip'    => $this->clientIp,
+            'file'         => $temporaleFile,
+            'updated'      => $updatedCount,
+            'added'        => $addedCount,
+            'i18n_locales' => $i18nLocales
         ]);
 
         return $this->encodeResponseBody($response, [
@@ -474,6 +640,186 @@ final class TemporaleHandler extends AbstractHandler
             } else {
                 // Invalidate APCu cache for this file
                 Utilities::invalidateJsonFileCache($i18nFile);
+            }
+        }
+    }
+
+    /**
+     * Write i18n data to locale files (for PUT - full replacement).
+     *
+     * @param \stdClass $i18n Object with locale keys and translation maps.
+     * @throws InternalServerErrorException If unable to write to a file.
+     */
+    private function writeI18nFiles(\stdClass $i18n): void
+    {
+        $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
+
+        // Ensure i18n folder exists
+        if (!is_dir($i18nFolder)) {
+            if (!@mkdir($i18nFolder, 0755, true) && !is_dir($i18nFolder)) {
+                throw new InternalServerErrorException('Failed to create i18n directory: ' . $i18nFolder);
+            }
+        }
+
+        /** @var array<string,\stdClass> $i18nArray */
+        $i18nArray = get_object_vars($i18n);
+        foreach ($i18nArray as $locale => $translations) {
+            $i18nFile    = strtr(JsonData::TEMPORALE_I18N_FILE->path(), ['{locale}' => $locale]);
+            $jsonContent = json_encode($translations, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            if ($jsonContent === false) {
+                throw new InternalServerErrorException("Failed to encode i18n data for locale '{$locale}'");
+            }
+
+            $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+            if ($result === false) {
+                throw new InternalServerErrorException("Failed to write i18n file for locale '{$locale}'");
+            }
+
+            Utilities::invalidateJsonFileCache($i18nFile);
+        }
+    }
+
+    /**
+     * Validate i18n structure in payload.
+     *
+     * @param \stdClass $i18n The i18n object to validate.
+     * @throws ValidationException If the structure is invalid.
+     */
+    private function validateI18n(\stdClass $i18n): void
+    {
+        /** @var array<string,mixed> $i18nArray */
+        $i18nArray = get_object_vars($i18n);
+        foreach ($i18nArray as $locale => $translations) {
+            if (empty($locale)) {
+                throw new ValidationException('i18n keys must be non-empty locale strings');
+            }
+            if (!( $translations instanceof \stdClass )) {
+                throw new ValidationException("i18n.{$locale} must be an object");
+            }
+            /** @var array<string,mixed> $translationsArray */
+            $translationsArray = get_object_vars($translations);
+            foreach ($translationsArray as $eventKey => $name) {
+                if (!is_string($name)) {
+                    throw new ValidationException("i18n.{$locale}.{$eventKey} must be a string");
+                }
+            }
+        }
+    }
+
+    /**
+     * Update i18n data in locale files (for PATCH - merge).
+     *
+     * @param \stdClass $i18n Object with locale keys and translation maps.
+     */
+    private function updateI18nFiles(\stdClass $i18n): void
+    {
+        $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
+
+        // Ensure i18n folder exists
+        if (!is_dir($i18nFolder)) {
+            if (!@mkdir($i18nFolder, 0755, true) && !is_dir($i18nFolder)) {
+                throw new InternalServerErrorException('Failed to create i18n directory: ' . $i18nFolder);
+            }
+        }
+
+        /** @var array<string,\stdClass> $i18nArray */
+        $i18nArray = get_object_vars($i18n);
+        foreach ($i18nArray as $locale => $translations) {
+            $i18nFile = strtr(JsonData::TEMPORALE_I18N_FILE->path(), ['{locale}' => $locale]);
+
+            // Load existing or start fresh
+            $existingData = new \stdClass();
+            if (file_exists($i18nFile) && is_file($i18nFile)) {
+                try {
+                    $existingData = Utilities::jsonFileToObject($i18nFile);
+                } catch (\Throwable $e) {
+                    // Start fresh if file is corrupted
+                    $this->auditLogger->warning("Failed to read existing i18n file for locale '{$locale}', starting fresh", [
+                        'file'  => $i18nFile,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            // Merge translations
+            /** @var array<string,string> $translationsArray */
+            $translationsArray = get_object_vars($translations);
+            foreach ($translationsArray as $eventKey => $name) {
+                $existingData->{$eventKey} = $name;
+            }
+
+            $jsonContent = json_encode($existingData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            if ($jsonContent === false) {
+                throw new InternalServerErrorException("Failed to encode i18n data for locale '{$locale}'");
+            }
+
+            $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+            if ($result === false) {
+                throw new InternalServerErrorException("Failed to write i18n file for locale '{$locale}'");
+            }
+
+            Utilities::invalidateJsonFileCache($i18nFile);
+        }
+    }
+
+    /**
+     * Ensure all event_keys have entries in all i18n files.
+     *
+     * Adds empty string as placeholder for missing entries.
+     *
+     * @param string[] $eventKeys The event keys that must exist.
+     * @param string|null $skipLocale Locale to skip (already has translations).
+     */
+    private function ensureI18nConsistency(array $eventKeys, ?string $skipLocale = null): void
+    {
+        $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
+        if (!is_dir($i18nFolder)) {
+            return;
+        }
+
+        foreach ($this->availableLocales as $locale) {
+            if ($locale === $skipLocale) {
+                continue;
+            }
+
+            $i18nFile = strtr(JsonData::TEMPORALE_I18N_FILE->path(), ['{locale}' => $locale]);
+
+            $i18nData = new \stdClass();
+            if (file_exists($i18nFile) && is_file($i18nFile)) {
+                try {
+                    $i18nData = Utilities::jsonFileToObject($i18nFile);
+                } catch (\Throwable $e) {
+                    // Start fresh if corrupted
+                    $this->auditLogger->warning("Failed to read i18n file for locale '{$locale}' during consistency check", [
+                        'file'  => $i18nFile,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            $modified = false;
+            foreach ($eventKeys as $eventKey) {
+                if (!property_exists($i18nData, $eventKey)) {
+                    $i18nData->{$eventKey} = ''; // Empty string placeholder
+                    $modified              = true;
+                }
+            }
+
+            if ($modified) {
+                $jsonContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                if ($jsonContent === false) {
+                    $this->auditLogger->warning("Failed to encode i18n data for locale '{$locale}' during consistency check");
+                    continue;
+                }
+
+                $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+                if ($result === false) {
+                    $this->auditLogger->warning("Failed to write i18n file for locale '{$locale}' during consistency check", [
+                        'file' => $i18nFile
+                    ]);
+                } else {
+                    Utilities::invalidateJsonFileCache($i18nFile);
+                }
             }
         }
     }
