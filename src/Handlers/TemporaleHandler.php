@@ -85,7 +85,15 @@ final class TemporaleHandler extends AbstractHandler
 
     /**
      * Builds the list of available locales from the lectionary folder.
-     * Uses Year A folder as reference since all years should have the same locales.
+     *
+     * ARCHITECTURAL CONSTRAINT: Uses Year A folder as the authoritative source.
+     * All three year-cycle folders (A, B, C) MUST have identical locale coverage.
+     * This is enforced by the translation workflow - when a new locale is added,
+     * it must be added to all three year folders simultaneously.
+     *
+     * The loadLectionaryData() method is defensive and skips missing files,
+     * so if a locale exists in Year A but not in B or C, those years will
+     * simply have no readings for that locale (graceful degradation).
      */
     private function buildAvailableLectionaryLocales(): void
     {
