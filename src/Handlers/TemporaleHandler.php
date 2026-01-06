@@ -744,6 +744,10 @@ final class TemporaleHandler extends AbstractHandler
         // Update i18n files if i18n provided
         if ($i18n !== null) {
             $this->updateI18nFiles($i18n);
+
+            // Merge newly created locales into availableLocales so ensureI18nConsistency can process them
+            $i18nLocalesFromPayload = array_keys(get_object_vars($i18n));
+            $this->availableLocales = array_values(array_unique(array_merge($this->availableLocales, $i18nLocalesFromPayload)));
         }
 
         // Ensure all new event_keys have entries in all i18n files (empty string placeholder)
