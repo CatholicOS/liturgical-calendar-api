@@ -44,6 +44,9 @@ final class TemporaleHandler extends AbstractHandler
     /** @var string[] Available locale files in the temporale i18n folder */
     private array $availableLocales = [];
 
+    /** @var string[] Available locale files in the lectionary folder */
+    private array $availableLectionaryLocales = [];
+
     /** @param string[] $requestPathParams */
     public function __construct(array $requestPathParams = [])
     {
@@ -56,6 +59,8 @@ final class TemporaleHandler extends AbstractHandler
         $this->auditLogger = LoggerFactory::create('audit', null, 90, false, true, false);
         // Build available locales list from i18n folder
         $this->buildAvailableLocales();
+        // Build available lectionary locales list
+        $this->buildAvailableLectionaryLocales();
     }
 
     /**
@@ -76,6 +81,55 @@ final class TemporaleHandler extends AbstractHandler
                 }
             }
         }
+    }
+
+    /**
+     * Builds the list of available locales from the lectionary folder.
+     * Uses Year A folder as reference since all years should have the same locales.
+     */
+    private function buildAvailableLectionaryLocales(): void
+    {
+        $lectionaryFolder = JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_A_FOLDER->path();
+        if (is_dir($lectionaryFolder)) {
+            $files = glob($lectionaryFolder . '/*.json');
+            if ($files !== false) {
+                foreach ($files as $file) {
+                    if (!is_readable($file)) {
+                        continue;
+                    }
+                    $locale                             = basename($file, '.json');
+                    $this->availableLectionaryLocales[] = $locale;
+                }
+            }
+        }
+    }
+
+    /**
+     * Determines the lectionary locale to use based on the current locale.
+     * Falls back to base locale, then Latin if the exact locale is not available.
+     *
+     * @return string|null The lectionary locale to use, or null if none available
+     */
+    private function getLectionaryLocale(): ?string
+    {
+        // First try exact match
+        if (in_array($this->locale, $this->availableLectionaryLocales, true)) {
+            return $this->locale;
+        }
+
+        // Try base locale (e.g., 'en' from 'en_US')
+        $localeParts = preg_split('/[_-]/', $this->locale);
+        $baseLocale  = is_array($localeParts) ? $localeParts[0] : $this->locale;
+        if (in_array($baseLocale, $this->availableLectionaryLocales, true)) {
+            return $baseLocale;
+        }
+
+        // Fall back to Latin
+        if (in_array('la', $this->availableLectionaryLocales, true)) {
+            return 'la';
+        }
+
+        return null;
     }
 
     /**
@@ -184,7 +238,7 @@ final class TemporaleHandler extends AbstractHandler
     /**
      * Handle GET and POST requests to retrieve temporale data.
      *
-     * Returns the temporale events with translated names based on the locale.
+     * Returns the temporale events with translated names and lectionary readings based on the locale.
      */
     private function handleGetRequest(ResponseInterface $response): ResponseInterface
     {
@@ -209,11 +263,109 @@ final class TemporaleHandler extends AbstractHandler
             }
         }
 
+        // Load lectionary readings for all three year cycles
+        $lectionaryLocale = $this->getLectionaryLocale();
+        if ($lectionaryLocale !== null) {
+            $lectionaryData = $this->loadLectionaryData($lectionaryLocale);
+            $sanctorumData  = $this->loadSanctorumLectionaryData($lectionaryLocale);
+
+            /** @var array<int,\stdClass&object{event_key:string,grade:int,type:string,color:string[]}> $temporaleRows */
+            foreach ($temporaleRows as $idx => $row) {
+                $key = $row->event_key;
+
+                // Special case: ImmaculateHeart readings are in sanctorum, not year-cycle based
+                if ($key === 'ImmaculateHeart' && $sanctorumData !== null && property_exists($sanctorumData, $key)) {
+                    $temporaleRows[$idx]->lectionary = $sanctorumData->{$key};
+                    continue;
+                }
+
+                // Add Year A readings
+                if (isset($lectionaryData['A']) && property_exists($lectionaryData['A'], $key)) {
+                    $temporaleRows[$idx]->annum_a = $lectionaryData['A']->{$key};
+                }
+
+                // Add Year B readings
+                if (isset($lectionaryData['B']) && property_exists($lectionaryData['B'], $key)) {
+                    $temporaleRows[$idx]->annum_b = $lectionaryData['B']->{$key};
+                }
+
+                // Add Year C readings
+                if (isset($lectionaryData['C']) && property_exists($lectionaryData['C'], $key)) {
+                    $temporaleRows[$idx]->annum_c = $lectionaryData['C']->{$key};
+                }
+            }
+        }
+
         $response = $response->withHeader('X-Litcal-Temporale-Locale', $this->locale);
         return $this->encodeResponseBody($response, [
             'events' => $temporaleRows,
             'locale' => $this->locale
         ]);
+    }
+
+    /**
+     * Load lectionary data for all three year cycles.
+     *
+     * @param string $locale The locale for the lectionary files
+     * @return array<string,\stdClass> Array with keys 'A', 'B', 'C' containing lectionary data
+     */
+    private function loadLectionaryData(string $locale): array
+    {
+        $lectionaryData = [];
+
+        // Year A
+        $fileA = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_A_FILE->path(), ['{locale}' => $locale]);
+        if (file_exists($fileA)) {
+            try {
+                $lectionaryData['A'] = Utilities::jsonFileToObject($fileA);
+            } catch (\Throwable $e) {
+                // Skip if file cannot be parsed
+            }
+        }
+
+        // Year B
+        $fileB = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_B_FILE->path(), ['{locale}' => $locale]);
+        if (file_exists($fileB)) {
+            try {
+                $lectionaryData['B'] = Utilities::jsonFileToObject($fileB);
+            } catch (\Throwable $e) {
+                // Skip if file cannot be parsed
+            }
+        }
+
+        // Year C
+        $fileC = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_C_FILE->path(), ['{locale}' => $locale]);
+        if (file_exists($fileC)) {
+            try {
+                $lectionaryData['C'] = Utilities::jsonFileToObject($fileC);
+            } catch (\Throwable $e) {
+                // Skip if file cannot be parsed
+            }
+        }
+
+        return $lectionaryData;
+    }
+
+    /**
+     * Load sanctorum (saints) lectionary data.
+     *
+     * This is used for events like ImmaculateHeart which are in the temporale
+     * but have their lectionary readings in the sanctorum folder.
+     *
+     * @param string $locale The locale for the lectionary file
+     * @return \stdClass|null The sanctorum lectionary data, or null if unavailable
+     */
+    private function loadSanctorumLectionaryData(string $locale): ?\stdClass
+    {
+        $file = strtr(JsonData::LECTIONARY_SAINTS_FILE->path(), ['{locale}' => $locale]);
+        if (file_exists($file)) {
+            try {
+                return Utilities::jsonFileToObject($file);
+            } catch (\Throwable $e) {
+                // Skip if file cannot be parsed
+            }
+        }
+        return null;
     }
 
     /**
