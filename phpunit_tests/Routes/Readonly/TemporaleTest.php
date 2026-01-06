@@ -204,4 +204,65 @@ final class TemporaleTest extends ApiTestCase
         $localeHeader = $response->getHeaderLine('X-Litcal-Temporale-Locale');
         $this->assertSame('la', $localeHeader, 'Unsupported locale should default to Latin (la)');
     }
+
+    public function testGetTemporaleWithLocaleQueryParameter(): void
+    {
+        $response = self::$http->get('/temporale', [
+            'query' => ['locale' => 'it']
+        ]);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $localeHeader = $response->getHeaderLine('X-Litcal-Temporale-Locale');
+        $this->assertSame('it', $localeHeader, 'Locale query parameter should set locale to "it"');
+
+        $data = json_decode((string) $response->getBody());
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('locale', $data);
+        $this->assertSame('it', $data->locale, 'Response locale should be "it"');
+    }
+
+    public function testLocaleQueryParameterOverridesAcceptLanguageHeader(): void
+    {
+        // Accept-Language says French, but query param says Italian
+        $response = self::$http->get('/temporale', [
+            'headers' => ['Accept-Language' => 'fr'],
+            'query'   => ['locale' => 'it']
+        ]);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $localeHeader = $response->getHeaderLine('X-Litcal-Temporale-Locale');
+        $this->assertSame('it', $localeHeader, 'Locale query parameter should override Accept-Language header');
+
+        $data = json_decode((string) $response->getBody());
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('locale', $data);
+        $this->assertSame('it', $data->locale, 'Response locale should be "it" from query param, not "fr" from header');
+    }
+
+    public function testInvalidLocaleQueryParameterReturns400(): void
+    {
+        $response = self::$http->get('/temporale', [
+            'query'       => ['locale' => 'invalid_locale_xyz'],
+            'http_errors' => false
+        ]);
+        $this->assertSame(
+            400,
+            $response->getStatusCode(),
+            'Invalid locale query parameter should return 400 Bad Request'
+        );
+    }
+
+    public function testUnavailableLocaleQueryParameterReturns400(): void
+    {
+        // 'zh' is a valid locale code but not available for temporale data
+        $response = self::$http->get('/temporale', [
+            'query'       => ['locale' => 'zh'],
+            'http_errors' => false
+        ]);
+        $this->assertSame(
+            400,
+            $response->getStatusCode(),
+            'Unavailable locale query parameter should return 400 Bad Request'
+        );
+    }
 }

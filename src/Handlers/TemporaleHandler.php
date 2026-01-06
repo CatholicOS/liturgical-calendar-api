@@ -127,6 +127,34 @@ final class TemporaleHandler extends AbstractHandler
             $this->locale = LitLocale::LATIN_PRIMARY_LANGUAGE;
         }
 
+        // Check for locale query parameter (overrides Accept-Language header)
+        $queryParams = $request->getQueryParams();
+        if (array_key_exists('locale', $queryParams) && is_string($queryParams['locale'])) {
+            $queryLocale = \Locale::canonicalize($queryParams['locale']);
+            if (null === $queryLocale || '' === $queryLocale) {
+                throw new ValidationException("Invalid value '{$queryParams['locale']}' for param `locale`");
+            }
+            if (LitLocale::isValid($queryLocale)) {
+                // Check if we have a translation file for this locale
+                $baseLocale = explode('_', $queryLocale)[0];
+                if (in_array($queryLocale, $this->availableLocales, true)) {
+                    $this->locale = $queryLocale;
+                } elseif (in_array($baseLocale, $this->availableLocales, true)) {
+                    $this->locale = $baseLocale;
+                } else {
+                    throw new ValidationException(
+                        "Locale '{$queryParams['locale']}' is not available for temporale data. "
+                        . 'Available locales: ' . implode(', ', $this->availableLocales)
+                    );
+                }
+            } else {
+                throw new ValidationException(
+                    "Invalid value '{$queryParams['locale']}' for param `locale`, valid values are: la, la_VA, "
+                    . implode(', ', LitLocale::$AllAvailableLocales)
+                );
+            }
+        }
+
         // Capture client IP for audit logging
         /** @var array<string,mixed> $serverParams */
         $serverParams   = $request->getServerParams();
