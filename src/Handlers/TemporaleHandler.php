@@ -257,7 +257,8 @@ final class TemporaleHandler extends AbstractHandler
         $this->validateI18n($i18n);
 
         // Determine Accept-Language locale (base locale only)
-        $acceptLocale = explode('_', $this->locale)[0];
+        $localeParts  = preg_split('/[_-]/', $this->locale);
+        $acceptLocale = is_array($localeParts) ? $localeParts[0] : $this->locale;
 
         // Validate that i18n contains the Accept-Language locale
         if (!property_exists($i18n, $acceptLocale)) {
@@ -421,7 +422,8 @@ final class TemporaleHandler extends AbstractHandler
         $newEventKeys = [];
 
         // Determine Accept-Language locale (base locale only)
-        $acceptLocale = explode('_', $this->locale)[0];
+        $localeParts  = preg_split('/[_-]/', $this->locale);
+        $acceptLocale = is_array($localeParts) ? $localeParts[0] : $this->locale;
 
         // Process each event in the payload
         foreach ($events as $event) {
