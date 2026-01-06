@@ -241,6 +241,7 @@ final class TemporaleTest extends ApiTestCase
 
     public function testInvalidLocaleQueryParameterReturns400(): void
     {
+        // Test malformed/syntactically invalid locale code
         $response = self::$http->get('/temporale', [
             'query'       => ['locale' => 'invalid_locale_xyz'],
             'http_errors' => false

@@ -115,7 +115,8 @@ final class TemporaleHandler extends AbstractHandler
         $locale = Negotiator::pickLanguage($request, [], LitLocale::LATIN);
         if ($locale && LitLocale::isValid($locale)) {
             // Check if we have a translation file for this locale
-            $baseLocale = explode('_', $locale)[0];
+            $localeParts = preg_split('/[_-]/', $locale);
+            $baseLocale  = is_array($localeParts) ? $localeParts[0] : $locale;
             if (in_array($locale, $this->availableLocales, true)) {
                 $this->locale = $locale;
             } elseif (in_array($baseLocale, $this->availableLocales, true)) {
@@ -136,7 +137,8 @@ final class TemporaleHandler extends AbstractHandler
             }
             if (LitLocale::isValid($queryLocale)) {
                 // Check if we have a translation file for this locale
-                $baseLocale = explode('_', $queryLocale)[0];
+                $localeParts = preg_split('/[_-]/', $queryLocale);
+                $baseLocale  = is_array($localeParts) ? $localeParts[0] : $queryLocale;
                 if (in_array($queryLocale, $this->availableLocales, true)) {
                     $this->locale = $queryLocale;
                 } elseif (in_array($baseLocale, $this->availableLocales, true)) {
@@ -567,21 +569,19 @@ final class TemporaleHandler extends AbstractHandler
         $existingData = Utilities::jsonFileToObjectArray($temporaleFile);
 
         // Find and remove the event
-        /** @var int|null $foundIndex */
-        $foundIndex = null;
-        foreach ($existingData as $idx => $event) {
-            if (property_exists($event, 'event_key') && $event->event_key === $eventKey) {
-                $foundIndex = (int) $idx;
-                break;
-            }
-        }
+        $foundEvent = array_find(
+            $existingData,
+            fn($event) => property_exists($event, 'event_key') && $event->event_key === $eventKey
+        );
 
-        if ($foundIndex === null) {
+        if ($foundEvent === null) {
             throw new NotFoundException("Temporale event with key '{$eventKey}' not found");
         }
 
+        $foundIndex = array_search($foundEvent, $existingData, true);
+
         // Remove the event
-        array_splice($existingData, $foundIndex, 1);
+        array_splice($existingData, (int) $foundIndex, 1);
 
         $jsonContent = json_encode(array_values($existingData), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if ($jsonContent === false) {
