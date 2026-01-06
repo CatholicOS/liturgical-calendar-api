@@ -363,6 +363,10 @@ final class TemporaleHandler extends AbstractHandler
                 $lectionaryData['A'] = Utilities::jsonFileToObject($fileA);
             } catch (\JsonException | ServiceUnavailableException $e) {
                 // Skip if file cannot be parsed or is unavailable
+                $this->auditLogger->debug("Failed to load Year A lectionary for locale '{$locale}'", [
+                    'file'  => $fileA,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
@@ -373,6 +377,10 @@ final class TemporaleHandler extends AbstractHandler
                 $lectionaryData['B'] = Utilities::jsonFileToObject($fileB);
             } catch (\JsonException | ServiceUnavailableException $e) {
                 // Skip if file cannot be parsed or is unavailable
+                $this->auditLogger->debug("Failed to load Year B lectionary for locale '{$locale}'", [
+                    'file'  => $fileB,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
@@ -383,6 +391,10 @@ final class TemporaleHandler extends AbstractHandler
                 $lectionaryData['C'] = Utilities::jsonFileToObject($fileC);
             } catch (\JsonException | ServiceUnavailableException $e) {
                 // Skip if file cannot be parsed or is unavailable
+                $this->auditLogger->debug("Failed to load Year C lectionary for locale '{$locale}'", [
+                    'file'  => $fileC,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
@@ -406,6 +418,10 @@ final class TemporaleHandler extends AbstractHandler
                 return Utilities::jsonFileToObject($file);
             } catch (\JsonException | ServiceUnavailableException $e) {
                 // Skip if file cannot be parsed or is unavailable
+                $this->auditLogger->debug("Failed to load sanctorum lectionary for locale '{$locale}'", [
+                    'file'  => $file,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
         return null;
@@ -434,6 +450,10 @@ final class TemporaleHandler extends AbstractHandler
                 }
             } catch (\JsonException | ServiceUnavailableException $e) {
                 // Skip if file cannot be parsed or is unavailable
+                $this->auditLogger->debug("Failed to load Lent weekdays lectionary for locale '{$locale}'", [
+                    'file'  => $lentFile,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
@@ -447,6 +467,10 @@ final class TemporaleHandler extends AbstractHandler
                 }
             } catch (\JsonException | ServiceUnavailableException $e) {
                 // Skip if file cannot be parsed or is unavailable
+                $this->auditLogger->debug("Failed to load Easter weekdays lectionary for locale '{$locale}'", [
+                    'file'  => $easterFile,
+                    'error' => $e->getMessage()
+                ]);
             }
         }
 
