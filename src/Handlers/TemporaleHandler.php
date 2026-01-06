@@ -3,6 +3,7 @@
 namespace LiturgicalCalendar\Api\Handlers;
 
 use LiturgicalCalendar\Api\Enum\JsonData;
+use LiturgicalCalendar\Api\Enum\LectionaryCategory;
 use LiturgicalCalendar\Api\Enum\LitColor;
 use LiturgicalCalendar\Api\Enum\LitLocale;
 use LiturgicalCalendar\Api\Handlers\Auth\ClientIpTrait;
@@ -592,6 +593,14 @@ final class TemporaleHandler extends AbstractHandler
         // Write i18n files for each locale
         $this->writeI18nFiles($i18nToWrite);
 
+        // Process optional lectionary data
+        $lectionaryLocales = [];
+        if (property_exists($payload, 'lectionary') && $payload->lectionary instanceof \stdClass) {
+            $this->validateLectionary($payload->lectionary);
+            $this->writeLectionaryFiles($payload->lectionary);
+            $lectionaryLocales = array_keys(get_object_vars($payload->lectionary));
+        }
+
         // Write events to main temporale file
         $jsonContent = json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if ($jsonContent === false) {
@@ -613,11 +622,12 @@ final class TemporaleHandler extends AbstractHandler
 
         // Log the operation
         $this->auditLogger->info('Temporale data created', [
-            'operation'    => 'PUT',
-            'client_ip'    => $this->clientIp,
-            'file'         => $temporaleFile,
-            'events'       => count($events),
-            'i18n_locales' => $locales
+            'operation'          => 'PUT',
+            'client_ip'          => $this->clientIp,
+            'file'               => $temporaleFile,
+            'events'             => count($events),
+            'i18n_locales'       => $locales,
+            'lectionary_locales' => $lectionaryLocales
         ]);
 
         return $this->encodeResponseBody($response, [
@@ -763,6 +773,14 @@ final class TemporaleHandler extends AbstractHandler
             $this->ensureI18nConsistency($newEventKeys, $acceptLocale);
         }
 
+        // Process optional lectionary data
+        $lectionaryLocales = [];
+        if (property_exists($payload, 'lectionary') && $payload->lectionary instanceof \stdClass) {
+            $this->validateLectionary($payload->lectionary);
+            $this->updateLectionaryFiles($payload->lectionary);
+            $lectionaryLocales = array_keys(get_object_vars($payload->lectionary));
+        }
+
         $jsonContent = json_encode(array_values($existingData), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if ($jsonContent === false) {
             throw new ValidationException('Failed to encode temporale data as JSON');
@@ -779,12 +797,13 @@ final class TemporaleHandler extends AbstractHandler
         // Log the operation
         $i18nLocales = $i18n !== null ? array_keys(get_object_vars($i18n)) : [];
         $this->auditLogger->info('Temporale data updated', [
-            'operation'    => 'PATCH',
-            'client_ip'    => $this->clientIp,
-            'file'         => $temporaleFile,
-            'updated'      => $updatedCount,
-            'added'        => $addedCount,
-            'i18n_locales' => $i18nLocales
+            'operation'          => 'PATCH',
+            'client_ip'          => $this->clientIp,
+            'file'               => $temporaleFile,
+            'updated'            => $updatedCount,
+            'added'              => $addedCount,
+            'i18n_locales'       => $i18nLocales,
+            'lectionary_locales' => $lectionaryLocales
         ]);
 
         return $this->encodeResponseBody($response, [
@@ -850,6 +869,9 @@ final class TemporaleHandler extends AbstractHandler
 
         // Remove from all i18n files
         $this->removeEventKeyFromI18nFiles($eventKey);
+
+        // Remove from all lectionary files
+        $this->removeEventKeyFromLectionaryFiles($eventKey);
 
         // Log the operation
         $this->auditLogger->info('Temporale event deleted', [
@@ -1115,6 +1137,305 @@ final class TemporaleHandler extends AbstractHandler
                 }
             }
         }
+    }
+
+    /**
+     * Validate lectionary structure in payload.
+     *
+     * Expected structure:
+     * {
+     *   "locale": {
+     *     "event_key": { ... readings ... } // for flat categories
+     *     "event_key": {
+     *       "annum_a": { ... },
+     *       "annum_b": { ... },
+     *       "annum_c": { ... }
+     *     } // for year-cycle categories
+     *   }
+     * }
+     *
+     * @param \stdClass $lectionary The lectionary object to validate.
+     * @throws ValidationException If the structure is invalid.
+     */
+    private function validateLectionary(\stdClass $lectionary): void
+    {
+        /** @var array<string,mixed> $lectionaryArray */
+        $lectionaryArray = get_object_vars($lectionary);
+        foreach ($lectionaryArray as $locale => $events) {
+            if (empty($locale)) {
+                throw new ValidationException('Lectionary keys must be non-empty locale strings');
+            }
+            if (!( $events instanceof \stdClass )) {
+                throw new ValidationException("lectionary.{$locale} must be an object");
+            }
+
+            /** @var array<string,mixed> $eventsArray */
+            $eventsArray = get_object_vars($events);
+            foreach ($eventsArray as $eventKey => $readings) {
+                if (!( $readings instanceof \stdClass )) {
+                    throw new ValidationException("lectionary.{$locale}.{$eventKey} must be an object");
+                }
+
+                // Check if this is a year-cycle category
+                $category = LectionaryCategory::forEventKey($eventKey);
+                if ($category->hasYearCycle()) {
+                    // Year-cycle events must have annum_a, annum_b, annum_c
+                    if (
+                        !property_exists($readings, 'annum_a') ||
+                        !property_exists($readings, 'annum_b') ||
+                        !property_exists($readings, 'annum_c')
+                    ) {
+                        throw new ValidationException(
+                            "lectionary.{$locale}.{$eventKey} must have annum_a, annum_b, and annum_c properties"
+                        );
+                    }
+                    if (
+                        !( $readings->annum_a instanceof \stdClass ) ||
+                        !( $readings->annum_b instanceof \stdClass ) ||
+                        !( $readings->annum_c instanceof \stdClass )
+                    ) {
+                        throw new ValidationException(
+                            "lectionary.{$locale}.{$eventKey}.annum_[a|b|c] must be objects"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Write lectionary data to files (for PUT - full creation).
+     *
+     * @param \stdClass $lectionary Object with locale keys and event readings.
+     * @throws InternalServerErrorException If unable to write to a file.
+     */
+    private function writeLectionaryFiles(\stdClass $lectionary): void
+    {
+        /** @var array<string,\stdClass> $lectionaryArray */
+        $lectionaryArray = get_object_vars($lectionary);
+        foreach ($lectionaryArray as $locale => $events) {
+            /** @var array<string,\stdClass> $eventsArray */
+            $eventsArray = get_object_vars($events);
+
+            // Group events by category
+            /** @var array<string,array<string,\stdClass>> $categorizedEvents */
+            $categorizedEvents = [];
+            foreach ($eventsArray as $eventKey => $readings) {
+                $category = LectionaryCategory::forEventKey($eventKey);
+                if (!isset($categorizedEvents[$category->value])) {
+                    $categorizedEvents[$category->value] = [];
+                }
+                $categorizedEvents[$category->value][$eventKey] = $readings;
+            }
+
+            // Write to each category's file(s)
+            foreach ($categorizedEvents as $categoryValue => $eventReadings) {
+                $category = LectionaryCategory::from($categoryValue);
+
+                if ($category->hasYearCycle()) {
+                    // Write to separate year-cycle files (A, B, C)
+                    foreach (['A', 'B', 'C'] as $year) {
+                        $yearKey = 'annum_' . strtolower($year);
+                        $file    = strtr($category->fileForYear($year)->path(), ['{locale}' => $locale]);
+
+                        $this->ensureLectionaryFolderExists($category->folderForYear($year));
+
+                        // Load existing or start fresh
+                        $existingData = $this->loadLectionaryFileData($file);
+
+                        // Merge new readings
+                        foreach ($eventReadings as $eventKey => $readings) {
+                            if (property_exists($readings, $yearKey)) {
+                                $existingData->{$eventKey} = $readings->{$yearKey};
+                            }
+                        }
+
+                        $this->saveLectionaryFile($file, $existingData, $locale);
+                    }
+                } else {
+                    // Write to flat file
+                    $file = strtr($category->file()->path(), ['{locale}' => $locale]);
+
+                    $this->ensureLectionaryFolderExists($category->folder());
+
+                    // Load existing or start fresh
+                    $existingData = $this->loadLectionaryFileData($file);
+
+                    // Merge new readings
+                    foreach ($eventReadings as $eventKey => $readings) {
+                        $existingData->{$eventKey} = $readings;
+                    }
+
+                    $this->saveLectionaryFile($file, $existingData, $locale);
+                }
+            }
+        }
+    }
+
+    /**
+     * Update lectionary data in files (for PATCH - merge).
+     *
+     * @param \stdClass $lectionary Object with locale keys and event readings.
+     */
+    private function updateLectionaryFiles(\stdClass $lectionary): void
+    {
+        // Uses the same logic as writeLectionaryFiles since both merge into existing data
+        $this->writeLectionaryFiles($lectionary);
+    }
+
+    /**
+     * Remove an event_key from all lectionary files.
+     *
+     * @param string $eventKey The event key to remove from lectionary files.
+     */
+    private function removeEventKeyFromLectionaryFiles(string $eventKey): void
+    {
+        $category = LectionaryCategory::forEventKey($eventKey);
+
+        if ($category->hasYearCycle()) {
+            // Remove from all year-cycle files (A, B, C)
+            foreach (['A', 'B', 'C'] as $year) {
+                $folder = $category->folderForYear($year)->path();
+                if (!is_dir($folder)) {
+                    continue;
+                }
+
+                $files = glob($folder . '/*.json');
+                if ($files === false) {
+                    continue;
+                }
+
+                foreach ($files as $file) {
+                    $this->removeEventKeyFromLectionaryFile($file, $eventKey);
+                }
+            }
+        } else {
+            // Remove from flat file for all locales
+            $folder = $category->folder()->path();
+            if (!is_dir($folder)) {
+                return;
+            }
+
+            $files = glob($folder . '/*.json');
+            if ($files === false) {
+                return;
+            }
+
+            foreach ($files as $file) {
+                $this->removeEventKeyFromLectionaryFile($file, $eventKey);
+            }
+        }
+    }
+
+    /**
+     * Remove an event_key from a specific lectionary file.
+     *
+     * @param string $file The file path.
+     * @param string $eventKey The event key to remove.
+     */
+    private function removeEventKeyFromLectionaryFile(string $file, string $eventKey): void
+    {
+        if (!file_exists($file) || !is_file($file)) {
+            return;
+        }
+
+        try {
+            $data = Utilities::jsonFileToObject($file);
+        } catch (\JsonException | ServiceUnavailableException $e) {
+            $this->auditLogger->warning('Failed to read lectionary file for event removal', [
+                'file'      => $file,
+                'event_key' => $eventKey,
+                'error'     => $e->getMessage()
+            ]);
+            return;
+        }
+
+        if (!property_exists($data, $eventKey)) {
+            return; // Event not in this file
+        }
+
+        unset($data->{$eventKey});
+
+        $jsonContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        if ($jsonContent === false) {
+            $this->auditLogger->warning('Failed to encode lectionary data after removing event', [
+                'file'      => $file,
+                'event_key' => $eventKey
+            ]);
+            return;
+        }
+
+        $result = file_put_contents($file, $jsonContent, LOCK_EX);
+        if ($result === false) {
+            $this->auditLogger->warning('Failed to write lectionary file after removing event', [
+                'file'      => $file,
+                'event_key' => $eventKey
+            ]);
+        } else {
+            Utilities::invalidateJsonFileCache($file);
+        }
+    }
+
+    /**
+     * Ensure a lectionary folder exists.
+     *
+     * @param JsonData $folderEnum The folder enum to ensure exists.
+     * @throws InternalServerErrorException If unable to create the directory.
+     */
+    private function ensureLectionaryFolderExists(JsonData $folderEnum): void
+    {
+        $folder = $folderEnum->path();
+        if (!is_dir($folder)) {
+            if (!@mkdir($folder, 0755, true) && !is_dir($folder)) {
+                throw new InternalServerErrorException('Failed to create lectionary directory: ' . $folder);
+            }
+        }
+    }
+
+    /**
+     * Load lectionary file data, returning empty object if file doesn't exist or is invalid.
+     *
+     * @param string $file The file path.
+     * @return \stdClass The loaded data or empty object.
+     */
+    private function loadLectionaryFileData(string $file): \stdClass
+    {
+        if (!file_exists($file) || !is_file($file)) {
+            return new \stdClass();
+        }
+
+        try {
+            return Utilities::jsonFileToObject($file);
+        } catch (\JsonException | ServiceUnavailableException $e) {
+            $this->auditLogger->debug('Failed to load lectionary file, starting fresh', [
+                'file'  => $file,
+                'error' => $e->getMessage()
+            ]);
+            return new \stdClass();
+        }
+    }
+
+    /**
+     * Save lectionary file data.
+     *
+     * @param string $file The file path.
+     * @param \stdClass $data The data to save.
+     * @param string $locale The locale (for error messages).
+     * @throws InternalServerErrorException If unable to save the file.
+     */
+    private function saveLectionaryFile(string $file, \stdClass $data, string $locale): void
+    {
+        $jsonContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        if ($jsonContent === false) {
+            throw new InternalServerErrorException("Failed to encode lectionary data for locale '{$locale}'");
+        }
+
+        $result = file_put_contents($file, $jsonContent, LOCK_EX);
+        if ($result === false) {
+            throw new InternalServerErrorException("Failed to write lectionary file for locale '{$locale}'");
+        }
+
+        Utilities::invalidateJsonFileCache($file);
     }
 
     /**
