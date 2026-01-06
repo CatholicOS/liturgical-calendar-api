@@ -202,9 +202,9 @@ enum LectionaryCategory: string
     public function eventKeys(): ?array
     {
         return match ($this) {
-            self::WEEKDAYS_LENT   => self::WEEKDAYS_LENT_EVENTS,
-            self::WEEKDAYS_EASTER => self::WEEKDAYS_EASTER_EVENTS,
-            self::SANCTORUM       => self::SANCTORUM_EVENTS,
+            self::WEEKDAYS_LENT       => self::WEEKDAYS_LENT_EVENTS,
+            self::WEEKDAYS_EASTER     => self::WEEKDAYS_EASTER_EVENTS,
+            self::SANCTORUM           => self::SANCTORUM_EVENTS,
             self::SUNDAYS_SOLEMNITIES => null,
         };
     }
@@ -232,11 +232,6 @@ enum LectionaryCategory: string
      */
     public static function all(): array
     {
-        return [
-            self::SUNDAYS_SOLEMNITIES,
-            self::WEEKDAYS_LENT,
-            self::WEEKDAYS_EASTER,
-            self::SANCTORUM,
-        ];
+        return self::cases();
     }
 }
