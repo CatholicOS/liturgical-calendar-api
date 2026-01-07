@@ -132,7 +132,7 @@ final class TemporaleHandler extends AbstractHandler
     private function getBaseLocale(string $locale): string
     {
         $localeParts = preg_split('/[_-]/', $locale);
-        return is_array($localeParts) ? $localeParts[0] : $locale;
+        return ( is_array($localeParts) && count($localeParts) > 0 ) ? $localeParts[0] : $locale;
     }
 
     /**
