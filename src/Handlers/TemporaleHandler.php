@@ -41,6 +41,7 @@ final class TemporaleHandler extends AbstractHandler
 
     private string $locale;
     private Logger $auditLogger;
+    private Logger $debugLogger;
     private string $clientIp = 'unknown';
 
     /** @var string[] Available locale files in the temporale i18n folder */
@@ -57,8 +58,10 @@ final class TemporaleHandler extends AbstractHandler
         $this->allowCredentials = true;
         // Initialize the list of available locales
         LitLocale::init();
-        // Initialize audit logger for write operations
+        // Initialize audit logger for write operations (security-relevant actions)
         $this->auditLogger = LoggerFactory::create('audit', null, 90, false, true, false);
+        // Initialize debug logger for diagnostics (non-security warnings)
+        $this->debugLogger = LoggerFactory::create('temporale_debug', null, 90, false, false, false);
         // Build available locales list from i18n folder
         $this->buildAvailableLocales();
         // Build available lectionary locales list
@@ -114,10 +117,10 @@ final class TemporaleHandler extends AbstractHandler
                     $yearBFile = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_B_FILE->path(), ['{locale}' => $locale]);
                     $yearCFile = strtr(JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_C_FILE->path(), ['{locale}' => $locale]);
                     if (!file_exists($yearBFile)) {
-                        $this->auditLogger->warning("Lectionary locale '{$locale}' exists in Year A but missing in Year B");
+                        $this->debugLogger->warning("Lectionary locale '{$locale}' exists in Year A but missing in Year B");
                     }
                     if (!file_exists($yearCFile)) {
-                        $this->auditLogger->warning("Lectionary locale '{$locale}' exists in Year A but missing in Year C");
+                        $this->debugLogger->warning("Lectionary locale '{$locale}' exists in Year A but missing in Year C");
                     }
                 }
             }
