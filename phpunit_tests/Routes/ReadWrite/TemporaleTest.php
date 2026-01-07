@@ -71,19 +71,19 @@ final class TemporaleTest extends ApiTestCase
         $token = self::getJwtToken();
         $this->assertNotNull($token, 'Failed to obtain JWT token for authenticated test');
 
-        // Valid payload structure, but data already exists so should return 409
+        // Valid payload structure (unified per-event), but data already exists so should return 409
         $payload = [
+            'locales' => ['en'],
             'events'  => [
                 [
                     'event_key' => 'TestEvent',
                     'grade'     => 3,
                     'type'      => 'mobile',
-                    'color'     => ['white']
+                    'color'     => ['white'],
+                    'i18n'      => [
+                        'en' => 'Test Event Name'
+                    ]
                 ]
-            ],
-            'locales' => ['en'],
-            'i18n'    => [
-                'en' => ['TestEvent' => 'Test Event Name']
             ]
         ];
 
@@ -230,7 +230,7 @@ final class TemporaleTest extends ApiTestCase
         // PUT without Content-Type - will return 409 since data exists (checked before Content-Type)
         $putResponse = self::$http->put('/temporale', [
             'headers'     => self::authHeaders($token),
-            'body'        => '{"events":[],"locales":[],"i18n":{}}',
+            'body'        => '{"locales":[],"events":[]}',
             'http_errors' => false
         ]);
         // Since data exists, 409 is returned before Content-Type check

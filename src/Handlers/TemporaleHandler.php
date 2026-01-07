@@ -480,11 +480,24 @@ final class TemporaleHandler extends AbstractHandler
      * PUT is only allowed when NO temporale data exists (initial creation only).
      * Requires JWT authentication (handled by middleware).
      *
-     * Expected payload structure:
+     * Expected payload structure (unified per-event structure):
      * {
-     *   "events": [...],
      *   "locales": ["en", "la", "de", ...],
-     *   "i18n": { "en": { "Easter": "Easter Sunday", ... } }
+     *   "events": [
+     *     {
+     *       "event_key": "Easter",
+     *       "grade": 7,
+     *       "type": "mobile",
+     *       "color": ["white"],
+     *       "i18n": {
+     *         "en": "Easter Sunday",
+     *         "la": "Dominica Paschatis"
+     *       },
+     *       "readings": {
+     *         "en": { "annum_a": {...}, "annum_b": {...}, "annum_c": {...} }
+     *       }
+     *     }
+     *   ]
      * }
      */
     private function handlePutRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -508,34 +521,28 @@ final class TemporaleHandler extends AbstractHandler
         $payload = $this->parseBodyPayload($request, false);
 
         if (!( $payload instanceof \stdClass )) {
-            throw new ValidationException('Request body must be an object with events, locales, and i18n properties');
+            throw new ValidationException('Request body must be an object with locales and events properties');
         }
 
         // Validate required properties
-        if (!property_exists($payload, 'events') || !is_array($payload->events)) {
-            throw new ValidationException('Payload must have an "events" array property');
-        }
-        if (count($payload->events) === 0) {
-            throw new ValidationException('Events array must contain at least one event');
-        }
         if (!property_exists($payload, 'locales') || !is_array($payload->locales)) {
             throw new ValidationException('Payload must have a "locales" array property');
         }
         if (count($payload->locales) === 0) {
             throw new ValidationException('Locales array must contain at least one locale');
         }
-        if (!property_exists($payload, 'i18n') || !( $payload->i18n instanceof \stdClass )) {
-            throw new ValidationException('Payload must have an "i18n" object property');
+        if (!property_exists($payload, 'events') || !is_array($payload->events)) {
+            throw new ValidationException('Payload must have an "events" array property');
         }
+        if (count($payload->events) === 0) {
+            throw new ValidationException('Events array must contain at least one event');
+        }
+
+        /** @var array<int,string> $locales */
+        $locales = $payload->locales;
 
         /** @var array<int,mixed> $events */
         $events = $payload->events;
-
-        /** @var array<int,mixed> $locales */
-        $locales = $payload->locales;
-
-        /** @var \stdClass $i18n */
-        $i18n = $payload->i18n;
 
         // Validate locales are base locale strings
         foreach ($locales as $locale) {
@@ -547,22 +554,18 @@ final class TemporaleHandler extends AbstractHandler
             }
         }
 
-        // Validate i18n structure
-        $this->validateI18n($i18n);
-
         // Determine Accept-Language locale (base locale only)
         $acceptLocale = $this->getBaseLocale($this->locale);
-
-        // Validate that i18n contains the Accept-Language locale
-        if (!property_exists($i18n, $acceptLocale)) {
-            throw new ValidationException("i18n must contain translations for the Accept-Language locale '{$acceptLocale}'");
-        }
 
         // Validate each event and collect event_keys
         /** @var array<string,bool> $seenEventKeys */
         $seenEventKeys = [];
         /** @var string[] $eventKeys */
         $eventKeys = [];
+
+        /** @var array<int,\stdClass> $validatedEvents */
+        $validatedEvents = [];
+
         foreach ($events as $event) {
             if (!( $event instanceof \stdClass )) {
                 throw new ValidationException('Each event must be an object');
@@ -576,26 +579,37 @@ final class TemporaleHandler extends AbstractHandler
             }
             $seenEventKeys[$eventKey] = true;
             $eventKeys[]              = $eventKey;
-        }
 
-        // Validate that i18n[acceptLocale] contains ALL event_keys
-        /** @var \stdClass $acceptLocaleI18n */
-        $acceptLocaleI18n = $i18n->{$acceptLocale};
-        foreach ($eventKeys as $eventKey) {
-            if (!property_exists($acceptLocaleI18n, $eventKey)) {
+            // Validate per-event i18n (required for PUT)
+            if (!property_exists($event, 'i18n') || !( $event->i18n instanceof \stdClass )) {
+                throw new ValidationException("Event '{$eventKey}' must have an 'i18n' object property");
+            }
+            $this->validateEventI18n($event->i18n, $eventKey);
+
+            // Ensure i18n has the Accept-Language locale
+            if (!property_exists($event->i18n, $acceptLocale)) {
                 throw new ValidationException(
-                    "i18n.{$acceptLocale} must contain translation for event_key '{$eventKey}'"
+                    "Event '{$eventKey}' i18n must contain translation for Accept-Language locale '{$acceptLocale}'"
                 );
             }
+
+            // Validate per-event readings (optional)
+            if (property_exists($event, 'readings') && $event->readings instanceof \stdClass) {
+                $this->validateEventReadings($event->readings, $eventKey);
+            }
+
+            $validatedEvents[] = $event;
         }
 
-        // Build i18n data for all locales
+        // Extract i18n from events and build data for all locales
+        $extractedI18n = $this->extractI18nFromEvents($validatedEvents);
+
+        // Build i18n data for all locales (with empty placeholders for missing translations)
         $i18nToWrite = new \stdClass();
-        /** @var string $locale */
         foreach ($locales as $locale) {
             $i18nToWrite->{$locale} = new \stdClass();
             /** @var \stdClass|null $localeTranslations */
-            $localeTranslations = property_exists($i18n, $locale) ? $i18n->{$locale} : null;
+            $localeTranslations = property_exists($extractedI18n, $locale) ? $extractedI18n->{$locale} : null;
             foreach ($eventKeys as $eventKey) {
                 if ($localeTranslations instanceof \stdClass && property_exists($localeTranslations, $eventKey)) {
                     $i18nToWrite->{$locale}->{$eventKey} = $localeTranslations->{$eventKey};
@@ -609,16 +623,18 @@ final class TemporaleHandler extends AbstractHandler
         // Write i18n files for each locale
         $this->writeI18nFiles($i18nToWrite);
 
-        // Process optional lectionary data
-        $lectionaryLocales = [];
-        if (property_exists($payload, 'lectionary') && $payload->lectionary instanceof \stdClass) {
-            $this->validateLectionary($payload->lectionary);
-            $this->writeLectionaryFiles($payload->lectionary);
-            $lectionaryLocales = array_keys(get_object_vars($payload->lectionary));
+        // Extract readings from events and write to lectionary files
+        $extractedReadings = $this->extractReadingsFromEvents($validatedEvents);
+        $readingsLocales   = array_keys(get_object_vars($extractedReadings));
+        if (count($readingsLocales) > 0) {
+            $this->writeLectionaryFiles($extractedReadings);
         }
 
+        // Strip i18n and readings before saving to main file
+        $eventsToStore = $this->stripI18nAndReadingsFromEvents($validatedEvents);
+
         // Write events to main temporale file
-        $jsonContent = json_encode($events, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $jsonContent = json_encode($eventsToStore, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if ($jsonContent === false) {
             throw new ValidationException('Failed to encode temporale data as JSON');
         }
@@ -632,24 +648,22 @@ final class TemporaleHandler extends AbstractHandler
         Utilities::invalidateJsonFileCache($temporaleFile);
 
         // Update available locales list
-        /** @var string[] $localesArray */
-        $localesArray           = $locales;
-        $this->availableLocales = array_values(array_unique(array_merge($this->availableLocales, $localesArray)));
+        $this->availableLocales = array_values(array_unique(array_merge($this->availableLocales, $locales)));
 
         // Log the operation
         $this->auditLogger->info('Temporale data created', [
-            'operation'          => 'PUT',
-            'client_ip'          => $this->clientIp,
-            'file'               => $temporaleFile,
-            'events'             => count($events),
-            'i18n_locales'       => $locales,
-            'lectionary_locales' => $lectionaryLocales
+            'operation'        => 'PUT',
+            'client_ip'        => $this->clientIp,
+            'file'             => $temporaleFile,
+            'events'           => count($validatedEvents),
+            'i18n_locales'     => $locales,
+            'readings_locales' => $readingsLocales
         ]);
 
         return $this->encodeResponseBody($response, [
             'success' => true,
             'message' => 'Temporale data created successfully',
-            'events'  => count($events)
+            'events'  => count($validatedEvents)
         ], StatusCode::CREATED);
     }
 
@@ -658,10 +672,22 @@ final class TemporaleHandler extends AbstractHandler
      *
      * Requires JWT authentication (handled by middleware).
      *
-     * Expected payload structure:
+     * Expected payload structure (unified per-event structure):
      * {
-     *   "events": [...],
-     *   "i18n": { "en": { "NewEvent": "New Event Name", ... } }  // optional
+     *   "events": [
+     *     {
+     *       "event_key": "Easter",
+     *       "grade": 7,
+     *       "type": "mobile",
+     *       "color": ["white"],
+     *       "i18n": {              // required for new events, optional for updates
+     *         "en": "Easter Sunday"
+     *       },
+     *       "readings": {          // optional
+     *         "en": { "annum_a": {...}, "annum_b": {...}, "annum_c": {...} }
+     *       }
+     *     }
+     *   ]
      * }
      */
     private function handlePatchRequest(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -680,15 +706,6 @@ final class TemporaleHandler extends AbstractHandler
         /** @var array<int,mixed> $events */
         $events = $payload->events;
 
-        // i18n is optional for PATCH
-        $hasI18n = property_exists($payload, 'i18n') && $payload->i18n instanceof \stdClass;
-        /** @var \stdClass|null $i18n */
-        $i18n = $hasI18n ? $payload->i18n : null;
-
-        if ($i18n !== null) {
-            $this->validateI18n($i18n);
-        }
-
         // Load existing data
         $temporaleFile = JsonData::TEMPORALE_FILE->path();
         if (!file_exists($temporaleFile)) {
@@ -696,18 +713,6 @@ final class TemporaleHandler extends AbstractHandler
         }
 
         $existingData = Utilities::jsonFileToObjectArray($temporaleFile);
-
-        // Check for duplicate event_keys in the payload
-        /** @var array<string,bool> $seenEventKeys */
-        $seenEventKeys = [];
-        foreach ($events as $event) {
-            if ($event instanceof \stdClass && property_exists($event, 'event_key') && is_string($event->event_key)) {
-                if (isset($seenEventKeys[$event->event_key])) {
-                    throw new ValidationException("Duplicate event_key '{$event->event_key}' in payload");
-                }
-                $seenEventKeys[$event->event_key] = true;
-            }
-        }
 
         // Build a map of existing events by event_key
         /** @var array<string,int> $existingEventKeyToIndex */
@@ -718,6 +723,10 @@ final class TemporaleHandler extends AbstractHandler
             }
         }
 
+        // Check for duplicate event_keys in the payload
+        /** @var array<string,bool> $seenEventKeys */
+        $seenEventKeys = [];
+
         $updatedCount = 0;
         $addedCount   = 0;
         /** @var string[] $newEventKeys */
@@ -725,6 +734,9 @@ final class TemporaleHandler extends AbstractHandler
 
         // Determine Accept-Language locale (base locale only)
         $acceptLocale = $this->getBaseLocale($this->locale);
+
+        /** @var array<int,\stdClass> $validatedEvents */
+        $validatedEvents = [];
 
         // Process each event in the payload
         foreach ($events as $event) {
@@ -735,53 +747,57 @@ final class TemporaleHandler extends AbstractHandler
                 throw new ValidationException('Each event must have an event_key property');
             }
 
-            $this->validateTemporaleEvent($event);
-
             /** @var string $eventKey */
             $eventKey = $event->event_key;
-            if (isset($existingEventKeyToIndex[$eventKey])) {
-                // Update existing event
-                $existingData[$existingEventKeyToIndex[$eventKey]] = $event;
-                $updatedCount++;
-            } else {
-                // Add new event
-                $existingData[] = $event;
-                $newEventKeys[] = $eventKey;
-                $addedCount++;
-            }
-        }
 
-        // For new event_keys, require i18n for Accept-Language locale
-        if (count($newEventKeys) > 0) {
-            if ($i18n === null) {
-                throw new ValidationException(
-                    'i18n property is required when adding new events. ' .
-                    'Missing translations for new event_keys: ' . implode(', ', $newEventKeys)
-                );
+            if (isset($seenEventKeys[$eventKey])) {
+                throw new ValidationException("Duplicate event_key '{$eventKey}' in payload");
             }
-            if (!property_exists($i18n, $acceptLocale)) {
-                throw new ValidationException(
-                    "i18n must contain translations for Accept-Language locale '{$acceptLocale}' for new events"
-                );
+            $seenEventKeys[$eventKey] = true;
+
+            $this->validateTemporaleEvent($event);
+
+            $isNewEvent = !isset($existingEventKeyToIndex[$eventKey]);
+
+            // Validate per-event i18n
+            if (property_exists($event, 'i18n') && $event->i18n instanceof \stdClass) {
+                $this->validateEventI18n($event->i18n, $eventKey);
             }
-            /** @var \stdClass $acceptLocaleI18n */
-            $acceptLocaleI18n = $i18n->{$acceptLocale};
-            foreach ($newEventKeys as $eventKey) {
-                if (!property_exists($acceptLocaleI18n, $eventKey)) {
+
+            // For new events, require i18n with Accept-Language locale
+            if ($isNewEvent) {
+                if (!property_exists($event, 'i18n') || !( $event->i18n instanceof \stdClass )) {
                     throw new ValidationException(
-                        "i18n.{$acceptLocale} must contain translation for new event_key '{$eventKey}'"
+                        "New event '{$eventKey}' must have an 'i18n' object property"
                     );
                 }
+                if (!property_exists($event->i18n, $acceptLocale)) {
+                    throw new ValidationException(
+                        "New event '{$eventKey}' i18n must contain translation for Accept-Language locale '{$acceptLocale}'"
+                    );
+                }
+                $newEventKeys[] = $eventKey;
+                $addedCount++;
+            } else {
+                $updatedCount++;
             }
+
+            // Validate per-event readings (optional)
+            if (property_exists($event, 'readings') && $event->readings instanceof \stdClass) {
+                $this->validateEventReadings($event->readings, $eventKey);
+            }
+
+            $validatedEvents[] = $event;
         }
 
-        // Update i18n files if i18n provided
-        if ($i18n !== null) {
-            $this->updateI18nFiles($i18n);
+        // Extract i18n from events and update files
+        $extractedI18n = $this->extractI18nFromEvents($validatedEvents);
+        $i18nLocales   = array_keys(get_object_vars($extractedI18n));
+        if (count($i18nLocales) > 0) {
+            $this->updateI18nFiles($extractedI18n);
 
             // Merge newly created locales into availableLocales so ensureI18nConsistency can process them
-            $i18nLocalesFromPayload = array_keys(get_object_vars($i18n));
-            $this->availableLocales = array_values(array_unique(array_merge($this->availableLocales, $i18nLocalesFromPayload)));
+            $this->availableLocales = array_values(array_unique(array_merge($this->availableLocales, $i18nLocales)));
         }
 
         // Ensure all new event_keys have entries in all i18n files (empty string placeholder)
@@ -789,12 +805,27 @@ final class TemporaleHandler extends AbstractHandler
             $this->ensureI18nConsistency($newEventKeys, $acceptLocale);
         }
 
-        // Process optional lectionary data
-        $lectionaryLocales = [];
-        if (property_exists($payload, 'lectionary') && $payload->lectionary instanceof \stdClass) {
-            $this->validateLectionary($payload->lectionary);
-            $this->updateLectionaryFiles($payload->lectionary);
-            $lectionaryLocales = array_keys(get_object_vars($payload->lectionary));
+        // Extract readings from events and update lectionary files
+        $extractedReadings = $this->extractReadingsFromEvents($validatedEvents);
+        $readingsLocales   = array_keys(get_object_vars($extractedReadings));
+        if (count($readingsLocales) > 0) {
+            $this->updateLectionaryFiles($extractedReadings);
+        }
+
+        // Strip i18n and readings before storing events
+        $eventsToStore = $this->stripI18nAndReadingsFromEvents($validatedEvents);
+
+        // Update existing data with new/updated events
+        foreach ($eventsToStore as $event) {
+            /** @var string $eventKey */
+            $eventKey = $event->event_key;
+            if (isset($existingEventKeyToIndex[$eventKey])) {
+                // Update existing event
+                $existingData[$existingEventKeyToIndex[$eventKey]] = $event;
+            } else {
+                // Add new event
+                $existingData[] = $event;
+            }
         }
 
         $jsonContent = json_encode(array_values($existingData), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -811,15 +842,14 @@ final class TemporaleHandler extends AbstractHandler
         Utilities::invalidateJsonFileCache($temporaleFile);
 
         // Log the operation
-        $i18nLocales = $i18n !== null ? array_keys(get_object_vars($i18n)) : [];
         $this->auditLogger->info('Temporale data updated', [
-            'operation'          => 'PATCH',
-            'client_ip'          => $this->clientIp,
-            'file'               => $temporaleFile,
-            'updated'            => $updatedCount,
-            'added'              => $addedCount,
-            'i18n_locales'       => $i18nLocales,
-            'lectionary_locales' => $lectionaryLocales
+            'operation'        => 'PATCH',
+            'client_ip'        => $this->clientIp,
+            'file'             => $temporaleFile,
+            'updated'          => $updatedCount,
+            'added'            => $addedCount,
+            'i18n_locales'     => $i18nLocales,
+            'readings_locales' => $readingsLocales
         ]);
 
         return $this->encodeResponseBody($response, [
@@ -1015,30 +1045,189 @@ final class TemporaleHandler extends AbstractHandler
     }
 
     /**
-     * Validate i18n structure in payload.
+     * Validate i18n structure on an event.
+     *
+     * Expected structure:
+     * {
+     *   "i18n": {
+     *     "en": "Easter Sunday",
+     *     "la": "Dominica Paschatis"
+     *   }
+     * }
      *
      * @param \stdClass $i18n The i18n object to validate.
+     * @param string $eventKey The event key (for error messages).
      * @throws ValidationException If the structure is invalid.
      */
-    private function validateI18n(\stdClass $i18n): void
+    private function validateEventI18n(\stdClass $i18n, string $eventKey): void
     {
         /** @var array<string,mixed> $i18nArray */
         $i18nArray = get_object_vars($i18n);
-        foreach ($i18nArray as $locale => $translations) {
+        foreach ($i18nArray as $locale => $name) {
             if (empty($locale)) {
-                throw new ValidationException('i18n keys must be non-empty locale strings');
+                throw new ValidationException("i18n keys must be non-empty locale strings in event '{$eventKey}'");
             }
-            if (!( $translations instanceof \stdClass )) {
-                throw new ValidationException("i18n.{$locale} must be an object");
+            if (!is_string($name)) {
+                throw new ValidationException("i18n.{$locale} must be a string in event '{$eventKey}'");
             }
-            /** @var array<string,mixed> $translationsArray */
-            $translationsArray = get_object_vars($translations);
-            foreach ($translationsArray as $eventKey => $name) {
-                if (!is_string($name)) {
-                    throw new ValidationException("i18n.{$locale}.{$eventKey} must be a string");
+        }
+    }
+
+    /**
+     * Validate readings structure on an event.
+     *
+     * Expected structure for year-cycle events (SUNDAYS_SOLEMNITIES):
+     * {
+     *   "readings": {
+     *     "en": {
+     *       "annum_a": { ... },
+     *       "annum_b": { ... },
+     *       "annum_c": { ... }
+     *     }
+     *   }
+     * }
+     *
+     * Expected structure for flat-category events (WEEKDAYS_LENT, WEEKDAYS_EASTER, SANCTORUM):
+     * {
+     *   "readings": {
+     *     "en": { ... readings data ... }
+     *   }
+     * }
+     *
+     * @param \stdClass $readings The readings object to validate.
+     * @param string $eventKey The event key (for error messages and category determination).
+     * @throws ValidationException If the structure is invalid.
+     */
+    private function validateEventReadings(\stdClass $readings, string $eventKey): void
+    {
+        $category = LectionaryCategory::forEventKey($eventKey);
+
+        /** @var array<string,mixed> $readingsArray */
+        $readingsArray = get_object_vars($readings);
+        foreach ($readingsArray as $locale => $localeReadings) {
+            if (empty($locale)) {
+                throw new ValidationException("readings keys must be non-empty locale strings in event '{$eventKey}'");
+            }
+            if (!( $localeReadings instanceof \stdClass )) {
+                throw new ValidationException("readings.{$locale} must be an object in event '{$eventKey}'");
+            }
+
+            if ($category->hasYearCycle()) {
+                // Year-cycle events must have annum_a, annum_b, annum_c
+                if (
+                    !property_exists($localeReadings, 'annum_a') ||
+                    !property_exists($localeReadings, 'annum_b') ||
+                    !property_exists($localeReadings, 'annum_c')
+                ) {
+                    throw new ValidationException(
+                        "readings.{$locale} must have annum_a, annum_b, and annum_c properties in event '{$eventKey}'"
+                    );
+                }
+                if (
+                    !( $localeReadings->annum_a instanceof \stdClass ) ||
+                    !( $localeReadings->annum_b instanceof \stdClass ) ||
+                    !( $localeReadings->annum_c instanceof \stdClass )
+                ) {
+                    throw new ValidationException(
+                        "readings.{$locale}.annum_[a|b|c] must be objects in event '{$eventKey}'"
+                    );
                 }
             }
         }
+    }
+
+    /**
+     * Extract i18n data from events array into locale-grouped structure.
+     *
+     * Transforms from per-event structure:
+     * [{ "event_key": "Easter", "i18n": { "en": "Easter Sunday" } }]
+     *
+     * To per-locale structure:
+     * { "en": { "Easter": "Easter Sunday" } }
+     *
+     * @param array<int,\stdClass> $events Array of event objects with i18n property.
+     * @return \stdClass Object with locale keys and translation maps.
+     */
+    private function extractI18nFromEvents(array $events): \stdClass
+    {
+        $i18n = new \stdClass();
+
+        foreach ($events as $event) {
+            if (!property_exists($event, 'i18n') || !( $event->i18n instanceof \stdClass )) {
+                continue;
+            }
+
+            /** @var string $eventKey */
+            $eventKey = $event->event_key;
+
+            /** @var array<string,string> $eventI18n */
+            $eventI18n = get_object_vars($event->i18n);
+            foreach ($eventI18n as $locale => $name) {
+                if (!property_exists($i18n, $locale)) {
+                    $i18n->{$locale} = new \stdClass();
+                }
+                $i18n->{$locale}->{$eventKey} = $name;
+            }
+        }
+
+        return $i18n;
+    }
+
+    /**
+     * Extract readings data from events array into locale-grouped structure.
+     *
+     * Transforms from per-event structure:
+     * [{ "event_key": "Easter", "readings": { "en": { "annum_a": {...} } } }]
+     *
+     * To per-locale structure (compatible with writeLectionaryFiles):
+     * { "en": { "Easter": { "annum_a": {...} } } }
+     *
+     * @param array<int,\stdClass> $events Array of event objects with readings property.
+     * @return \stdClass Object with locale keys and event readings.
+     */
+    private function extractReadingsFromEvents(array $events): \stdClass
+    {
+        $readings = new \stdClass();
+
+        foreach ($events as $event) {
+            if (!property_exists($event, 'readings') || !( $event->readings instanceof \stdClass )) {
+                continue;
+            }
+
+            /** @var string $eventKey */
+            $eventKey = $event->event_key;
+
+            /** @var array<string,\stdClass> $eventReadings */
+            $eventReadings = get_object_vars($event->readings);
+            foreach ($eventReadings as $locale => $localeReadings) {
+                if (!property_exists($readings, $locale)) {
+                    $readings->{$locale} = new \stdClass();
+                }
+                $readings->{$locale}->{$eventKey} = $localeReadings;
+            }
+        }
+
+        return $readings;
+    }
+
+    /**
+     * Strip i18n and readings properties from events for storage.
+     *
+     * The main temporale file stores only core event data (event_key, grade, type, color).
+     * i18n and readings are stored in separate locale-specific files.
+     *
+     * @param array<int,\stdClass> $events Array of event objects.
+     * @return array<int,\stdClass> Events with i18n and readings removed.
+     */
+    private function stripI18nAndReadingsFromEvents(array $events): array
+    {
+        $stripped = [];
+        foreach ($events as $event) {
+            $strippedEvent = clone $event;
+            unset($strippedEvent->i18n, $strippedEvent->readings);
+            $stripped[] = $strippedEvent;
+        }
+        return $stripped;
     }
 
     /**
@@ -1150,70 +1339,6 @@ final class TemporaleHandler extends AbstractHandler
                     ]);
                 } else {
                     Utilities::invalidateJsonFileCache($i18nFile);
-                }
-            }
-        }
-    }
-
-    /**
-     * Validate lectionary structure in payload.
-     *
-     * Expected structure:
-     * {
-     *   "locale": {
-     *     "event_key": { ... readings ... } // for flat categories
-     *     "event_key": {
-     *       "annum_a": { ... },
-     *       "annum_b": { ... },
-     *       "annum_c": { ... }
-     *     } // for year-cycle categories
-     *   }
-     * }
-     *
-     * @param \stdClass $lectionary The lectionary object to validate.
-     * @throws ValidationException If the structure is invalid.
-     */
-    private function validateLectionary(\stdClass $lectionary): void
-    {
-        /** @var array<string,mixed> $lectionaryArray */
-        $lectionaryArray = get_object_vars($lectionary);
-        foreach ($lectionaryArray as $locale => $events) {
-            if (empty($locale)) {
-                throw new ValidationException('Lectionary keys must be non-empty locale strings');
-            }
-            if (!( $events instanceof \stdClass )) {
-                throw new ValidationException("lectionary.{$locale} must be an object");
-            }
-
-            /** @var array<string,mixed> $eventsArray */
-            $eventsArray = get_object_vars($events);
-            foreach ($eventsArray as $eventKey => $readings) {
-                if (!( $readings instanceof \stdClass )) {
-                    throw new ValidationException("lectionary.{$locale}.{$eventKey} must be an object");
-                }
-
-                // Check if this is a year-cycle category
-                $category = LectionaryCategory::forEventKey($eventKey);
-                if ($category->hasYearCycle()) {
-                    // Year-cycle events must have annum_a, annum_b, annum_c
-                    if (
-                        !property_exists($readings, 'annum_a') ||
-                        !property_exists($readings, 'annum_b') ||
-                        !property_exists($readings, 'annum_c')
-                    ) {
-                        throw new ValidationException(
-                            "lectionary.{$locale}.{$eventKey} must have annum_a, annum_b, and annum_c properties"
-                        );
-                    }
-                    if (
-                        !( $readings->annum_a instanceof \stdClass ) ||
-                        !( $readings->annum_b instanceof \stdClass ) ||
-                        !( $readings->annum_c instanceof \stdClass )
-                    ) {
-                        throw new ValidationException(
-                            "lectionary.{$locale}.{$eventKey}.annum_[a|b|c] must be objects"
-                        );
-                    }
                 }
             }
         }
