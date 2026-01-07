@@ -800,16 +800,30 @@ final class TemporaleHandler extends AbstractHandler
         // Extract i18n from events and update files
         $extractedI18n = $this->extractI18nFromEvents($validatedEvents);
         $i18nLocales   = array_keys(get_object_vars($extractedI18n));
+
+        // Track which locales are newly created (not in previous availableLocales)
+        $previousLocales     = $this->availableLocales;
+        $newlyCreatedLocales = [];
+
         if (count($i18nLocales) > 0) {
             $this->updateI18nFiles($extractedI18n);
 
             // Merge newly created locales into availableLocales so ensureI18nConsistency can process them
-            $this->availableLocales = array_values(array_unique(array_merge($this->availableLocales, $i18nLocales)));
+            $this->availableLocales = array_values(array_unique(array_merge($previousLocales, $i18nLocales)));
+            $newlyCreatedLocales    = array_diff($i18nLocales, $previousLocales);
         }
 
         // Ensure all new event_keys have entries in all i18n files (empty string placeholder)
         if (count($newEventKeys) > 0) {
             $this->ensureI18nConsistency($newEventKeys, $acceptLocale);
+        }
+
+        // For newly created locales, ensure they have placeholders for ALL existing event keys
+        // This ensures new locale files contain all events, not just the new ones from this PATCH
+        if (count($newlyCreatedLocales) > 0) {
+            // Use the existing map keys which are already validated as strings
+            $allExistingEventKeys = array_keys($existingEventKeyToIndex);
+            $this->ensureI18nConsistency($allExistingEventKeys, null, $newlyCreatedLocales);
         }
 
         // Extract readings from events and update lectionary files
@@ -1316,21 +1330,24 @@ final class TemporaleHandler extends AbstractHandler
     }
 
     /**
-     * Ensure all event_keys have entries in all i18n files.
+     * Ensure all event_keys have entries in specified i18n files.
      *
      * Adds empty string as placeholder for missing entries.
      *
      * @param string[] $eventKeys The event keys that must exist.
      * @param string|null $skipLocale Locale to skip (already has translations).
+     * @param string[]|null $onlyLocales If provided, only process these locales. If null, process all available locales.
      */
-    private function ensureI18nConsistency(array $eventKeys, ?string $skipLocale = null): void
+    private function ensureI18nConsistency(array $eventKeys, ?string $skipLocale = null, ?array $onlyLocales = null): void
     {
         $i18nFolder = JsonData::TEMPORALE_I18N_FOLDER->path();
         if (!is_dir($i18nFolder)) {
             return;
         }
 
-        foreach ($this->availableLocales as $locale) {
+        $localesToProcess = $onlyLocales ?? $this->availableLocales;
+
+        foreach ($localesToProcess as $locale) {
             if ($locale === $skipLocale) {
                 continue;
             }
