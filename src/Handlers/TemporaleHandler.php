@@ -6,6 +6,7 @@ use LiturgicalCalendar\Api\Enum\JsonData;
 use LiturgicalCalendar\Api\Enum\LectionaryCategory;
 use LiturgicalCalendar\Api\Enum\LitColor;
 use LiturgicalCalendar\Api\Enum\LitLocale;
+use LiturgicalCalendar\Api\Enum\ReadingsType;
 use LiturgicalCalendar\Api\Handlers\Auth\ClientIpTrait;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
@@ -1080,9 +1081,9 @@ final class TemporaleHandler extends AbstractHandler
      * {
      *   "readings": {
      *     "en": {
-     *       "annum_a": { ... },
-     *       "annum_b": { ... },
-     *       "annum_c": { ... }
+     *       "annum_a": { ... readings matching ReadingsType DTO ... },
+     *       "annum_b": { ... readings matching ReadingsType DTO ... },
+     *       "annum_c": { ... readings matching ReadingsType DTO ... }
      *     }
      *   }
      * }
@@ -1090,9 +1091,17 @@ final class TemporaleHandler extends AbstractHandler
      * Expected structure for flat-category events (WEEKDAYS_LENT, WEEKDAYS_EASTER, SANCTORUM):
      * {
      *   "readings": {
-     *     "en": { ... readings data ... }
+     *     "en": { ... readings matching ReadingsType DTO ... }
      *   }
      * }
+     *
+     * The readings structure within each annum (or directly for flat categories) must match
+     * the expected DTO structure for the event, as determined by ReadingsType::forEventKey().
+     * For example:
+     * - Christmas: { vigil: {...}, night: {...}, dawn: {...}, day: {...} }
+     * - EasterVigil: { first_reading, ..., epistle, gospel } (18 readings)
+     * - PalmSun: { palm_gospel, first_reading, ..., gospel }
+     * - Most events: { first_reading, responsorial_psalm, second_reading, gospel_acclamation, gospel }
      *
      * @param \stdClass $readings The readings object to validate.
      * @param string $eventKey The event key (for error messages and category determination).
@@ -1100,7 +1109,8 @@ final class TemporaleHandler extends AbstractHandler
      */
     private function validateEventReadings(\stdClass $readings, string $eventKey): void
     {
-        $category = LectionaryCategory::forEventKey($eventKey);
+        $category     = LectionaryCategory::forEventKey($eventKey);
+        $readingsType = ReadingsType::forEventKey($eventKey);
 
         /** @var array<string,mixed> $readingsArray */
         $readingsArray = get_object_vars($readings);
@@ -1130,6 +1140,26 @@ final class TemporaleHandler extends AbstractHandler
                 ) {
                     throw new ValidationException(
                         "readings.{$locale}.annum_[a|b|c] must be objects in event '{$eventKey}'"
+                    );
+                }
+
+                // Validate each annum's structure against the expected DTO
+                foreach (['annum_a', 'annum_b', 'annum_c'] as $annum) {
+                    /** @var \stdClass $annumReadings */
+                    $annumReadings = $localeReadings->$annum;
+                    if (!$readingsType->validateStructure($annumReadings)) {
+                        throw new ValidationException(
+                            $readingsType->getValidationError($annumReadings)
+                            . " in event '{$eventKey}' readings.{$locale}.{$annum}"
+                        );
+                    }
+                }
+            } else {
+                // Flat-category events have readings directly under locale
+                if (!$readingsType->validateStructure($localeReadings)) {
+                    throw new ValidationException(
+                        $readingsType->getValidationError($localeReadings)
+                        . " in event '{$eventKey}' readings.{$locale}"
                     );
                 }
             }
