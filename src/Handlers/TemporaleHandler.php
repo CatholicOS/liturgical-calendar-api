@@ -1446,11 +1446,13 @@ final class TemporaleHandler extends AbstractHandler
     /**
      * Update lectionary data in files (for PATCH - merge).
      *
+     * Note: This uses the same logic as writeLectionaryFiles() because both
+     * operations merge new readings into existing file data rather than replacing.
+     *
      * @param \stdClass $lectionary Object with locale keys and event readings.
      */
     private function updateLectionaryFiles(\stdClass $lectionary): void
     {
-        // Uses the same logic as writeLectionaryFiles since both merge into existing data
         $this->writeLectionaryFiles($lectionary);
     }
 
