@@ -594,10 +594,11 @@ final class TemporaleHandler extends AbstractHandler
                 );
             }
 
-            // Validate per-event readings (optional)
-            if (property_exists($event, 'readings') && $event->readings instanceof \stdClass) {
-                $this->validateEventReadings($event->readings, $eventKey);
+            // Validate per-event readings (required for PUT - all events are new)
+            if (!property_exists($event, 'readings') || !( $event->readings instanceof \stdClass )) {
+                throw new ValidationException("Event '{$eventKey}' must have a 'readings' object property");
             }
+            $this->validateEventReadings($event->readings, $eventKey);
 
             $validatedEvents[] = $event;
         }
@@ -684,7 +685,7 @@ final class TemporaleHandler extends AbstractHandler
      *       "i18n": {              // required for new events, optional for updates
      *         "en": "Easter Sunday"
      *       },
-     *       "readings": {          // optional
+     *       "readings": {          // required for new events, optional for updates
      *         "en": { "annum_a": {...}, "annum_b": {...}, "annum_c": {...} }
      *       }
      *     }
@@ -783,9 +784,14 @@ final class TemporaleHandler extends AbstractHandler
                 $updatedCount++;
             }
 
-            // Validate per-event readings (optional)
+            // Validate per-event readings
             if (property_exists($event, 'readings') && $event->readings instanceof \stdClass) {
                 $this->validateEventReadings($event->readings, $eventKey);
+            } elseif ($isNewEvent) {
+                // For new events, readings are required
+                throw new ValidationException(
+                    "New event '{$eventKey}' must have a 'readings' object property"
+                );
             }
 
             $validatedEvents[] = $event;
