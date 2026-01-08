@@ -237,10 +237,11 @@ enum LectionaryCategory: string
     /**
      * Get the liturgical color(s) for this category.
      *
-     * @note For SUNDAYS_SOLEMNITIES and SANCTORUM, this returns a generic default
-     *       since colors vary per event. Callers should use event-specific color data.
+     * For ferial categories, returns the standard liturgical color for that season.
+     * For SUNDAYS_SOLEMNITIES and SANCTORUM, returns an empty array since colors
+     * vary per event and must be obtained from event-specific data.
      *
-     * @return string[] Array of liturgical color strings.
+     * @return string[] Array of liturgical color strings, or empty for varied categories.
      */
     public function liturgicalColor(): array
     {
@@ -251,8 +252,9 @@ enum LectionaryCategory: string
             self::WEEKDAYS_EASTER     => ['white'],
             self::WEEKDAYS_ORDINARY   => ['green'],
             // SUNDAYS_SOLEMNITIES and SANCTORUM have varied colors per event
+            // Return empty array to signal callers must use event-specific color data
             self::SUNDAYS_SOLEMNITIES,
-            self::SANCTORUM           => ['green'],  // Default, but events typically override
+            self::SANCTORUM           => [],
         };
     }
 
