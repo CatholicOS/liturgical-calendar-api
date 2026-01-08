@@ -124,7 +124,7 @@ enum LitSeason: string
             /**translators: context = liturgical season */
             LitSeason::EASTER         => $isLatin ? 'Tempus Paschale'     : _('Easter'),
             /**translators: context = liturgical season */
-            LitSeason::ORDINARY_TIME  => $isLatin ? 'Tempus per Annum'    : _('Ordinary Time')
+            LitSeason::ORDINARY_TIME  => $isLatin ? 'Tempus per annum'    : _('Ordinary Time')
         };
     }
 }

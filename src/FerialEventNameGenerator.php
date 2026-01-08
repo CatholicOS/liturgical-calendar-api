@@ -527,8 +527,8 @@ class FerialEventNameGenerator
         $ordinal = $this->getLocalizedOrdinal($week);
 
         if ($this->primaryLanguage === 'la') {
-            // "Tempus per Annum" is the liturgically correct Latin for "Ordinary Time"
-            return sprintf('%s Hebdomadæ %s Temporis per Annum', $dayName, $ordinal);
+            // "Tempus per annum" is the liturgically correct Latin for "Ordinary Time"
+            return sprintf('%s Hebdomadæ %s Temporis per annum', $dayName, $ordinal);
         }
 
         /**translators: %s is an ordinal number (1st, 2nd, etc.) */
