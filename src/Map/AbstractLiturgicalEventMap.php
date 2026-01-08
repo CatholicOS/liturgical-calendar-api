@@ -2,8 +2,9 @@
 
 namespace LiturgicalCalendar\Api\Map;
 
-use LiturgicalCalendar\Api\Models\Calendar\LiturgicalEvent;
 use LiturgicalCalendar\Api\DateTime;
+use LiturgicalCalendar\Api\Enum\LitSeason;
+use LiturgicalCalendar\Api\Models\Calendar\LiturgicalEvent;
 
 /**
  * Abstract class for liturgical event maps.
@@ -275,7 +276,8 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      * If the two LiturgicalEvent objects have different dates, the comparison is based on their date.
      * If the two LiturgicalEvent objects have different dates, the object with the later date is considered higher (i.e. it will come after the earlier date).
      * If the two LiturgicalEvent objects have the same date, the comparison is based on their grade.
-     * If the two LiturgicalEvent objects have the same grade, the comparison result is 0 and no sorting will take place.
+     * If the two LiturgicalEvent objects have the same grade, the comparison is based on their liturgical season.
+     * If the two LiturgicalEvent objects have the same liturgical season, the comparison result is 0 and no sorting will take place.
      * If the two LiturgicalEvent objects have different grades, the object with the higher grade is considered higher (i.e. it will come after the lower grade):
      *   this may seem counterintuitive, it would seem that a higher grade should come before a lower grade, but the most common case is for commemorations on weekdays,
      *   where the commemoration actually has a higher logical grade but is still optional so it should come after the weekday celebration.
@@ -299,11 +301,52 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
                 return -1;
             }
             if ($a->grade->value === $b->grade->value) {
-                return 0;
+                // When date and grade are equal, sort by liturgical season order.
+                // This ensures events like HolyThursChrism (LENT) come before HolyThurs (EASTER_TRIDUUM).
+                // Season order: ADVENT < CHRISTMAS < LENT < EASTER_TRIDUUM < EASTER < ORDINARY_TIME
+                return self::compareSeasons($a, $b);
             }
             return ( $a->grade->value > $b->grade->value ) ? +1 : -1;
         }
         return ( $a->date > $b->date ) ? +1 : -1;
+    }
+
+    /**
+     * Compares two LiturgicalEvent objects based on their liturgical season.
+     *
+     * The season order follows the liturgical year: ADVENT, CHRISTMAS, LENT, EASTER_TRIDUUM, EASTER, ORDINARY_TIME.
+     * This is used as a tiebreaker when events have the same date and grade (e.g., HolyThursChrism vs HolyThurs).
+     *
+     * @param LiturgicalEvent $a The first LiturgicalEvent object to compare.
+     * @param LiturgicalEvent $b The second LiturgicalEvent object to compare.
+     *
+     * @return int A value indicating the result of the comparison.
+     */
+    private static function compareSeasons(LiturgicalEvent $a, LiturgicalEvent $b): int
+    {
+        // Define season order using enum cases directly for maintainability
+        // (lower = earlier in liturgical year)
+        $seasonOrder = [
+            LitSeason::ADVENT->value         => 0,
+            LitSeason::CHRISTMAS->value      => 1,
+            LitSeason::LENT->value           => 2,
+            LitSeason::EASTER_TRIDUUM->value => 3,
+            LitSeason::EASTER->value         => 4,
+            LitSeason::ORDINARY_TIME->value  => 5,
+        ];
+
+        $seasonA = $a->liturgical_season?->value;
+        $seasonB = $b->liturgical_season?->value;
+
+        // If either season is null, treat as equal
+        if ($seasonA === null || $seasonB === null) {
+            return 0;
+        }
+
+        $orderA = $seasonOrder[$seasonA] ?? 99;
+        $orderB = $seasonOrder[$seasonB] ?? 99;
+
+        return $orderA <=> $orderB;
     }
 
     /**
