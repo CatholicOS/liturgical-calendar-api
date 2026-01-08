@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-16 13:42+0000\n"
+"POT-Creation-Date: 2026-01-08 03:55+0000\n"
 "PO-Revision-Date: 2025-12-16 09:49+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Indonesian <https://translate.johnromanodorazio.com/projects/"
@@ -587,33 +587,103 @@ msgid "Masses and Prayers for Various Needs and Occasions"
 msgstr "Misa dan Doa untuk Berbagai Kebutuhan dan Kesempatan"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:27
+#: src/Enum/LitSeason.php:117
 msgid "Advent"
 msgstr "Adven"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:29
+#: src/Enum/LitSeason.php:119
 msgid "Christmas"
 msgstr "Natal"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:31
+#: src/Enum/LitSeason.php:121
 msgid "Lent"
 msgstr "Prapaskah"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:33
+#: src/Enum/LitSeason.php:123
 msgid "Easter Triduum"
 msgstr "Trihari Paskah"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:35
+#: src/Enum/LitSeason.php:125
 msgid "Easter"
 msgstr "Paskah"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:37
+#: src/Enum/LitSeason.php:127
 msgid "Ordinary Time"
+msgstr ""
+
+#. translators: %s is a day number (17, 18, etc.) - for Advent weekdays Dec 17-24
+#: src/FerialEventNameGenerator.php:366
+#, php-format
+msgid "December %s"
+msgstr ""
+
+#. translators: %s is an ordinal number (1st, 2nd, 3rd)
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:382 src/Handlers/CalendarHandler.php:1737
+#, php-format
+msgid "of the %s Week of Advent"
+msgstr "Pekan %s Adven"
+
+#. translators: %s is an ordinal number (2nd, 3rd, etc.) - Day of Christmas Octave
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:401 src/Handlers/CalendarHandler.php:1797
+#, php-format
+msgid "%s Day of the Octave of Christmas"
+msgstr "Hari %s pada Oktaf Natal"
+
+#. translators: %s is a day number (2, 3, etc.) - for Christmas weekdays Jan 2-6
+#. translators: %s is a day number (7, 8, etc.) - for days after Epiphany
+#: src/FerialEventNameGenerator.php:418 src/FerialEventNameGenerator.php:452
+#, php-format
+msgid "January %s"
+msgstr ""
+
+#. translators: %s is a day of the week - for days after Epiphany
+#: src/FerialEventNameGenerator.php:435
+#, php-format
+msgid "%s after Epiphany"
+msgstr ""
+
+#. translators: Day after Ash Wednesday pattern
+#: src/FerialEventNameGenerator.php:467 src/Handlers/CalendarHandler.php:1876
+msgid "after Ash Wednesday"
+msgstr "setelah Rabu Abu"
+
+#. translators: %s is an ordinal number (1st, 2nd, 3rd)
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:484 src/Handlers/CalendarHandler.php:1855
+#, php-format
+msgid "of the %s Week of Lent"
+msgstr "Pekan %s Prapaskah"
+
+#. translators: %s is a day of the week - Easter Octave pattern
+#: src/FerialEventNameGenerator.php:501
+#, fuzzy, php-format
+msgid "%s within the Octave of Easter"
+msgstr "Hari %s pada Oktaf Natal"
+
+#. translators: %s is an ordinal number (2nd, 3rd, etc.)
+#: src/FerialEventNameGenerator.php:517 src/Handlers/CalendarHandler.php:2865
+#, php-format
+msgid "of the %s Week of Easter"
+msgstr "Pekan %s Paskah"
+
+#. translators: %s is an ordinal number (1st, 2nd, etc.)
+#: src/FerialEventNameGenerator.php:535 src/Handlers/CalendarHandler.php:2937
+#: src/Handlers/CalendarHandler.php:2985
+#, php-format
+msgid "of the %s Week of Ordinary Time"
+msgstr "Pekan Biasa %s"
+
+#. translators: %s is a day of the week - Holy Week pattern
+#: src/FerialEventNameGenerator.php:552
+#, php-format
+msgid "%s of Holy Week"
 msgstr ""
 
 #: src/Handlers/CalendarHandler.php:432
@@ -756,28 +826,6 @@ msgstr ""
 #, php-format
 msgid "'%1$s' is superseded by the %2$s '%3$s' in the year %4$d."
 msgstr "'%1$s' digantikan oleh %2$s '%3$s' di tahun %4$d."
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1737
-#, php-format
-msgid "of the %s Week of Advent"
-msgstr "Pekan %s Adven"
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1797
-#, php-format
-msgid "%s Day of the Octave of Christmas"
-msgstr "Hari %s pada Oktaf Natal"
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1855
-#, php-format
-msgid "of the %s Week of Lent"
-msgstr "Pekan %s Prapaskah"
-
-#: src/Handlers/CalendarHandler.php:1876
-msgid "after Ash Wednesday"
-msgstr "setelah Rabu Abu"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1065,16 +1113,6 @@ msgstr ""
 "Minggu, namun karena merupakan Tahun Rasul Paulus, seperti yang dinyatakan "
 "oleh %2$s telah dipulihkan sehingga gereja-gereja lokal bisa secara opsional "
 "merayakan peringatan."
-
-#: src/Handlers/CalendarHandler.php:2865
-#, php-format
-msgid "of the %s Week of Easter"
-msgstr "Pekan %s Paskah"
-
-#: src/Handlers/CalendarHandler.php:2937 src/Handlers/CalendarHandler.php:2985
-#, php-format
-msgid "of the %s Week of Ordinary Time"
-msgstr "Pekan Biasa %s"
 
 #: src/Handlers/CalendarHandler.php:3028
 msgid "Saturday Memorial of the Blessed Virgin Mary"

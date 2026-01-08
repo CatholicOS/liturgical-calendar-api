@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-16 13:42+0000\n"
+"POT-Creation-Date: 2026-01-08 03:55+0000\n"
 "PO-Revision-Date: 2025-10-18 13:19+0000\n"
 "Last-Translator: Mai Lê Bảo Khang <baokhang48812002@gmail.com>\n"
 "Language-Team: Vietnamese <https://translate.johnromanodorazio.com/projects/"
@@ -586,34 +586,104 @@ msgid "Masses and Prayers for Various Needs and Occasions"
 msgstr "Thánh Lễ và Kinh Nguyện cho Mọi Nhu Cầu"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:27
+#: src/Enum/LitSeason.php:117
 msgid "Advent"
 msgstr "Mùa Vọng"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:29
+#: src/Enum/LitSeason.php:119
 msgid "Christmas"
 msgstr "Mùa Giáng Sinh"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:31
+#: src/Enum/LitSeason.php:121
 msgid "Lent"
 msgstr "Mùa Chay"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:33
+#: src/Enum/LitSeason.php:123
 msgid "Easter Triduum"
 msgstr "Tam Nhật Vượt Qua"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:35
+#: src/Enum/LitSeason.php:125
 msgid "Easter"
 msgstr "Mùa Phục Sinh"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:37
+#: src/Enum/LitSeason.php:127
 msgid "Ordinary Time"
 msgstr "Thường Niên"
+
+#. translators: %s is a day number (17, 18, etc.) - for Advent weekdays Dec 17-24
+#: src/FerialEventNameGenerator.php:366
+#, php-format
+msgid "December %s"
+msgstr ""
+
+#. translators: %s is an ordinal number (1st, 2nd, 3rd)
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:382 src/Handlers/CalendarHandler.php:1737
+#, php-format
+msgid "of the %s Week of Advent"
+msgstr "của Tuần %s Mùa Vọng"
+
+#. translators: %s is an ordinal number (2nd, 3rd, etc.) - Day of Christmas Octave
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:401 src/Handlers/CalendarHandler.php:1797
+#, php-format
+msgid "%s Day of the Octave of Christmas"
+msgstr "Ngày %s trong Tuần Bát Nhật Giáng Sinh"
+
+#. translators: %s is a day number (2, 3, etc.) - for Christmas weekdays Jan 2-6
+#. translators: %s is a day number (7, 8, etc.) - for days after Epiphany
+#: src/FerialEventNameGenerator.php:418 src/FerialEventNameGenerator.php:452
+#, php-format
+msgid "January %s"
+msgstr ""
+
+#. translators: %s is a day of the week - for days after Epiphany
+#: src/FerialEventNameGenerator.php:435
+#, php-format
+msgid "%s after Epiphany"
+msgstr ""
+
+#. translators: Day after Ash Wednesday pattern
+#: src/FerialEventNameGenerator.php:467 src/Handlers/CalendarHandler.php:1876
+msgid "after Ash Wednesday"
+msgstr "sau Lễ Tro"
+
+#. translators: %s is an ordinal number (1st, 2nd, 3rd)
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:484 src/Handlers/CalendarHandler.php:1855
+#, php-format
+msgid "of the %s Week of Lent"
+msgstr "của Tuần %s Mùa Chay"
+
+#. translators: %s is a day of the week - Easter Octave pattern
+#: src/FerialEventNameGenerator.php:501
+#, fuzzy, php-format
+msgid "%s within the Octave of Easter"
+msgstr "Ngày %s trong Tuần Bát Nhật Giáng Sinh"
+
+#. translators: %s is an ordinal number (2nd, 3rd, etc.)
+#: src/FerialEventNameGenerator.php:517 src/Handlers/CalendarHandler.php:2865
+#, php-format
+msgid "of the %s Week of Easter"
+msgstr "trong Tuần %s Mùa Phục Sinh"
+
+#. translators: %s is an ordinal number (1st, 2nd, etc.)
+#: src/FerialEventNameGenerator.php:535 src/Handlers/CalendarHandler.php:2937
+#: src/Handlers/CalendarHandler.php:2985
+#, php-format
+msgid "of the %s Week of Ordinary Time"
+msgstr "trong Tuần %s Mùa Thường Niên"
+
+#. translators: %s is a day of the week - Holy Week pattern
+#: src/FerialEventNameGenerator.php:552
+#, fuzzy, php-format
+msgid "%s of Holy Week"
+msgstr "Cho Các Thánh Nữ"
 
 #: src/Handlers/CalendarHandler.php:432
 #, php-format
@@ -752,28 +822,6 @@ msgstr ""
 #, php-format
 msgid "'%1$s' is superseded by the %2$s '%3$s' in the year %4$d."
 msgstr "'%1$s' bị thay thế bởi %2$s '%3$s' trong năm %4$d."
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1737
-#, php-format
-msgid "of the %s Week of Advent"
-msgstr "của Tuần %s Mùa Vọng"
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1797
-#, php-format
-msgid "%s Day of the Octave of Christmas"
-msgstr "Ngày %s trong Tuần Bát Nhật Giáng Sinh"
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1855
-#, php-format
-msgid "of the %s Week of Lent"
-msgstr "của Tuần %s Mùa Chay"
-
-#: src/Handlers/CalendarHandler.php:1876
-msgid "after Ash Wednesday"
-msgstr "sau Lễ Tro"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1058,16 +1106,6 @@ msgstr ""
 "Lễ '%1$s' lẽ ra đã bị thay thế năm nay (2009) vì rơi vào Chúa Nhật, tuy "
 "nhiên do là Năm của Tông đồ Phaolô, theo %2$s nó đã được khôi phục để các "
 "nhà thờ địa phương có thể tùy chọn cử hành lễ nhớ."
-
-#: src/Handlers/CalendarHandler.php:2865
-#, php-format
-msgid "of the %s Week of Easter"
-msgstr "trong Tuần %s Mùa Phục Sinh"
-
-#: src/Handlers/CalendarHandler.php:2937 src/Handlers/CalendarHandler.php:2985
-#, php-format
-msgid "of the %s Week of Ordinary Time"
-msgstr "trong Tuần %s Mùa Thường Niên"
 
 #: src/Handlers/CalendarHandler.php:3028
 msgid "Saturday Memorial of the Blessed Virgin Mary"
