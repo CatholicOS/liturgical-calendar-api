@@ -2,13 +2,9 @@
     "litcal": [
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 9,
                 "month": 1,
                 "event_key": "BeatoGregorioX"
@@ -21,13 +17,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 22,
                 "month": 1,
                 "event_key": "SanVincenzoPallotti"
@@ -40,13 +32,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Holy Men and Women:For Those Who Practiced Works of Mercy"
-                ],
+                "common": [ "Holy Men and Women:For Those Who Practiced Works of Mercy" ],
                 "day": 1,
                 "month": 2,
                 "event_key": "BeataLudovicaAlbertoni"
@@ -58,13 +46,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 28,
                 "month": 2,
                 "event_key": "SantoIlaro"
@@ -77,13 +61,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 1,
                 "month": 3,
                 "event_key": "SanFeliceIII"
@@ -96,15 +76,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "red",
-                    "white"
-                ],
+                "color": [ "red", "white" ],
                 "grade": 3,
-                "common": [
-                    "Martyrs:For One Martyr",
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Martyrs:For One Martyr", "Pastors:For a Pope" ],
                 "day": 13,
                 "month": 4,
                 "event_key": "SanMartinoI"
@@ -117,13 +91,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 16,
                 "month": 4,
                 "event_key": "SanBenedettoGiuseppeLabre"
@@ -136,13 +106,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 19,
                 "month": 4,
                 "event_key": "SanLeoneIX"
@@ -155,13 +121,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 30,
                 "month": 4,
                 "event_key": "SanPioV"
@@ -174,13 +136,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Holy Men and Women:For Religious"
-                ],
+                "common": [ "Holy Men and Women:For Religious" ],
                 "day": 18,
                 "month": 5,
                 "event_key": "SanFelicedaCantalice"
@@ -192,13 +150,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 23,
                 "month": 5,
                 "event_key": "SanGiovanniBattistadeRossi"
@@ -211,13 +165,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 24,
                 "month": 5,
                 "event_key": "BeataMariaVergineAuxiliumChristianorum"
@@ -230,13 +180,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 25,
                 "month": 5,
                 "event_key": "SanGregorioVII"
@@ -249,13 +195,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 3,
-                "common": [
-                    "Martyrs:For Several Martyrs"
-                ],
+                "common": [ "Martyrs:For Several Martyrs" ],
                 "day": 2,
                 "month": 6,
                 "event_key": "SantiMarcellinoePietro"
@@ -268,13 +210,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Holy Men and Women:For Holy Women"
-                ],
+                "common": [ "Holy Men and Women:For Holy Women" ],
                 "day": 9,
                 "month": 6,
                 "event_key": "BeataAnnaMariaTaigi"
@@ -286,13 +224,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 2,
-                "common": [
-                    "Martyrs"
-                ],
+                "common": [ "Martyrs" ],
                 "day": 26,
                 "month": 6,
                 "event_key": "SantiGiovanniePaolo"
@@ -305,14 +239,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Holy Men and Women:For Religious",
-                    "Holy Men and Women:For Holy Women"
-                ],
+                "common": [ "Holy Men and Women:For Religious", "Holy Men and Women:For Holy Women" ],
                 "day": 23,
                 "month": 7,
                 "event_key": "SantaBrigida"
@@ -325,13 +254,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 12,
                 "month": 8,
                 "event_key": "BeatoInnocenzoXI"
@@ -344,13 +269,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 19,
                 "month": 8,
                 "event_key": "SanSistoIII"
@@ -363,13 +284,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 21,
                 "month": 10,
                 "event_key": "SanGaspareBufalo"
@@ -382,13 +299,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 13,
                 "month": 11,
                 "event_key": "SanNicolaI"
@@ -401,13 +314,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 20,
                 "month": 11,
                 "event_key": "SanGelasioI"
@@ -420,15 +329,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "red",
-                    "white"
-                ],
+                "color": [ "red", "white" ],
                 "grade": 3,
-                "common": [
-                    "Martyrs:For One Martyr",
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Martyrs:For One Martyr", "Pastors:For a Pope" ],
                 "day": 23,
                 "month": 11,
                 "event_key": "SanClementeI"
@@ -441,13 +344,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 26,
                 "month": 11,
                 "event_key": "SanSiricio"
@@ -460,13 +359,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 11,
                 "month": 12,
                 "event_key": "SanDamasoI"
@@ -479,13 +374,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 22,
                 "month": 10,
                 "event_key": "SanGiovanniPaoloII"
@@ -498,13 +389,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 28,
                 "month": 7,
                 "event_key": "BeatoUrbanoII"
@@ -517,13 +404,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Pastors:For a Pope" ],
                 "day": 10,
                 "month": 1,
                 "event_key": "SantAgatone"
@@ -536,15 +419,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "red",
-                    "white"
-                ],
+                "color": [ "red", "white" ],
                 "grade": 3,
-                "common": [
-                    "Martyrs:For One Martyr",
-                    "Pastors:For a Pope"
-                ],
+                "common": [ "Martyrs:For One Martyr", "Pastors:For a Pope" ],
                 "day": 14,
                 "month": 10,
                 "event_key": "SanCallistoI"
@@ -557,13 +434,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 22,
                 "month": 1,
                 "event_key": "SanVincenzoPallotti"
@@ -575,13 +448,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 6,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 29,
                 "month": 6,
                 "event_key": "SantiPietroePaoloApostoliPatroniChiesaRomana"
@@ -593,13 +462,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Holy Men and Women"
-                ],
+                "common": [ "Holy Men and Women" ],
                 "day": 16,
                 "month": 4,
                 "event_key": "SanBenedettoGiuseppeLabre"
@@ -611,13 +476,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 23,
                 "month": 5,
                 "event_key": "SanGiovanniBattistadeRossi_1"
@@ -629,13 +490,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 4,
                 "month": 6,
                 "event_key": "BeataVergineMariaSalusPopuliRomani"
@@ -647,13 +504,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 26,
                 "month": 6,
                 "event_key": "SanJosemariaEscrivaBalaguer"
@@ -665,13 +518,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 7,
                 "month": 7,
                 "event_key": "SantiVescoviChiesaRomana"
@@ -683,13 +532,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 3,
-                "common": [
-                    "Martyrs:For Several Martyrs"
-                ],
+                "common": [ "Martyrs:For Several Martyrs" ],
                 "day": 30,
                 "month": 6,
                 "event_key": "SantiPrimiMartiriChiesaRomana"
@@ -701,13 +546,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 6,
-                "common": [
-                    "Dedication of a Church"
-                ],
+                "common": [ "Dedication of a Church" ],
                 "day": 25,
                 "month": 10,
                 "event_key": "AnniversarioDedicazionePropriaChiesa"
@@ -719,13 +560,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 21,
                 "month": 10,
                 "event_key": "SanGaspareBufalo"
@@ -737,13 +574,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 8,
                 "month": 11,
                 "event_key": "TuttiSantiChiesaRomana"
@@ -755,13 +588,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 4,
-                "common": [
-                    "Dedication of a Church"
-                ],
+                "common": [ "Dedication of a Church" ],
                 "day": 9,
                 "month": 11,
                 "event_key": "DedicazioneBasilicaLateranense"
@@ -773,13 +602,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Holy Men and Women"
-                ],
+                "common": [ "Holy Men and Women" ],
                 "day": 25,
                 "month": 11,
                 "event_key": "BeatiLuigieMariaBeltrameQuattrocchi"
@@ -791,13 +616,9 @@
         },
         {
             "liturgical_event": {
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Holy Men and Women:For Religious"
-                ],
+                "common": [ "Holy Men and Women:For Religious" ],
                 "day": 26,
                 "month": 11,
                 "event_key": "SanLeonardodaPortoMaurizio"
@@ -812,10 +633,8 @@
         "diocese_id": "romamo_it",
         "diocese_name": "Diocesi di Roma",
         "nation": "IT",
-        "locales": [
-            "it_IT"
-        ],
-        "timezone": "Europe/Rome",
+        "locales": [ "it_IT" ],
+        "timezone": "Europe\/Rome",
         "group": "Diocesi del Lazio"
     }
 }

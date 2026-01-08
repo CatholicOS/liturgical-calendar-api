@@ -5,9 +5,7 @@
                 "event_key": "StAndreBessette",
                 "day": 7,
                 "month": 1,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
                 "common": []
             },
@@ -34,9 +32,7 @@
                 "event_key": "StMargueriteBourgeoys",
                 "day": 12,
                 "month": 1,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
                 "common": []
             },
@@ -60,9 +56,7 @@
                 "event_key": "KateriTekakwitha",
                 "day": 17,
                 "month": 4,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
                 "common": []
             },
@@ -76,9 +70,7 @@
                 "event_key": "BlMarieAnneBlondin",
                 "day": 18,
                 "month": 4,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -92,9 +84,7 @@
                 "event_key": "OurLadyofGoodCounsel",
                 "day": 26,
                 "month": 4,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -108,9 +98,7 @@
                 "event_key": "StMariedelIncarnation",
                 "day": 30,
                 "month": 4,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
                 "common": []
             },
@@ -137,9 +125,7 @@
                 "event_key": "BlMarieLeonieParadis",
                 "day": 4,
                 "month": 5,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -153,9 +139,7 @@
                 "event_key": "StFrancoisdeLaval",
                 "day": 6,
                 "month": 5,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
                 "common": []
             },
@@ -169,9 +153,7 @@
                 "event_key": "BlCatherinedeSaintAugustin",
                 "day": 8,
                 "month": 5,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -185,9 +167,7 @@
                 "event_key": "StEugenedeMazenod",
                 "day": 21,
                 "month": 5,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -201,9 +181,7 @@
                 "event_key": "BlLouisZephirinMoreau",
                 "day": 24,
                 "month": 5,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -217,9 +195,7 @@
                 "event_key": "BlNykytaBudkaVasylVelychkowsky",
                 "day": 27,
                 "month": 6,
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 2,
                 "common": []
             },
@@ -233,9 +209,7 @@
                 "event_key": "CanadaDay",
                 "day": 1,
                 "month": 7,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -259,9 +233,7 @@
                 "event_key": "BlFredericJanssoone",
                 "day": 5,
                 "month": 8,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -275,9 +247,7 @@
                 "event_key": "BlAndreGrasset",
                 "day": 2,
                 "month": 9,
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 2,
                 "common": []
             },
@@ -291,9 +261,7 @@
                 "event_key": "BlDinaBelanger",
                 "day": 4,
                 "month": 9,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -307,9 +275,7 @@
                 "event_key": "BlEmilieTavernierGamelin",
                 "day": 24,
                 "month": 9,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -358,9 +324,7 @@
             "liturgical_event": {
                 "event_key": "LabourDay",
                 "strtotime": "first monday of september",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
                 "common": []
             },
@@ -374,9 +338,7 @@
                 "event_key": "BlMarieRoseDurocher",
                 "day": 6,
                 "month": 10,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
                 "common": []
             },
@@ -390,9 +352,7 @@
                 "event_key": "StMargueritedYouville",
                 "day": 16,
                 "month": 10,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
                 "common": []
             },
@@ -432,9 +392,7 @@
                 "event_key": "DedicationUnknown",
                 "day": 22,
                 "month": 10,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 4,
                 "common": []
             },
@@ -448,9 +406,7 @@
                 "event_key": "RemembranceDay",
                 "day": 11,
                 "month": 11,
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
                 "common": []
             },
@@ -480,14 +436,8 @@
     },
     "metadata": {
         "nation": "CA",
-        "locales": [
-            "en_CA",
-            "fr_CA"
-        ],
+        "locales": [ "en_CA", "fr_CA" ],
         "wider_region": "Americas",
-        "missals": [
-            "CA_2011",
-            "CA_2016"
-        ]
+        "missals": [ "CA_2011", "CA_2016" ]
     }
 }

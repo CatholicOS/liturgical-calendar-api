@@ -10,6 +10,7 @@ use LiturgicalCalendar\Api\Enum\LitSeason;
 use LiturgicalCalendar\Api\Enum\ReadingsType;
 use LiturgicalCalendar\Api\FerialEventNameGenerator;
 use LiturgicalCalendar\Api\Handlers\Auth\ClientIpTrait;
+use LiturgicalCalendar\Api\JsonFormatter;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
@@ -790,12 +791,8 @@ final class TemporaleHandler extends AbstractHandler
         $eventsToStore = $this->stripI18nAndReadingsFromEvents($validatedEvents);
 
         // Write events to main temporale file (only non-grade-0 events)
-        $jsonContent = json_encode($eventsToStore, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        if ($jsonContent === false) {
-            throw new ValidationException('Failed to encode temporale data as JSON');
-        }
-
-        $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
+        $jsonContent = JsonFormatter::encode($eventsToStore);
+        $result      = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
@@ -1036,12 +1033,8 @@ final class TemporaleHandler extends AbstractHandler
             }
         }
 
-        $jsonContent = json_encode(array_values($existingData), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        if ($jsonContent === false) {
-            throw new ValidationException('Failed to encode temporale data as JSON');
-        }
-
-        $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
+        $jsonContent = JsonFormatter::encode(array_values($existingData));
+        $result      = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
@@ -1142,12 +1135,8 @@ final class TemporaleHandler extends AbstractHandler
         // Remove the event from main temporale file
         array_splice($existingData, (int) $foundIndex, 1);
 
-        $jsonContent = json_encode(array_values($existingData), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        if ($jsonContent === false) {
-            throw new ValidationException('Failed to encode temporale data as JSON');
-        }
-
-        $result = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
+        $jsonContent = JsonFormatter::encode(array_values($existingData));
+        $result      = file_put_contents($temporaleFile, $jsonContent, LOCK_EX);
         if ($result === false) {
             throw new InternalServerErrorException('Failed to write temporale data to file');
         }
@@ -1220,16 +1209,8 @@ final class TemporaleHandler extends AbstractHandler
 
             unset($i18nData->{$eventKey});
 
-            $jsonContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            if ($jsonContent === false) {
-                $this->auditLogger->warning("Failed to encode i18n data for locale '{$locale}'", [
-                    'event_key' => $eventKey,
-                    'locale'    => $locale
-                ]);
-                continue;
-            }
-
-            $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+            $jsonContent = JsonFormatter::encode($i18nData);
+            $result      = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
             if ($result === false) {
                 $this->auditLogger->warning("Failed to write i18n file for locale '{$locale}'", [
                     'event_key' => $eventKey,
@@ -1272,12 +1253,8 @@ final class TemporaleHandler extends AbstractHandler
         $i18nArray = get_object_vars($i18n);
         foreach ($i18nArray as $locale => $translations) {
             $i18nFile    = strtr(JsonData::TEMPORALE_I18N_FILE->path(), ['{locale}' => $locale]);
-            $jsonContent = json_encode($translations, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            if ($jsonContent === false) {
-                throw new InternalServerErrorException("Failed to encode i18n data for locale '{$locale}'");
-            }
-
-            $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+            $jsonContent = JsonFormatter::encode($translations);
+            $result      = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
             if ($result === false) {
                 throw new InternalServerErrorException("Failed to write i18n file for locale '{$locale}'");
             }
@@ -1566,12 +1543,8 @@ final class TemporaleHandler extends AbstractHandler
                 $existingData->{$eventKey} = $name;
             }
 
-            $jsonContent = json_encode($existingData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            if ($jsonContent === false) {
-                throw new InternalServerErrorException("Failed to encode i18n data for locale '{$locale}'");
-            }
-
-            $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+            $jsonContent = JsonFormatter::encode($existingData);
+            $result      = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
             if ($result === false) {
                 throw new InternalServerErrorException("Failed to write i18n file for locale '{$locale}'");
             }
@@ -1627,16 +1600,8 @@ final class TemporaleHandler extends AbstractHandler
             }
 
             if ($modified) {
-                $jsonContent = json_encode($i18nData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                if ($jsonContent === false) {
-                    $this->auditLogger->warning("Failed to encode i18n data for locale '{$locale}' during consistency check", [
-                        'file'       => $i18nFile,
-                        'event_keys' => $eventKeys
-                    ]);
-                    continue;
-                }
-
-                $result = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
+                $jsonContent = JsonFormatter::encode($i18nData);
+                $result      = file_put_contents($i18nFile, $jsonContent, LOCK_EX);
                 if ($result === false) {
                     $this->auditLogger->warning("Failed to write i18n file for locale '{$locale}' during consistency check", [
                         'file' => $i18nFile
@@ -1840,16 +1805,8 @@ final class TemporaleHandler extends AbstractHandler
 
         unset($data->{$eventKey});
 
-        $jsonContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        if ($jsonContent === false) {
-            $this->auditLogger->warning('Failed to encode lectionary data after removing event', [
-                'file'      => $file,
-                'event_key' => $eventKey
-            ]);
-            return;
-        }
-
-        $result = file_put_contents($file, $jsonContent, LOCK_EX);
+        $jsonContent = JsonFormatter::encode($data);
+        $result      = file_put_contents($file, $jsonContent, LOCK_EX);
         if ($result === false) {
             $this->auditLogger->warning('Failed to write lectionary file after removing event', [
                 'file'      => $file,
@@ -1909,12 +1866,8 @@ final class TemporaleHandler extends AbstractHandler
      */
     private function saveLectionaryFile(string $file, \stdClass $data, string $locale): void
     {
-        $jsonContent = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        if ($jsonContent === false) {
-            throw new InternalServerErrorException("Failed to encode lectionary data for locale '{$locale}'");
-        }
-
-        $result = file_put_contents($file, $jsonContent, LOCK_EX);
+        $jsonContent = JsonFormatter::encode($data);
+        $result      = file_put_contents($file, $jsonContent, LOCK_EX);
         if ($result === false) {
             throw new InternalServerErrorException("Failed to write lectionary file for locale '{$locale}'");
         }
