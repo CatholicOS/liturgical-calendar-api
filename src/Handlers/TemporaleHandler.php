@@ -469,7 +469,7 @@ final class TemporaleHandler extends AbstractHandler
                     $lectionaryData[$year] = Utilities::jsonFileToObject($file);
                 } catch (\JsonException | ServiceUnavailableException $e) {
                     // Skip if file cannot be parsed or is unavailable
-                    $this->auditLogger->debug("Failed to load Year {$year} lectionary for locale '{$locale}'", [
+                    $this->debugLogger->debug("Failed to load Year {$year} lectionary for locale '{$locale}'", [
                         'file'  => $file,
                         'error' => $e->getMessage()
                     ]);
@@ -497,7 +497,7 @@ final class TemporaleHandler extends AbstractHandler
                 return Utilities::jsonFileToObject($file);
             } catch (\JsonException | ServiceUnavailableException $e) {
                 // Skip if file cannot be parsed or is unavailable
-                $this->auditLogger->debug("Failed to load sanctorum lectionary for locale '{$locale}'", [
+                $this->debugLogger->debug("Failed to load sanctorum lectionary for locale '{$locale}'", [
                     'file'  => $file,
                     'error' => $e->getMessage()
                 ]);
