@@ -3,9 +3,9 @@
         {
             "liturgical_event": {
                 "event_key": "DedicationoftheCathedraloftheHolyCross",
-                "color": ["white"],
+                "color": [ "white" ],
                 "grade": 4,
-                "common": ["Dedication of a Church"],
+                "common": [ "Dedication of a Church" ],
                 "day": 8,
                 "month": 12
             },
@@ -24,7 +24,7 @@
         "diocese_id": "boston_us",
         "diocese_name": "Archdiocese of Boston (Massachusetts)",
         "nation": "US",
-        "locales": ["en_US"],
-        "timezone": "America/New_York"
+        "locales": [ "en_US" ],
+        "timezone": "America\/New_York"
     }
 }

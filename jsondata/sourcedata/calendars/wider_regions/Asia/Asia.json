@@ -26,10 +26,7 @@
         "Japan": "JP"
     },
     "metadata": {
-        "locales": [
-            "zh_Hans_CN",
-            "ja_JP"
-        ],
+        "locales": [ "zh_Hans_CN", "ja_JP" ],
         "wider_region": "Asia"
     }
 }

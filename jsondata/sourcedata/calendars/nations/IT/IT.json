@@ -57,12 +57,7 @@
     "metadata": {
         "nation": "IT",
         "wider_region": "Europe",
-        "missals": [
-            "IT_1983",
-            "IT_2020"
-        ],
-        "locales": [
-            "it_IT"
-        ]
+        "missals": [ "IT_1983", "IT_2020" ],
+        "locales": [ "it_IT" ]
     }
 }

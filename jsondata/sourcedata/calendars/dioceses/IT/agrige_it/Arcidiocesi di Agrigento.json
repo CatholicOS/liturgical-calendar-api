@@ -1,15 +1,11 @@
 {
     "litcal": [
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanGerlando",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 6,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 25,
                 "month": 2
             },
@@ -19,15 +15,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "DedicazioneDellaCattedrale",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 4,
-                "common": [
-                    "Dedication of a Church"
-                ],
+                "common": [ "Dedication of a Church" ],
                 "day": 6,
                 "month": 9
             },
@@ -37,15 +29,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "DedicazioneDellaPropriaChiesa",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 6,
-                "common": [
-                    "Dedication of a Church"
-                ],
+                "common": [ "Dedication of a Church" ],
                 "day": 25,
                 "month": 10
             },
@@ -55,15 +43,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SantAgata",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 4,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 5,
                 "month": 2
             },
@@ -73,15 +57,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SantaLucia",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 4,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 13,
                 "month": 12
             },
@@ -91,15 +71,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SantAlfonsoMariaDeLiguori",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 1,
                 "month": 8
             },
@@ -109,15 +85,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanGiuseppeMariaTomasi",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 3,
                 "month": 1
             },
@@ -127,15 +99,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SantAngeloMartire",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 3,
-                "common": [
-                    "Martyrs"
-                ],
+                "common": [ "Martyrs" ],
                 "day": 5,
                 "month": 5
             },
@@ -145,15 +113,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "MariaMadreDellaChiesa",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Blessed Virgin Mary"
-                ],
+                "common": [ "Blessed Virgin Mary" ],
                 "day": 8,
                 "month": 5
             },
@@ -163,15 +127,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanCalogeroEremita",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 18,
                 "month": 6
             },
@@ -181,15 +141,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SantaRosalia",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Proper"
-                ],
+                "common": [ "Proper" ],
                 "day": 4,
                 "month": 9
             },
@@ -199,15 +155,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanLibertino",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 3,
-                "common": [
-                    "Martyrs"
-                ],
+                "common": [ "Martyrs" ],
                 "day": 3,
                 "month": 11
             },
@@ -217,15 +169,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "TuttiISantiDelleChieseDiSicilia",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Holy Men and Women"
-                ],
+                "common": [ "Holy Men and Women" ],
                 "day": 5,
                 "month": 11
             },
@@ -235,15 +183,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanGiacintoGiordanoAnsaloneECompagniMartiri",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 3,
-                "common": [
-                    "Martyrs"
-                ],
+                "common": [ "Martyrs" ],
                 "day": 19,
                 "month": 11
             },
@@ -253,15 +197,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanGregorioAgrigentino",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 25,
                 "month": 11
             },
@@ -271,15 +211,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "BeatoMatteoCimarra",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 3,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 7,
                 "month": 1
             },
@@ -289,15 +225,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanPellegrino",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 30,
                 "month": 1
             },
@@ -307,15 +239,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "BeatoGiacomoCusmano",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Pastors"
-                ],
+                "common": [ "Pastors" ],
                 "day": 14,
                 "month": 3
             },
@@ -325,15 +253,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanPancrazio",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 2,
-                "common": [
-                    "Martyrs"
-                ],
+                "common": [ "Martyrs" ],
                 "day": 3,
                 "month": 4
             },
@@ -343,15 +267,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanVito",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 2,
-                "common": [
-                    "Martyrs"
-                ],
+                "common": [ "Martyrs" ],
                 "day": 15,
                 "month": 6
             },
@@ -361,15 +281,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SantaVenera",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 2,
-                "common": [
-                    "Martyrs"
-                ],
+                "common": [ "Martyrs" ],
                 "day": 26,
                 "month": 7
             },
@@ -379,15 +295,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "SanRocco",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Holy Men and Women"
-                ],
+                "common": [ "Holy Men and Women" ],
                 "day": 16,
                 "month": 8
             },
@@ -397,15 +309,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "BMVDellaMercede",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 2,
-                "common": [
-                    "Blessed Virgin Mary"
-                ],
+                "common": [ "Blessed Virgin Mary" ],
                 "day": 24,
                 "month": 9
             },
@@ -415,15 +323,11 @@
             }
         },
         {
-            "liturgical_event":{
+            "liturgical_event": {
                 "event_key": "BeatoFrancescoSpoto",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 2,
-                "common": [
-                    "Martyrs"
-                ],
+                "common": [ "Martyrs" ],
                 "day": 24,
                 "month": 9
             },
@@ -442,9 +346,7 @@
         "nation": "IT",
         "diocese_id": "agrige_it",
         "diocese_name": "Arcidiocesi di Agrigento",
-        "locales": [
-            "it_IT"
-        ],
+        "locales": [ "it_IT" ],
         "timezone": "Europe\/Rome"
     }
 }

@@ -14,15 +14,11 @@
         {
             "liturgical_event": {
                 "event_key": "HLidwina",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 4,
                 "day": 4,
                 "month": 6,
-                "common": [
-                    "Proper"
-                ]
+                "common": [ "Proper" ]
             },
             "metadata": {
                 "action": "createNew",
@@ -32,15 +28,11 @@
         {
             "liturgical_event": {
                 "event_key": "MartelarenGorcum",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 4,
                 "day": 9,
                 "month": 7,
-                "common": [
-                    "Proper"
-                ]
+                "common": [ "Proper" ]
             },
             "metadata": {
                 "action": "createNew",
@@ -50,15 +42,11 @@
         {
             "liturgical_event": {
                 "event_key": "Brandsma",
-                "color": [
-                    "red"
-                ],
+                "color": [ "red" ],
                 "grade": 3,
                 "day": 27,
                 "month": 7,
-                "common": [
-                    "Martyrs"
-                ]
+                "common": [ "Martyrs" ]
             },
             "metadata": {
                 "action": "createNew",
@@ -68,15 +56,11 @@
         {
             "liturgical_event": {
                 "event_key": "VerjaardagWijdingKerken",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 6,
                 "day": 25,
                 "month": 10,
-                "common": [
-                    "Proper"
-                ]
+                "common": [ "Proper" ]
             },
             "metadata": {
                 "action": "createNew",
@@ -86,15 +70,11 @@
         {
             "liturgical_event": {
                 "event_key": "Verkondigers",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 4,
                 "day": 6,
                 "month": 11,
-                "common": [
-                    "Proper"
-                ]
+                "common": [ "Proper" ]
             },
             "metadata": {
                 "action": "createNew",
@@ -104,15 +84,11 @@
         {
             "liturgical_event": {
                 "event_key": "Willibrord",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 6,
                 "day": 7,
                 "month": 11,
-                "common": [
-                    "Proper"
-                ]
+                "common": [ "Proper" ]
             },
             "metadata": {
                 "action": "createNew",
@@ -140,10 +116,8 @@
     },
     "metadata": {
         "nation": "NL",
-        "locales": ["nl_NL"],
+        "locales": [ "nl_NL" ],
         "wider_region": "Europe",
-        "missals": [
-            "NL_1978"
-        ]
+        "missals": [ "NL_1978" ]
     }
 }
