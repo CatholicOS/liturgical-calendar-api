@@ -25,7 +25,7 @@ final class JsonFormatter
      */
     public static function encode(mixed $data, bool $unescapeUnicode = true): string
     {
-        $flags = JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR;
+        $flags = JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES;
         if ($unescapeUnicode) {
             $flags |= JSON_UNESCAPED_UNICODE;
         }
