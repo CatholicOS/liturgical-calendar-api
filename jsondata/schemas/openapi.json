@@ -3614,7 +3614,7 @@
       },
       "TemporaleEventInput": {
         "type": "object",
-        "description": "Input format for a temporale event. Grade 0 (ferial) events should not include i18n (translations come from gettext).",
+        "description": "Input format for a temporale event. Grade 0 (ferial) events should not include i18n (translations come from gettext). Note: i18n is marked optional in the schema because it reflects the final storage structure (where translations are extracted to separate files), but explicit validation enforces i18n for non-grade-0 events in PUT/PATCH operations.",
         "properties": {
           "event_key": {
             "$ref": "./CommonDef.json#/definitions/EventKey"
