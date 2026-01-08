@@ -663,9 +663,9 @@ msgstr "Pekan %s Prapaskah"
 
 #. translators: %s is a day of the week - Easter Octave pattern
 #: src/FerialEventNameGenerator.php:501
-#, fuzzy, php-format
+#, php-format
 msgid "%s within the Octave of Easter"
-msgstr "Hari %s pada Oktaf Natal"
+msgstr "%s dalam Oktaf Paskah"
 
 #. translators: %s is an ordinal number (2nd, 3rd, etc.)
 #: src/FerialEventNameGenerator.php:517 src/Handlers/CalendarHandler.php:2865

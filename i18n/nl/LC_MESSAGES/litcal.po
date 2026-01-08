@@ -647,9 +647,9 @@ msgstr ""
 
 #. translators: %s is a day of the week - for days after Epiphany
 #: src/FerialEventNameGenerator.php:435
-#, fuzzy, php-format
+#, php-format
 msgid "%s after Epiphany"
-msgstr "%s dag na de Openbaring des Heren"
+msgstr "%s na Driekoningen"
 
 #. translators: Day after Ash Wednesday pattern
 #: src/FerialEventNameGenerator.php:467 src/Handlers/CalendarHandler.php:1876
@@ -665,9 +665,9 @@ msgstr "in de %s week van de veertigdagentijd"
 
 #. translators: %s is a day of the week - Easter Octave pattern
 #: src/FerialEventNameGenerator.php:501
-#, fuzzy, php-format
+#, php-format
 msgid "%s within the Octave of Easter"
-msgstr "%s dag onder het octaaf van Kerstmis"
+msgstr "%s in het Paasoctaaf"
 
 #. translators: %s is an ordinal number (2nd, 3rd, etc.)
 #: src/FerialEventNameGenerator.php:517 src/Handlers/CalendarHandler.php:2865
@@ -684,9 +684,9 @@ msgstr "in de %s week door het jaar"
 
 #. translators: %s is a day of the week - Holy Week pattern
 #: src/FerialEventNameGenerator.php:552
-#, fuzzy, php-format
+#, php-format
 msgid "%s of Holy Week"
-msgstr "Voor heilige vrouwen"
+msgstr "%s van de Goede Week"
 
 #: src/Handlers/CalendarHandler.php:432
 #, php-format

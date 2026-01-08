@@ -668,9 +668,9 @@ msgstr "de la %s semaine de Carême"
 
 #. translators: %s is a day of the week - Easter Octave pattern
 #: src/FerialEventNameGenerator.php:501
-#, fuzzy, php-format
+#, php-format
 msgid "%s within the Octave of Easter"
-msgstr "%s jour dans l'Octave de la Nativité"
+msgstr "%s dans l'Octave de Pâques"
 
 #. translators: %s is an ordinal number (2nd, 3rd, etc.)
 #: src/FerialEventNameGenerator.php:517 src/Handlers/CalendarHandler.php:2865
@@ -687,9 +687,9 @@ msgstr "de la %s Semaine du Temps Ordinaire"
 
 #. translators: %s is a day of the week - Holy Week pattern
 #: src/FerialEventNameGenerator.php:552
-#, fuzzy, php-format
+#, php-format
 msgid "%s of Holy Week"
-msgstr "Pour les saintes femmes"
+msgstr "%s de la Semaine Sainte"
 
 #: src/Handlers/CalendarHandler.php:432
 #, php-format

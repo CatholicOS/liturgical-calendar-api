@@ -682,9 +682,9 @@ msgstr ""
 
 #. translators: %s is a day of the week - Holy Week pattern
 #: src/FerialEventNameGenerator.php:552
-#, fuzzy, php-format
+#, php-format
 msgid "%s of Holy Week"
-msgstr "Dla świętych kobiet"
+msgstr "%s Wielkiego Tygodnia"
 
 #: src/Handlers/CalendarHandler.php:432
 #, php-format
