@@ -21,6 +21,7 @@ enum LectionaryCategory: string
      * - Easter Sundays (Easter, Easter2-7)
      * - Ordinary Time Sundays (OrdSunday2-33)
      * - Major celebrations (Christmas, Epiphany, Ascension, Pentecost, etc.)
+     * - Holy Week (HolyThursChrism)
      * - Triduum (HolyThurs, GoodFri, EasterVigil)
      */
     case SUNDAYS_SOLEMNITIES = 'dominicale_et_festivum';

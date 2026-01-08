@@ -1,5 +1,11 @@
 [
     {
+        "event_key": "HolyThursChrism",
+        "grade": 7,
+        "type": "mobile",
+        "color": [ "white" ]
+    },
+    {
         "event_key": "HolyThurs",
         "grade": 7,
         "type": "mobile",

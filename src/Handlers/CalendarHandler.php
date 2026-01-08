@@ -1127,9 +1127,12 @@ final class CalendarHandler extends AbstractHandler
             ->sub(new \DateInterval('P5D')));
         $this->PropriumDeTempore['WedHolyWeek']->setDate(Utilities::calcGregEaster($this->CalendarParams->Year)
             ->sub(new \DateInterval('P4D')));
+        $this->PropriumDeTempore['HolyThursChrism']->setDate(Utilities::calcGregEaster($this->CalendarParams->Year)
+            ->sub(new \DateInterval('P3D')));
         $this->createPropriumDeTemporeLiturgicalEventByKey('MonHolyWeek');
         $this->createPropriumDeTemporeLiturgicalEventByKey('TueHolyWeek');
         $this->createPropriumDeTemporeLiturgicalEventByKey('WedHolyWeek');
+        $this->createPropriumDeTemporeLiturgicalEventByKey('HolyThursChrism');
     }
 
     /**
