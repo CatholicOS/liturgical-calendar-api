@@ -118,10 +118,10 @@ class FerialEventNameGenerator
      */
     public function __construct(string $locale)
     {
-        $this->locale          = $locale;
-        $this->primaryLanguage = str_contains($locale, '_')
-            ? substr($locale, 0, (int) strpos($locale, '_'))
-            : $locale;
+        $this->locale = $locale;
+        // Derive primary language from either underscore or hyphen separated tags (e.g. "en_US", "en-US")
+        $parts                 = preg_split('/[-_]/', $locale);
+        $this->primaryLanguage = $parts[0] ?? $locale;
 
         $this->initializeFormatters();
         $this->initializeGettext();
