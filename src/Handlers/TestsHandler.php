@@ -7,6 +7,7 @@ use Swaggest\JsonSchema\Schema;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Enum\JsonData;
+use LiturgicalCalendar\Api\JsonFormatter;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Exception\MethodNotAllowedException;
@@ -234,7 +235,7 @@ final class TestsHandler extends AbstractHandler
             throw new UnprocessableContentException($description);
         }
 
-        $jsonEncodedTest = json_encode($this->payload, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+        $jsonEncodedTest = JsonFormatter::encode($this->payload, false);
         $bytesWritten    = file_put_contents($testFilePath, $jsonEncodedTest);
         if (false === $bytesWritten) {
             $description = 'The server did not succeed in writing to disk the Unit Test. Please try again later or contact the service administrator for support.';
@@ -281,7 +282,7 @@ final class TestsHandler extends AbstractHandler
             throw new UnprocessableContentException($description);
         }
 
-        $jsonEncodedTest = json_encode($this->payload, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+        $jsonEncodedTest = JsonFormatter::encode($this->payload, false);
         $bytesWritten    = file_put_contents($testFilePath, $jsonEncodedTest);
         if (false === $bytesWritten) {
             $description = 'The server did not succeed in writing to disk the Unit Test. Please try again later or contact the service administrator for support.';
