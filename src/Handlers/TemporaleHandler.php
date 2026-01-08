@@ -664,11 +664,14 @@ final class TemporaleHandler extends AbstractHandler
         // Validate each event and collect event_keys
         /** @var array<string,bool> $seenEventKeys */
         $seenEventKeys = [];
-        /** @var string[] $eventKeys */
+        /** @var string[] $eventKeys Event keys for non-grade-0 events (stored in main file) */
         $eventKeys = [];
 
-        /** @var array<int,\stdClass> $validatedEvents */
+        /** @var array<int,\stdClass> $validatedEvents Events to store in main temporale file (non-grade-0) */
         $validatedEvents = [];
+
+        /** @var array<int,\stdClass> $ferialEvents Grade 0 events (only readings go to lectionary files) */
+        $ferialEvents = [];
 
         foreach ($events as $event) {
             if (!( $event instanceof \stdClass )) {
@@ -682,34 +685,61 @@ final class TemporaleHandler extends AbstractHandler
                 throw new ValidationException("Duplicate event_key '{$eventKey}' in payload");
             }
             $seenEventKeys[$eventKey] = true;
-            $eventKeys[]              = $eventKey;
 
-            // Validate per-event i18n (required for PUT)
-            if (!property_exists($event, 'i18n') || !( $event->i18n instanceof \stdClass )) {
-                throw new ValidationException("Event '{$eventKey}' must have an 'i18n' object property");
+            // Grade 0 events (ferial/weekday) are handled differently:
+            // - NOT stored in main temporale file (dynamically generated from lectionary)
+            // - NO i18n data (translations come from gettext in CalendarHandler)
+            // - Readings ARE stored in lectionary files
+            $isGradeZero = $event->grade === 0;
+
+            if ($isGradeZero) {
+                // Grade 0: i18n should NOT be provided (translations from gettext)
+                if (property_exists($event, 'i18n') && $event->i18n instanceof \stdClass) {
+                    $i18nKeys = array_keys(get_object_vars($event->i18n));
+                    if (count($i18nKeys) > 0) {
+                        throw new ValidationException(
+                            "Grade 0 event '{$eventKey}' should not have i18n data (translations are from gettext)"
+                        );
+                    }
+                }
+
+                // Grade 0: readings are required
+                if (!property_exists($event, 'readings') || !( $event->readings instanceof \stdClass )) {
+                    throw new ValidationException("Grade 0 event '{$eventKey}' must have a 'readings' object property");
+                }
+                $this->validateEventReadings($event->readings, $eventKey);
+
+                $ferialEvents[] = $event;
+            } else {
+                // Non-grade-0: i18n is required
+                if (!property_exists($event, 'i18n') || !( $event->i18n instanceof \stdClass )) {
+                    throw new ValidationException("Event '{$eventKey}' must have an 'i18n' object property");
+                }
+                $this->validateEventI18n($event->i18n, $eventKey);
+
+                // Ensure i18n has the Accept-Language locale
+                if (!property_exists($event->i18n, $acceptLocale)) {
+                    throw new ValidationException(
+                        "Event '{$eventKey}' i18n must contain translation for Accept-Language locale '{$acceptLocale}'"
+                    );
+                }
+
+                // Non-grade-0: readings are required
+                if (!property_exists($event, 'readings') || !( $event->readings instanceof \stdClass )) {
+                    throw new ValidationException("Event '{$eventKey}' must have a 'readings' object property");
+                }
+                $this->validateEventReadings($event->readings, $eventKey);
+
+                $eventKeys[]       = $eventKey;
+                $validatedEvents[] = $event;
             }
-            $this->validateEventI18n($event->i18n, $eventKey);
-
-            // Ensure i18n has the Accept-Language locale
-            if (!property_exists($event->i18n, $acceptLocale)) {
-                throw new ValidationException(
-                    "Event '{$eventKey}' i18n must contain translation for Accept-Language locale '{$acceptLocale}'"
-                );
-            }
-
-            // Validate per-event readings (required for PUT - all events are new)
-            if (!property_exists($event, 'readings') || !( $event->readings instanceof \stdClass )) {
-                throw new ValidationException("Event '{$eventKey}' must have a 'readings' object property");
-            }
-            $this->validateEventReadings($event->readings, $eventKey);
-
-            $validatedEvents[] = $event;
         }
 
-        // Extract i18n from events and build data for all locales
+        // Extract i18n from non-grade-0 events and build data for all locales
         $extractedI18n = $this->extractI18nFromEvents($validatedEvents);
 
         // Build i18n data for all locales (with empty placeholders for missing translations)
+        // Only for non-grade-0 events
         $i18nToWrite = new \stdClass();
         foreach ($locales as $locale) {
             $i18nToWrite->{$locale} = new \stdClass();
@@ -725,20 +755,23 @@ final class TemporaleHandler extends AbstractHandler
             }
         }
 
-        // Write i18n files for each locale
-        $this->writeI18nFiles($i18nToWrite);
+        // Write i18n files for each locale (only non-grade-0 events)
+        if (count($eventKeys) > 0) {
+            $this->writeI18nFiles($i18nToWrite);
+        }
 
-        // Extract readings from events and write to lectionary files
-        $extractedReadings = $this->extractReadingsFromEvents($validatedEvents);
-        $readingsLocales   = array_keys(get_object_vars($extractedReadings));
+        // Extract readings from ALL events (both non-grade-0 and grade-0) and write to lectionary files
+        $allEventsWithReadings = array_merge($validatedEvents, $ferialEvents);
+        $extractedReadings     = $this->extractReadingsFromEvents($allEventsWithReadings);
+        $readingsLocales       = array_keys(get_object_vars($extractedReadings));
         if (count($readingsLocales) > 0) {
             $this->writeLectionaryFiles($extractedReadings);
         }
 
-        // Strip i18n and readings before saving to main file
+        // Strip i18n and readings before saving to main file (only non-grade-0 events)
         $eventsToStore = $this->stripI18nAndReadingsFromEvents($validatedEvents);
 
-        // Write events to main temporale file
+        // Write events to main temporale file (only non-grade-0 events)
         $jsonContent = json_encode($eventsToStore, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if ($jsonContent === false) {
             throw new ValidationException('Failed to encode temporale data as JSON');
@@ -761,14 +794,16 @@ final class TemporaleHandler extends AbstractHandler
             'client_ip'        => $this->clientIp,
             'file'             => $temporaleFile,
             'events'           => count($validatedEvents),
+            'ferial_events'    => count($ferialEvents),
             'i18n_locales'     => $locales,
             'readings_locales' => $readingsLocales
         ]);
 
         return $this->encodeResponseBody($response, [
-            'success' => true,
-            'message' => 'Temporale data created successfully',
-            'events'  => count($validatedEvents)
+            'success'       => true,
+            'message'       => 'Temporale data created successfully',
+            'events'        => count($validatedEvents),
+            'ferial_events' => count($ferialEvents)
         ], StatusCode::CREATED);
     }
 
@@ -834,14 +869,18 @@ final class TemporaleHandler extends AbstractHandler
 
         $updatedCount = 0;
         $addedCount   = 0;
-        /** @var string[] $newEventKeys */
+        /** @var string[] $newEventKeys Event keys for new non-grade-0 events */
         $newEventKeys = [];
 
         // Determine Accept-Language locale (base locale only)
         $acceptLocale = $this->getBaseLocale($this->locale);
 
-        /** @var array<int,\stdClass> $validatedEvents */
+        /** @var array<int,\stdClass> $validatedEvents Events to store in main temporale file (non-grade-0) */
         $validatedEvents = [];
+
+        /** @var array<int,\stdClass> $ferialEvents Grade 0 events (only readings go to lectionary files) */
+        $ferialEvents = [];
+        $ferialCount  = 0;
 
         // Process each event in the payload
         foreach ($events as $event) {
@@ -862,45 +901,70 @@ final class TemporaleHandler extends AbstractHandler
 
             $this->validateTemporaleEvent($event);
 
-            $isNewEvent = !isset($existingEventKeyToIndex[$eventKey]);
+            // Grade 0 events (ferial/weekday) are handled differently
+            $isGradeZero = $event->grade === 0;
 
-            // Validate per-event i18n
-            if (property_exists($event, 'i18n') && $event->i18n instanceof \stdClass) {
-                $this->validateEventI18n($event->i18n, $eventKey);
-            }
-
-            // For new events, require i18n with Accept-Language locale
-            if ($isNewEvent) {
-                if (!property_exists($event, 'i18n') || !( $event->i18n instanceof \stdClass )) {
-                    throw new ValidationException(
-                        "New event '{$eventKey}' must have an 'i18n' object property"
-                    );
+            if ($isGradeZero) {
+                // Grade 0: i18n should NOT be provided (translations from gettext)
+                if (property_exists($event, 'i18n') && $event->i18n instanceof \stdClass) {
+                    $i18nKeys = array_keys(get_object_vars($event->i18n));
+                    if (count($i18nKeys) > 0) {
+                        throw new ValidationException(
+                            "Grade 0 event '{$eventKey}' should not have i18n data (translations are from gettext)"
+                        );
+                    }
                 }
-                if (!property_exists($event->i18n, $acceptLocale)) {
-                    throw new ValidationException(
-                        "New event '{$eventKey}' i18n must contain translation for Accept-Language locale '{$acceptLocale}'"
-                    );
-                }
-                $newEventKeys[] = $eventKey;
-                $addedCount++;
-            } else {
-                $updatedCount++;
-            }
 
-            // Validate per-event readings
-            if (property_exists($event, 'readings') && $event->readings instanceof \stdClass) {
+                // Grade 0: readings are required
+                if (!property_exists($event, 'readings') || !( $event->readings instanceof \stdClass )) {
+                    throw new ValidationException("Grade 0 event '{$eventKey}' must have a 'readings' object property");
+                }
                 $this->validateEventReadings($event->readings, $eventKey);
-            } elseif ($isNewEvent) {
-                // For new events, readings are required
-                throw new ValidationException(
-                    "New event '{$eventKey}' must have a 'readings' object property"
-                );
-            }
 
-            $validatedEvents[] = $event;
+                $ferialEvents[] = $event;
+                $ferialCount++;
+            } else {
+                // Non-grade-0 event
+                $isNewEvent = !isset($existingEventKeyToIndex[$eventKey]);
+
+                // Validate per-event i18n
+                if (property_exists($event, 'i18n') && $event->i18n instanceof \stdClass) {
+                    $this->validateEventI18n($event->i18n, $eventKey);
+                }
+
+                // For new events, require i18n with Accept-Language locale
+                if ($isNewEvent) {
+                    if (!property_exists($event, 'i18n') || !( $event->i18n instanceof \stdClass )) {
+                        throw new ValidationException(
+                            "New event '{$eventKey}' must have an 'i18n' object property"
+                        );
+                    }
+                    if (!property_exists($event->i18n, $acceptLocale)) {
+                        throw new ValidationException(
+                            "New event '{$eventKey}' i18n must contain translation for Accept-Language locale '{$acceptLocale}'"
+                        );
+                    }
+                    $newEventKeys[] = $eventKey;
+                    $addedCount++;
+                } else {
+                    $updatedCount++;
+                }
+
+                // Validate per-event readings
+                if (property_exists($event, 'readings') && $event->readings instanceof \stdClass) {
+                    $this->validateEventReadings($event->readings, $eventKey);
+                } elseif ($isNewEvent) {
+                    // For new events, readings are required
+                    throw new ValidationException(
+                        "New event '{$eventKey}' must have a 'readings' object property"
+                    );
+                }
+
+                $validatedEvents[] = $event;
+            }
         }
 
-        // Extract i18n from events and update files
+        // Extract i18n from non-grade-0 events and update files
         $extractedI18n = $this->extractI18nFromEvents($validatedEvents);
         $i18nLocales   = array_keys(get_object_vars($extractedI18n));
 
@@ -917,6 +981,7 @@ final class TemporaleHandler extends AbstractHandler
         }
 
         // Ensure all new event_keys have entries in all i18n files (empty string placeholder)
+        // Only for non-grade-0 events
         if (count($newEventKeys) > 0) {
             $this->ensureI18nConsistency($newEventKeys, $acceptLocale);
         }
@@ -929,17 +994,18 @@ final class TemporaleHandler extends AbstractHandler
             $this->ensureI18nConsistency($allExistingEventKeys, null, $newlyCreatedLocales);
         }
 
-        // Extract readings from events and update lectionary files
-        $extractedReadings = $this->extractReadingsFromEvents($validatedEvents);
-        $readingsLocales   = array_keys(get_object_vars($extractedReadings));
+        // Extract readings from ALL events (both non-grade-0 and grade-0) and update lectionary files
+        $allEventsWithReadings = array_merge($validatedEvents, $ferialEvents);
+        $extractedReadings     = $this->extractReadingsFromEvents($allEventsWithReadings);
+        $readingsLocales       = array_keys(get_object_vars($extractedReadings));
         if (count($readingsLocales) > 0) {
             $this->updateLectionaryFiles($extractedReadings);
         }
 
-        // Strip i18n and readings before storing events
+        // Strip i18n and readings before storing events (only non-grade-0)
         $eventsToStore = $this->stripI18nAndReadingsFromEvents($validatedEvents);
 
-        // Update existing data with new/updated events
+        // Update existing data with new/updated events (only non-grade-0)
         foreach ($eventsToStore as $event) {
             /** @var string $eventKey */
             $eventKey = $event->event_key;
@@ -972,15 +1038,17 @@ final class TemporaleHandler extends AbstractHandler
             'file'             => $temporaleFile,
             'updated'          => $updatedCount,
             'added'            => $addedCount,
+            'ferial_updated'   => $ferialCount,
             'i18n_locales'     => $i18nLocales,
             'readings_locales' => $readingsLocales
         ]);
 
         return $this->encodeResponseBody($response, [
-            'success' => true,
-            'message' => 'Temporale data updated successfully',
-            'updated' => $updatedCount,
-            'added'   => $addedCount
+            'success'        => true,
+            'message'        => 'Temporale data updated successfully',
+            'updated'        => $updatedCount,
+            'added'          => $addedCount,
+            'ferial_updated' => $ferialCount
         ], StatusCode::OK);
     }
 
@@ -989,6 +1057,9 @@ final class TemporaleHandler extends AbstractHandler
      *
      * Requires JWT authentication (handled by middleware).
      * The event_key is expected as a path parameter: DELETE /temporale/{event_key}
+     *
+     * For grade 0 (ferial/weekday) events that only exist in lectionary files,
+     * this will delete the event from lectionary files only.
      */
     private function handleDeleteRequest(ResponseInterface $response): ResponseInterface
     {
@@ -1017,11 +1088,40 @@ final class TemporaleHandler extends AbstractHandler
             }
         }
 
+        // Check if this is a grade 0 (ferial) event that only exists in lectionary files
+        $isFerialEvent = false;
         if ($foundIndex === null) {
-            throw new NotFoundException("Temporale event with key '{$eventKey}' not found");
+            $category = LectionaryCategory::forEventKey($eventKey);
+            if ($category->isFerial()) {
+                $isFerialEvent = true;
+            } else {
+                throw new NotFoundException("Temporale event with key '{$eventKey}' not found");
+            }
         }
 
-        // Remove the event
+        if ($isFerialEvent) {
+            // Grade 0 events: only remove from lectionary files (no main file or i18n)
+            $this->removeEventKeyFromLectionaryFiles($eventKey);
+
+            // Log the operation
+            $this->auditLogger->info('Ferial temporale event deleted from lectionary', [
+                'operation' => 'DELETE',
+                'client_ip' => $this->clientIp,
+                'event_key' => $eventKey,
+                'type'      => 'ferial'
+            ]);
+
+            return $this->encodeResponseBody($response, [
+                'success'   => true,
+                'message'   => "Ferial event '{$eventKey}' deleted from lectionary files",
+                'event_key' => $eventKey,
+                'type'      => 'ferial'
+            ], StatusCode::OK);
+        }
+
+        // Non-ferial event: remove from main file, i18n, and lectionary
+
+        // Remove the event from main temporale file
         array_splice($existingData, (int) $foundIndex, 1);
 
         $jsonContent = json_encode(array_values($existingData), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -1592,9 +1692,26 @@ final class TemporaleHandler extends AbstractHandler
         $category = LectionaryCategory::forEventKey($eventKey);
 
         if ($category->hasYearCycle()) {
-            // Remove from all year-cycle files (A, B, C)
+            // Remove from all three-year cycle files (A, B, C)
             foreach (['A', 'B', 'C'] as $year) {
                 $folder = $category->folderForYear($year)->path();
+                if (!is_dir($folder)) {
+                    continue;
+                }
+
+                $files = glob($folder . '/*.json');
+                if ($files === false) {
+                    continue;
+                }
+
+                foreach ($files as $file) {
+                    $this->removeEventKeyFromLectionaryFile($file, $eventKey);
+                }
+            }
+        } elseif ($category->hasTwoYearCycle()) {
+            // Remove from all two-year cycle files (I, II)
+            foreach (['I', 'II'] as $year) {
+                $folder = $category->folderForTwoYearCycle($year)->path();
                 if (!is_dir($folder)) {
                     continue;
                 }
