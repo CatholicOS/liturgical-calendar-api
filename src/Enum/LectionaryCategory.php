@@ -399,9 +399,9 @@ enum LectionaryCategory: string
     }
 
     /**
-     * Get all explicit event keys from non-pattern categories.
+     * Get explicit event keys from the SANCTORUM category.
      *
-     * Note: This only returns SANCTORUM events since other categories use patterns.
+     * Note: Only SANCTORUM uses explicit event keys; other categories use patterns.
      * For pattern-based categories, the event keys must be read from lectionary files.
      *
      * @return string[] Array of event keys in special explicit categories.
