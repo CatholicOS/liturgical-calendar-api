@@ -1364,7 +1364,7 @@ final class TemporaleHandler extends AbstractHandler
             }
 
             if ($category->hasYearCycle()) {
-                // Year-cycle events must have annum_a, annum_b, annum_c
+                // Three-year-cycle events must have annum_a, annum_b, annum_c
                 if (
                     !property_exists($localeReadings, 'annum_a') ||
                     !property_exists($localeReadings, 'annum_b') ||
@@ -1386,6 +1386,36 @@ final class TemporaleHandler extends AbstractHandler
 
                 // Validate each annum's structure against the expected DTO
                 foreach (['annum_a', 'annum_b', 'annum_c'] as $annum) {
+                    /** @var \stdClass $annumReadings */
+                    $annumReadings = $localeReadings->$annum;
+                    if (!$readingsType->validateStructure($annumReadings)) {
+                        throw new ValidationException(
+                            $readingsType->getValidationError($annumReadings)
+                            . " in event '{$eventKey}' readings.{$locale}.{$annum}"
+                        );
+                    }
+                }
+            } elseif ($category->hasTwoYearCycle()) {
+                // Two-year-cycle events (Ordinary Time weekdays) must have annum_I, annum_II
+                if (
+                    !property_exists($localeReadings, 'annum_I') ||
+                    !property_exists($localeReadings, 'annum_II')
+                ) {
+                    throw new ValidationException(
+                        "readings.{$locale} must have annum_I and annum_II properties in event '{$eventKey}'"
+                    );
+                }
+                if (
+                    !( $localeReadings->annum_I instanceof \stdClass ) ||
+                    !( $localeReadings->annum_II instanceof \stdClass )
+                ) {
+                    throw new ValidationException(
+                        "readings.{$locale}.annum_[I|II] must be objects in event '{$eventKey}'"
+                    );
+                }
+
+                // Validate each annum's structure against the expected DTO
+                foreach (['annum_I', 'annum_II'] as $annum) {
                     /** @var \stdClass $annumReadings */
                     $annumReadings = $localeReadings->$annum;
                     if (!$readingsType->validateStructure($annumReadings)) {
