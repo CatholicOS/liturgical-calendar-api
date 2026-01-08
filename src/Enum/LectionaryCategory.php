@@ -237,6 +237,9 @@ enum LectionaryCategory: string
     /**
      * Get the liturgical color(s) for this category.
      *
+     * @note For SUNDAYS_SOLEMNITIES and SANCTORUM, this returns a generic default
+     *       since colors vary per event. Callers should use event-specific color data.
+     *
      * @return string[] Array of liturgical color strings.
      */
     public function liturgicalColor(): array
