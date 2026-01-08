@@ -30,6 +30,17 @@ class DateTime extends \DateTime implements \JsonSerializable
         ];
     }
 
+    /**
+     * Create a DateTime from a day-month-year string.
+     *
+     * Uses UTC timezone intentionally - see public/index.php for the full timezone
+     * design rationale. UTC is used for all internal calculations to avoid DST issues,
+     * while the PHP default timezone (Europe/Vatican) is used for external display.
+     *
+     * @param string $time Date string in 'j-n-Y' format (e.g., '25-12-2024')
+     * @return DateTime
+     * @throws \InvalidArgumentException If the date string cannot be parsed
+     */
     public static function fromFormat(string $time): DateTime
     {
         $dateTime = DateTime::createFromFormat('!j-n-Y', $time, new \DateTimeZone('UTC'));

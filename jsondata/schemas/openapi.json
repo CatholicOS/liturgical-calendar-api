@@ -3212,15 +3212,23 @@
         ],
         "summary": "Retrieve all Proprium de Tempore (temporale) events",
         "operationId": "temporaleGET",
-        "description": "Returns all temporale events with translated names based on the Accept-Language header. Temporale events are liturgical events that don't have fixed dates (Easter, Pentecost, etc.).",
+        "description": "Returns all temporale events with translated names based on the Accept-Language header. Includes both regular events (from propriumdetempore.json) and grade 0 ferial events (dynamically generated from lectionary files). Ferial events include liturgical readings.",
         "parameters": [
           {
             "$ref": "#/components/parameters/AcceptLanguageHeader"
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "schema": {
+              "$ref": "./CommonDef.json#/definitions/Locale"
+            },
+            "description": "Optional locale override. If provided, overrides Accept-Language header."
           }
         ],
         "responses": {
           "200": {
-            "description": "OK: array of temporale events with translated names",
+            "description": "OK: object containing temporale events with translated names and lectionary readings",
             "headers": {
               "X-Litcal-Temporale-Locale": {
                 "description": "The locale used for translating event names",
@@ -3232,10 +3240,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "./PropriumDeTempore.json"
+                  "$ref": "#/components/schemas/TemporaleGetResponse"
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest400"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -3251,15 +3262,23 @@
         ],
         "summary": "Retrieve all Proprium de Tempore (temporale) events (POST alias)",
         "operationId": "temporalePOST",
-        "description": "Read-only alias of GET. Returns all temporale events with translated names based on the Accept-Language header. Temporale events are liturgical events that don't have fixed dates (Easter, Pentecost, etc.).",
+        "description": "Read-only alias of GET. Returns all temporale events with translated names based on the Accept-Language header. Includes both regular events and grade 0 ferial events with lectionary readings.",
         "parameters": [
           {
             "$ref": "#/components/parameters/AcceptLanguageHeader"
+          },
+          {
+            "in": "query",
+            "name": "locale",
+            "schema": {
+              "$ref": "./CommonDef.json#/definitions/Locale"
+            },
+            "description": "Optional locale override. If provided, overrides Accept-Language header."
           }
         ],
         "responses": {
           "200": {
-            "description": "OK: array of temporale events with translated names",
+            "description": "OK: object containing temporale events with translated names and lectionary readings",
             "headers": {
               "X-Litcal-Temporale-Locale": {
                 "description": "The locale used for translating event names",
@@ -3271,10 +3290,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "./PropriumDeTempore.json"
+                  "$ref": "#/components/schemas/TemporaleGetResponse"
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest400"
           },
           "404": {
             "$ref": "#/components/responses/NotFound404"
@@ -3293,22 +3315,27 @@
             "CookieAuth": []
           }
         ],
-        "summary": "Replace all Proprium de Tempore (temporale) events",
+        "summary": "Create all Proprium de Tempore (temporale) events",
         "operationId": "temporalePUT",
-        "description": "Replaces the entire temporale data with the provided array of events. Requires authentication.",
+        "description": "Creates the entire temporale data. Only allowed when no data exists (initial creation). Grade 0 (ferial/weekday) events are stored only in lectionary files without i18n data. The Accept-Language header is required to validate that i18n translations are provided for all non-grade-0 events in the Accept-Language locale. Requires authentication.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "./PropriumDeTempore.json"
+                "$ref": "#/components/schemas/TemporalePutRequest"
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "OK: temporale data replaced successfully",
+          "201": {
+            "description": "Created: temporale data created successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -3321,7 +3348,12 @@
                       "type": "string"
                     },
                     "events": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "Number of non-grade-0 events stored in main temporale file"
+                    },
+                    "ferial_events": {
+                      "type": "integer",
+                      "description": "Number of grade 0 events stored only in lectionary files"
                     }
                   }
                 }
@@ -3333,6 +3365,9 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized401"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict409"
           }
         }
       },
@@ -3350,13 +3385,18 @@
         ],
         "summary": "Update specific Proprium de Tempore (temporale) events",
         "operationId": "temporalePATCH",
-        "description": "Updates or adds specific temporale events. Events are matched by event_key. Requires authentication.",
+        "description": "Updates or adds specific temporale events. Events are matched by event_key. Grade 0 (ferial/weekday) events update only lectionary files. The Accept-Language header is required to validate that i18n translations are provided for any new non-grade-0 event_keys in the Accept-Language locale. Requires authentication.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguageHeader"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "./PropriumDeTempore.json"
+                "$ref": "#/components/schemas/TemporalePatchRequest"
               }
             }
           }
@@ -3376,10 +3416,16 @@
                       "type": "string"
                     },
                     "updated": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "Number of existing non-grade-0 events updated"
                     },
                     "added": {
-                      "type": "integer"
+                      "type": "integer",
+                      "description": "Number of new non-grade-0 events added"
+                    },
+                    "ferial_updated": {
+                      "type": "integer",
+                      "description": "Number of grade 0 events updated in lectionary files"
                     }
                   }
                 }
@@ -3413,7 +3459,7 @@
         ],
         "summary": "Delete a specific Proprium de Tempore (temporale) event",
         "operationId": "temporaleDELETE",
-        "description": "Deletes a specific temporale event by its event_key. Requires authentication.",
+        "description": "Deletes a specific temporale event by its event_key. For grade 0 (ferial/weekday) events, deletes only from lectionary files. Requires authentication.",
         "parameters": [
           {
             "in": "path",
@@ -3441,6 +3487,13 @@
                     },
                     "event_key": {
                       "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Present only for grade 0 events, indicates the event was ferial and deleted only from lectionary files",
+                      "enum": [
+                        "ferial"
+                      ]
                     }
                   }
                 }
@@ -3462,6 +3515,174 @@
   },
   "components": {
     "schemas": {
+      "TemporaleGetResponse": {
+        "type": "object",
+        "description": "Response object containing temporale events and locale information",
+        "properties": {
+          "events": {
+            "type": "array",
+            "description": "Array of temporale events including both regular events and grade 0 ferial events with lectionary readings",
+            "items": {
+              "$ref": "#/components/schemas/TemporaleEventWithReadings"
+            }
+          },
+          "locale": {
+            "type": "string",
+            "description": "The locale used for translating event names"
+          }
+        },
+        "required": [
+          "events",
+          "locale"
+        ]
+      },
+      "TemporaleEventWithReadings": {
+        "type": "object",
+        "description": "A temporale event with optional name translation and lectionary readings",
+        "properties": {
+          "event_key": {
+            "$ref": "./CommonDef.json#/definitions/EventKey"
+          },
+          "grade": {
+            "$ref": "./CommonDef.json#/definitions/LitGrade"
+          },
+          "type": {
+            "$ref": "./CommonDef.json#/definitions/LitEventType"
+          },
+          "color": {
+            "$ref": "./CommonDef.json#/definitions/LitColor"
+          },
+          "name": {
+            "type": "string",
+            "description": "Translated name of the event (if available for the requested locale)"
+          },
+          "readings": {
+            "type": "object",
+            "description": "Lectionary readings for this event. Structure varies by event type: year-cycle events have annum_a/b/c, ferial events have flat or annum_I/II structure."
+          },
+          "lectionary_category": {
+            "type": "string",
+            "description": "The lectionary category indicating which lectionary file contains this event's readings.",
+            "enum": [
+              "dominicale_et_festivum",
+              "feriale_tempus_adventus",
+              "feriale_tempus_nativitatis",
+              "feriale_tempus_quadragesimae",
+              "feriale_tempus_paschatis",
+              "feriale_per_annum",
+              "sanctorum"
+            ]
+          },
+          "liturgical_season": {
+            "type": "string",
+            "description": "The liturgical season this event belongs to.",
+            "enum": [
+              "ADVENT",
+              "CHRISTMAS",
+              "LENT",
+              "EASTER_TRIDUUM",
+              "EASTER",
+              "ORDINARY_TIME"
+            ]
+          }
+        },
+        "required": [
+          "event_key",
+          "grade",
+          "type",
+          "color",
+          "lectionary_category",
+          "liturgical_season"
+        ]
+      },
+      "TemporalePutRequest": {
+        "type": "object",
+        "description": "Request body for creating temporale data (PUT). Grade 0 events should not include i18n data.",
+        "properties": {
+          "locales": {
+            "type": "array",
+            "description": "Array of base locale strings (without regional identifiers) for which i18n files will be created",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z]{2}$"
+            },
+            "minItems": 1
+          },
+          "events": {
+            "type": "array",
+            "description": "Array of temporale events to create. Each event must include i18n (except grade 0) and readings.",
+            "items": {
+              "$ref": "#/components/schemas/TemporaleEventInput"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "locales",
+          "events"
+        ]
+      },
+      "TemporalePatchRequest": {
+        "type": "object",
+        "description": "Request body for updating temporale data (PATCH). Grade 0 events should not include i18n data.",
+        "properties": {
+          "events": {
+            "type": "array",
+            "description": "Array of temporale events to update or add. i18n is required for new non-grade-0 events, optional for updates.",
+            "items": {
+              "$ref": "#/components/schemas/TemporaleEventInput"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "events"
+        ]
+      },
+      "TemporaleEventInput": {
+        "type": "object",
+        "description": "Input format for a temporale event. Grade 0 (ferial) events should not include i18n (translations come from gettext). Note: i18n is marked optional in the schema because it reflects the final storage structure (where translations are extracted to separate files), but explicit validation enforces i18n for non-grade-0 events in PUT/PATCH operations.",
+        "properties": {
+          "event_key": {
+            "$ref": "./CommonDef.json#/definitions/EventKey"
+          },
+          "grade": {
+            "$ref": "./CommonDef.json#/definitions/LitGrade"
+          },
+          "type": {
+            "$ref": "./CommonDef.json#/definitions/LitEventType"
+          },
+          "color": {
+            "$ref": "./CommonDef.json#/definitions/LitColor"
+          },
+          "i18n": {
+            "type": "object",
+            "description": "Translations keyed by locale. Required for non-grade-0 events, forbidden for grade 0 events.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "en": "Easter Sunday",
+              "la": "Dominica Paschatis"
+            }
+          },
+          "readings": {
+            "type": "object",
+            "description": "Lectionary readings keyed by locale. Each locale contains readings in the appropriate structure for the event type.",
+            "additionalProperties": {
+              "type": "object",
+              "description": "Readings for a specific locale. Year-cycle events have annum_a/b/c, ferial events have flat structure."
+            }
+          }
+        },
+        "required": [
+          "event_key",
+          "grade",
+          "type",
+          "color",
+          "readings"
+        ]
+      },
       "LitCalXML": {
         "type": "object",
         "properties": {

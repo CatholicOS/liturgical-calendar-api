@@ -1088,7 +1088,7 @@ msgstr "Hebdomadæ %s Temporis Paschali"
 #: src/Handlers/CalendarHandler.php:2937 src/Handlers/CalendarHandler.php:2985
 #, php-format
 msgid "of the %s Week of Ordinary Time"
-msgstr "Hebdomadæ %s Temporis Ordinarii"
+msgstr "Hebdomadæ %s Temporis per annum"
 
 #: src/Handlers/CalendarHandler.php:3028
 msgid "Saturday Memorial of the Blessed Virgin Mary"
