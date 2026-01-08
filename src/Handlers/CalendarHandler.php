@@ -2891,7 +2891,7 @@ final class CalendarHandler extends AbstractHandler
      * - The second part begins the day after Pentecost and ends with the Feast of Christ the King.
      *
      * For each weekday, the event name is generated in the format:
-     * - For the Latin locale, "feria Hebdomadæ X Temporis Ordinarii", where X is the week number in ordinal form (Primæ, Secundæ, etc).
+     * - For the Latin locale, "feria Hebdomadæ X Temporis per Annum", where X is the week number in ordinal form (Primæ, Secundæ, etc).
      * - For all other locales, "Monday of the X Week of Ordinary Time", where X is the week number in ordinal form according to the current locale.
      *
      * The event color is green, and the event type is MOBILE, with a grade of WEEKDAY.
@@ -2933,7 +2933,7 @@ final class CalendarHandler extends AbstractHandler
                     ? LatinUtils::LATIN_DAYOFTHEWEEK[$firstOrdinaryDate->format('w')]
                     : Utilities::ucfirst($this->dayOfTheWeek->format($firstOrdinaryDate->format('U')));
                 $nthStr                 = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? sprintf('Hebdomadæ %s Temporis Ordinarii', $ordinal)
+                    ? sprintf('Hebdomadæ %s Temporis per Annum', $ordinal)
                     : sprintf(_('of the %s Week of Ordinary Time'), $ordinal);
                 $name                   = $dayOfTheWeek . ' ' . $nthStr;
                 $dayOfTheWeekEnglish    = $this->dayOfTheWeekEnglish->format($firstOrdinaryDate->format('U'));
@@ -2981,7 +2981,7 @@ final class CalendarHandler extends AbstractHandler
                     ? LatinUtils::LATIN_DAYOFTHEWEEK[$lastOrdinaryDate->format('w')]
                     : Utilities::ucfirst($this->dayOfTheWeek->format($lastOrdinaryDate->format('U')));
                 $nthStr              = $locale === LitLocale::LATIN_PRIMARY_LANGUAGE
-                    ? sprintf('Hebdomadæ %s Temporis Ordinarii', $ordinal)
+                    ? sprintf('Hebdomadæ %s Temporis per Annum', $ordinal)
                     : sprintf(_('of the %s Week of Ordinary Time'), $ordinal);
                 $name                = $dayOfTheWeek . ' ' . $nthStr;
                 $dayOfTheWeekEnglish = $this->dayOfTheWeekEnglish->format($lastOrdinaryDate->format('U'));

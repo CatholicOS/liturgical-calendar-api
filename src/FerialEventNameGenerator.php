@@ -23,6 +23,10 @@ use LiturgicalCalendar\Api\Router;
  * - {day}OctaveEaster (e.g., MonOctaveEaster)
  * - EasterWeekday{week}{day} (e.g., EasterWeekday2Monday)
  * - OrdWeekday{week}{day} (e.g., OrdWeekday1Monday)
+ *
+ * @todo CalendarHandler::calculateWeekdaysOrdinaryTime() has similar logic for
+ *       generating Ordinary Time weekday names. Consider refactoring CalendarHandler
+ *       to use this class to avoid code duplication.
  */
 class FerialEventNameGenerator
 {
@@ -523,7 +527,8 @@ class FerialEventNameGenerator
         $ordinal = $this->getLocalizedOrdinal($week);
 
         if ($this->primaryLanguage === 'la') {
-            return sprintf('%s Hebdomadæ %s Temporis Ordinarii', $dayName, $ordinal);
+            // "Tempus per Annum" is the liturgically correct Latin for "Ordinary Time"
+            return sprintf('%s Hebdomadæ %s Temporis per Annum', $dayName, $ordinal);
         }
 
         /**translators: %s is an ordinal number (1st, 2nd, etc.) */

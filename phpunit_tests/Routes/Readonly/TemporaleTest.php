@@ -334,9 +334,9 @@ final class TemporaleTest extends ApiTestCase
         $this->assertObjectHasProperty('name', $eventEn);
         $this->assertObjectHasProperty('name', $eventLa);
 
-        // English should contain "Ordinary Time", Latin should contain "Temporis Ordinarii"
+        // English should contain "Ordinary Time", Latin should contain "Temporis per Annum"
         $this->assertStringContainsString('Ordinary Time', $eventEn->name, 'English name should contain "Ordinary Time"');
-        $this->assertStringContainsString('Temporis Ordinarii', $eventLa->name, 'Latin name should contain "Temporis Ordinarii"');
+        $this->assertStringContainsString('Temporis per Annum', $eventLa->name, 'Latin name should contain "Temporis per Annum"');
     }
 
     public function testAllTemporaleEventsHaveReadings(): void
