@@ -3,13 +3,9 @@
         {
             "liturgical_event": {
                 "event_key": "DedicationoftheCathedral",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 4,
-                "common": [
-                    "Dedication of a Church"
-                ],
+                "common": [ "Dedication of a Church" ],
                 "day": 26,
                 "month": 6
             },
@@ -21,13 +17,9 @@
         {
             "liturgical_event": {
                 "event_key": "StDunstanpatronoftheDiocese",
-                "color": [
-                    "white"
-                ],
+                "color": [ "white" ],
                 "grade": 4,
-                "common": [
-                    "Pastors:For a Bishop"
-                ],
+                "common": [ "Pastors:For a Bishop" ],
                 "day": 19,
                 "month": 5
             },
@@ -41,10 +33,7 @@
         "nation": "CA",
         "diocese_id": "charlo_ca",
         "diocese_name": "Charlottetown",
-        "locales": [
-            "en_CA",
-            "fr_CA"
-        ],
+        "locales": [ "en_CA", "fr_CA" ],
         "timezone": "America\/Halifax"
     }
 }
