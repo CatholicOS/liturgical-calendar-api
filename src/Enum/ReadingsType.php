@@ -64,16 +64,12 @@ enum ReadingsType: string
 
     /**
      * Ferial: 4 readings without second reading.
-     * Used by: Seasonal weekdays (Advent, Christmas, Lent, Easter).
+     * Used by: Seasonal weekdays (Advent, Christmas, Lent, Easter, Ordinary Time).
+     *
+     * Note: Ordinary Time weekdays use a two-year cycle (I, II) handled by
+     * LectionaryCategory, but the readings structure itself is still ferial.
      */
     case FERIAL = 'ferial';
-
-    /**
-     * Ferial with two-year cycle: nested structure with annum_I/annum_II keys.
-     * Each nested object has 4 readings (first, psalm, acclamation, gospel).
-     * Used by: Ordinary Time weekdays.
-     */
-    case FERIAL_TWO_YEAR = 'ferial_two_year';
 
     /**
      * Event keys that use ReadingsChristmas structure.
@@ -107,7 +103,10 @@ enum ReadingsType: string
 
     /**
      * Event keys that use ReadingsFerial structure.
-     * All seasonal weekdays (Advent, Christmas, Lent, Easter) use ferial structure.
+     * All weekdays (Advent, Christmas, Lent, Easter, Ordinary Time) use ferial structure.
+     *
+     * Note: Ordinary Time weekdays use a two-year cycle (I, II) for file storage,
+     * but the readings structure is still ferial. The cycle is handled by LectionaryCategory.
      */
     private const array FERIAL_EVENT_PATTERNS = [
         // Advent weekdays
@@ -121,13 +120,9 @@ enum ReadingsType: string
         '/^(Friday|Saturday|Thursday)AfterAshWednesday$/',
         // Easter weekdays (not octave days which may have different structure)
         '/^EasterWeekday\d/',
+        // Ordinary Time weekdays (two-year cycle I/II handled by LectionaryCategory)
+        '/^OrdWeekday\d+/',
     ];
-
-    /**
-     * Event keys that use ReadingsFerial structure with two-year cycle.
-     * Ordinary Time weekdays use a two-year lectionary cycle (I, II).
-     */
-    private const array FERIAL_TWO_YEAR_PATTERNS = ['/^OrdWeekday\d+/'];
 
     /**
      * Determine the expected readings type for a given event key.
@@ -156,14 +151,7 @@ enum ReadingsType: string
             return self::MULTIPLE_SCHEMAS;
         }
 
-        // Check ferial two-year cycle patterns (must check before regular ferial)
-        foreach (self::FERIAL_TWO_YEAR_PATTERNS as $pattern) {
-            if (preg_match($pattern, $eventKey)) {
-                return self::FERIAL_TWO_YEAR;
-            }
-        }
-
-        // Check ferial patterns
+        // Check ferial patterns (includes Ordinary Time weekdays)
         foreach (self::FERIAL_EVENT_PATTERNS as $pattern) {
             if (preg_match($pattern, $eventKey)) {
                 return self::FERIAL;
@@ -189,7 +177,6 @@ enum ReadingsType: string
             self::WITH_EVENING       => ReadingsMap::READINGS_WITH_EVENING_MASS_KEYS,
             self::MULTIPLE_SCHEMAS   => ReadingsMap::READINGS_MULTIPLE_SCHEMAS_KEYS,
             self::SEASONAL           => ReadingsMap::READINGS_SEASONAL_KEYS,
-            self::FERIAL_TWO_YEAR    => ReadingsMap::READINGS_TWO_YEAR_KEYS,
             self::FESTIVE            => ReadingsMap::FESTIVE_KEYS,
             self::FERIAL             => ReadingsMap::FERIAL_KEYS,
         };
@@ -210,8 +197,7 @@ enum ReadingsType: string
             self::FESTIVE_WITH_VIGIL,
             self::WITH_EVENING,
             self::MULTIPLE_SCHEMAS,
-            self::SEASONAL,
-            self::FERIAL_TWO_YEAR    => true,
+            self::SEASONAL           => true,
             self::EASTER_VIGIL,
             self::PALM_SUNDAY,
             self::FESTIVE,
@@ -234,11 +220,10 @@ enum ReadingsType: string
         }
 
         // All nested readings use festive structure (5 keys)
-        // except SEASONAL and FERIAL_TWO_YEAR which use ferial (4 keys)
+        // except SEASONAL which uses ferial (4 keys)
         return match ($this) {
-            self::SEASONAL,
-            self::FERIAL_TWO_YEAR => ReadingsMap::FERIAL_KEYS,
-            default               => ReadingsMap::FESTIVE_KEYS,
+            self::SEASONAL => ReadingsMap::FERIAL_KEYS,
+            default        => ReadingsMap::FESTIVE_KEYS,
         };
     }
 
