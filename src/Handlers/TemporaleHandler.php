@@ -7,6 +7,7 @@ use LiturgicalCalendar\Api\Enum\LectionaryCategory;
 use LiturgicalCalendar\Api\Enum\LitColor;
 use LiturgicalCalendar\Api\Enum\LitLocale;
 use LiturgicalCalendar\Api\Enum\ReadingsType;
+use LiturgicalCalendar\Api\FerialEventNameGenerator;
 use LiturgicalCalendar\Api\Handlers\Auth\ClientIpTrait;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
@@ -396,7 +397,8 @@ final class TemporaleHandler extends AbstractHandler
      */
     private function generateFerialEvents(\stdClass $ferialData, array $existingKeys, ?\stdClass $i18nObj): array
     {
-        $events = [];
+        $events        = [];
+        $nameGenerator = new FerialEventNameGenerator($this->locale);
 
         foreach (get_object_vars($ferialData) as $eventKey => $readings) {
             // Skip if this event already exists in the main temporale file
@@ -418,8 +420,12 @@ final class TemporaleHandler extends AbstractHandler
             $event->color     = $category->liturgicalColor();
             $event->readings  = $readings;
 
-            // Add translation if available
-            if ($i18nObj !== null && property_exists($i18nObj, $eventKey)) {
+            // Generate name using gettext (ferial events don't have i18n file entries)
+            $generatedName = $nameGenerator->generateName($eventKey);
+            if ($generatedName !== null) {
+                $event->name = $generatedName;
+            } elseif ($i18nObj !== null && property_exists($i18nObj, $eventKey)) {
+                // Fallback to i18n if available (shouldn't happen for ferial events)
                 $event->name = $i18nObj->{$eventKey};
             }
 

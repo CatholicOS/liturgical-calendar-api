@@ -212,6 +212,64 @@ final class TemporaleTest extends ApiTestCase
         $this->assertContains('green', $ordWeekday1Monday->color, 'Ordinary Time weekday should have green color');
     }
 
+    public function testFerialEventsHaveGeneratedNames(): void
+    {
+        $response = self::$http->get('/temporale', [
+            'headers' => ['Accept-Language' => 'en']
+        ]);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string) $response->getBody());
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('events', $data);
+
+        // Test different types of ferial events have names
+        $testCases = [
+            'AdventWeekday1Monday' => 'Advent weekday should have name',
+            'LentWeekday1Monday'   => 'Lent weekday should have name',
+            'EasterWeekday2Monday' => 'Easter weekday should have name',
+            'OrdWeekday1Monday'    => 'Ordinary Time weekday should have name',
+        ];
+
+        foreach ($testCases as $eventKey => $message) {
+            $event = array_find($data->events, fn($e) => $e->event_key === $eventKey);
+            if ($event !== null) {
+                $this->assertObjectHasProperty('name', $event, $message);
+                $this->assertIsString($event->name, "Name should be a string for {$eventKey}");
+                $this->assertNotEmpty($event->name, "Name should not be empty for {$eventKey}");
+            }
+        }
+    }
+
+    public function testFerialEventNamesAreLocalized(): void
+    {
+        // Test with English locale
+        $responseEn = self::$http->get('/temporale', [
+            'headers' => ['Accept-Language' => 'en']
+        ]);
+        $dataEn     = json_decode((string) $responseEn->getBody());
+
+        // Test with Latin locale
+        $responseLa = self::$http->get('/temporale', [
+            'headers' => ['Accept-Language' => 'la']
+        ]);
+        $dataLa     = json_decode((string) $responseLa->getBody());
+
+        // Find OrdWeekday1Monday in both responses
+        $eventEn = array_find($dataEn->events, fn($e) => $e->event_key === 'OrdWeekday1Monday');
+        $eventLa = array_find($dataLa->events, fn($e) => $e->event_key === 'OrdWeekday1Monday');
+
+        if ($eventEn !== null && $eventLa !== null) {
+            $this->assertObjectHasProperty('name', $eventEn);
+            $this->assertObjectHasProperty('name', $eventLa);
+
+            // Names should be different for different locales
+            // English should contain "Ordinary Time", Latin should contain "Temporis Ordinarii"
+            $this->assertStringContainsString('Ordinary Time', $eventEn->name, 'English name should contain "Ordinary Time"');
+            $this->assertStringContainsString('Temporis Ordinarii', $eventLa->name, 'Latin name should contain "Temporis Ordinarii"');
+        }
+    }
+
     public function testAllTemporaleEventsHaveReadings(): void
     {
         $response = self::$http->get('/temporale', [
