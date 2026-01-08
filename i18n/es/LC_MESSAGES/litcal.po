@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-16 13:42+0000\n"
+"POT-Creation-Date: 2026-01-08 03:55+0000\n"
 "PO-Revision-Date: 2025-12-15 21:38+0000\n"
 "Last-Translator: \"John R. D'Orazio\" <priest@johnromanodorazio.com>\n"
 "Language-Team: Spanish <https://translate.johnromanodorazio.com/projects/"
@@ -590,34 +590,104 @@ msgid "Masses and Prayers for Various Needs and Occasions"
 msgstr "Misas y oraciones para diversas necesidades y ocasiones"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:27
+#: src/Enum/LitSeason.php:117
 msgid "Advent"
 msgstr "Adviento"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:29
+#: src/Enum/LitSeason.php:119
 msgid "Christmas"
 msgstr "Navidad"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:31
+#: src/Enum/LitSeason.php:121
 msgid "Lent"
 msgstr "Cuaresma"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:33
+#: src/Enum/LitSeason.php:123
 msgid "Easter Triduum"
 msgstr "Triduo Pascual"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:35
+#: src/Enum/LitSeason.php:125
 msgid "Easter"
 msgstr "Pascua"
 
 #. translators: context = liturgical season
-#: src/Enum/LitSeason.php:37
+#: src/Enum/LitSeason.php:127
 msgid "Ordinary Time"
 msgstr "Tiempo Ordinario"
+
+#. translators: %s is a day number (17, 18, etc.) - for Advent weekdays Dec 17-24
+#: src/FerialEventNameGenerator.php:366
+#, php-format
+msgid "December %s"
+msgstr ""
+
+#. translators: %s is an ordinal number (1st, 2nd, 3rd)
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:382 src/Handlers/CalendarHandler.php:1737
+#, php-format
+msgid "of the %s Week of Advent"
+msgstr "de la %s Semana de Adviento"
+
+#. translators: %s is an ordinal number (2nd, 3rd, etc.) - Day of Christmas Octave
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:401 src/Handlers/CalendarHandler.php:1797
+#, php-format
+msgid "%s Day of the Octave of Christmas"
+msgstr "%s Día de la Octava de Navidad"
+
+#. translators: %s is a day number (2, 3, etc.) - for Christmas weekdays Jan 2-6
+#. translators: %s is a day number (7, 8, etc.) - for days after Epiphany
+#: src/FerialEventNameGenerator.php:418 src/FerialEventNameGenerator.php:452
+#, php-format
+msgid "January %s"
+msgstr ""
+
+#. translators: %s is a day of the week - for days after Epiphany
+#: src/FerialEventNameGenerator.php:435
+#, fuzzy, php-format
+msgid "%s after Epiphany"
+msgstr "%s día después de la Epifanía"
+
+#. translators: Day after Ash Wednesday pattern
+#: src/FerialEventNameGenerator.php:467 src/Handlers/CalendarHandler.php:1876
+msgid "after Ash Wednesday"
+msgstr "después del Miércoles de Ceniza"
+
+#. translators: %s is an ordinal number (1st, 2nd, 3rd)
+#. translators: %s is an ordinal number (first, second...)
+#: src/FerialEventNameGenerator.php:484 src/Handlers/CalendarHandler.php:1855
+#, php-format
+msgid "of the %s Week of Lent"
+msgstr "de la %s Semana de Cuaresma"
+
+#. translators: %s is a day of the week - Easter Octave pattern
+#: src/FerialEventNameGenerator.php:501
+#, fuzzy, php-format
+msgid "%s within the Octave of Easter"
+msgstr "%s Día de la Octava de Navidad"
+
+#. translators: %s is an ordinal number (2nd, 3rd, etc.)
+#: src/FerialEventNameGenerator.php:517 src/Handlers/CalendarHandler.php:2865
+#, php-format
+msgid "of the %s Week of Easter"
+msgstr "de la %s Semana de Pascua"
+
+#. translators: %s is an ordinal number (1st, 2nd, etc.)
+#: src/FerialEventNameGenerator.php:535 src/Handlers/CalendarHandler.php:2937
+#: src/Handlers/CalendarHandler.php:2985
+#, php-format
+msgid "of the %s Week of Ordinary Time"
+msgstr "de la %s Semana del Tiempo Ordinario"
+
+#. translators: %s is a day of the week - Holy Week pattern
+#: src/FerialEventNameGenerator.php:552
+#, fuzzy, php-format
+msgid "%s of Holy Week"
+msgstr "Por Mujeres Santas"
 
 #: src/Handlers/CalendarHandler.php:432
 #, php-format
@@ -762,28 +832,6 @@ msgstr ""
 #, php-format
 msgid "'%1$s' is superseded by the %2$s '%3$s' in the year %4$d."
 msgstr "'%1$s' es reemplazado por el %2$s '%3$s' en el año %4$d."
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1737
-#, php-format
-msgid "of the %s Week of Advent"
-msgstr "de la %s Semana de Adviento"
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1797
-#, php-format
-msgid "%s Day of the Octave of Christmas"
-msgstr "%s Día de la Octava de Navidad"
-
-#. translators: %s is an ordinal number (first, second...)
-#: src/Handlers/CalendarHandler.php:1855
-#, php-format
-msgid "of the %s Week of Lent"
-msgstr "de la %s Semana de Cuaresma"
-
-#: src/Handlers/CalendarHandler.php:1876
-msgid "after Ash Wednesday"
-msgstr "después del Miércoles de Ceniza"
 
 #. translators:
 #.  1. Grade or rank of the liturgical event
@@ -1072,16 +1120,6 @@ msgstr ""
 "domingo, sin embargo, siendo el Año del Apóstol Pablo, según el %2$s ha sido "
 "reinstaurada para que las iglesias locales puedan celebrar opcionalmente la "
 "memoria."
-
-#: src/Handlers/CalendarHandler.php:2865
-#, php-format
-msgid "of the %s Week of Easter"
-msgstr "de la %s Semana de Pascua"
-
-#: src/Handlers/CalendarHandler.php:2937 src/Handlers/CalendarHandler.php:2985
-#, php-format
-msgid "of the %s Week of Ordinary Time"
-msgstr "de la %s Semana del Tiempo Ordinario"
 
 #: src/Handlers/CalendarHandler.php:3028
 msgid "Saturday Memorial of the Blessed Virgin Mary"
@@ -1650,6 +1688,3 @@ msgstr ""
 
 #~ msgid "%s day before Epiphany"
 #~ msgstr "%s día antes de la Epifanía"
-
-#~ msgid "%s day after Epiphany"
-#~ msgstr "%s día después de la Epifanía"
