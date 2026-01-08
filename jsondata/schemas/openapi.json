@@ -3317,7 +3317,7 @@
         ],
         "summary": "Create all Proprium de Tempore (temporale) events",
         "operationId": "temporalePUT",
-        "description": "Creates the entire temporale data. Only allowed when no data exists (initial creation). Grade 0 (ferial/weekday) events are stored only in lectionary files without i18n data. Requires authentication.",
+        "description": "Creates the entire temporale data. Only allowed when no data exists (initial creation). Grade 0 (ferial/weekday) events are stored only in lectionary files without i18n data. The Accept-Language header is required to validate that i18n translations are provided for all non-grade-0 events in the Accept-Language locale. Requires authentication.",
         "parameters": [
           {
             "$ref": "#/components/parameters/AcceptLanguageHeader"
@@ -3385,7 +3385,7 @@
         ],
         "summary": "Update specific Proprium de Tempore (temporale) events",
         "operationId": "temporalePATCH",
-        "description": "Updates or adds specific temporale events. Events are matched by event_key. Grade 0 (ferial/weekday) events update only lectionary files. Requires authentication.",
+        "description": "Updates or adds specific temporale events. Events are matched by event_key. Grade 0 (ferial/weekday) events update only lectionary files. The Accept-Language header is required to validate that i18n translations are provided for any new non-grade-0 event_keys in the Accept-Language locale. Requires authentication.",
         "parameters": [
           {
             "$ref": "#/components/parameters/AcceptLanguageHeader"
