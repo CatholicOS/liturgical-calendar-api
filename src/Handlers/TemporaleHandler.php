@@ -155,6 +155,8 @@ final class TemporaleHandler extends AbstractHandler
     private function selectLocale(string $locale, bool $throwOnUnavailable = false): string
     {
         $canonicalized = \Locale::canonicalize($locale);
+        // Null check required for PHPStan (stubs declare string|null return type);
+        // in practice canonicalize() returns empty string for invalid input
         if (null === $canonicalized || '' === $canonicalized) {
             if ($throwOnUnavailable) {
                 throw new ValidationException("Invalid locale value: '{$locale}'");
