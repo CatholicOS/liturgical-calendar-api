@@ -1678,12 +1678,32 @@ final class TemporaleHandler extends AbstractHandler
                 $category = LectionaryCategory::from($categoryValue);
 
                 if ($category->hasYearCycle()) {
-                    // Write to separate year-cycle files (A, B, C)
+                    // Write to separate three-year-cycle files (A, B, C)
                     foreach (['A', 'B', 'C'] as $year) {
                         $yearKey = 'annum_' . strtolower($year);
                         $file    = strtr($category->fileForYear($year)->path(), ['{locale}' => $locale]);
 
                         $this->ensureLectionaryFolderExists($category->folderForYear($year));
+
+                        // Load existing or start fresh
+                        $existingData = $this->loadLectionaryFileData($file);
+
+                        // Merge new readings
+                        foreach ($eventReadings as $eventKey => $readings) {
+                            if (property_exists($readings, $yearKey)) {
+                                $existingData->{$eventKey} = $readings->{$yearKey};
+                            }
+                        }
+
+                        $this->saveLectionaryFile($file, $existingData, $locale);
+                    }
+                } elseif ($category->hasTwoYearCycle()) {
+                    // Write to separate two-year-cycle files (I, II)
+                    foreach (['I', 'II'] as $year) {
+                        $yearKey = 'annum_' . $year;
+                        $file    = strtr($category->fileForTwoYearCycle($year)->path(), ['{locale}' => $locale]);
+
+                        $this->ensureLectionaryFolderExists($category->folderForTwoYearCycle($year));
 
                         // Load existing or start fresh
                         $existingData = $this->loadLectionaryFileData($file);
