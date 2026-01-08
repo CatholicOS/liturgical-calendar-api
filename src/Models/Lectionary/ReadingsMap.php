@@ -182,6 +182,14 @@ final class ReadingsMap implements \ArrayAccess
     ];
 
     /**
+     * @var array{0:'annum_I',1:'annum_II'}
+     */
+    public const READINGS_TWO_YEAR_KEYS = [
+        'annum_I',
+        'annum_II'
+    ];
+
+    /**
      * ReadingsMap constructor.
      *
      * Initializes an empty $readings array property.

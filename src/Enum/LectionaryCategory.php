@@ -26,10 +26,28 @@ enum LectionaryCategory: string
     case SUNDAYS_SOLEMNITIES = 'dominicale_et_festivum';
 
     /**
+     * Advent weekdays lectionary (flat structure, no year cycle).
+     *
+     * Contains readings for:
+     * - AdventWeekday1-3[Day], AdventWeekdayDec17-24
+     */
+    case WEEKDAYS_ADVENT = 'feriale_tempus_adventus';
+
+    /**
+     * Christmas weekdays lectionary (flat structure, no year cycle).
+     *
+     * Contains readings for:
+     * - ChristmasWeekdayDec29-31, ChristmasWeekdayJan2-7
+     * - DayAfterEpiphany[Day], DayAfterEpiphanyJan7-12
+     */
+    case WEEKDAYS_CHRISTMAS = 'feriale_tempus_nativitatis';
+
+    /**
      * Lent weekdays lectionary (flat structure, no year cycle).
      *
      * Contains readings for:
-     * - AshWednesday
+     * - AshWednesday, days after Ash Wednesday
+     * - LentWeekday1-5[Day]
      * - MonHolyWeek, TueHolyWeek, WedHolyWeek
      */
     case WEEKDAYS_LENT = 'feriale_tempus_quadragesimae';
@@ -38,10 +56,20 @@ enum LectionaryCategory: string
      * Easter weekdays lectionary (flat structure, no year cycle).
      *
      * Contains readings for:
-     * - MonOctaveEaster, TueOctaveEaster, WedOctaveEaster
-     * - ThuOctaveEaster, FriOctaveEaster, SatOctaveEaster
+     * - Easter Octave days (MonOctaveEaster, etc.)
+     * - EasterWeekday2-7[Day]
      */
     case WEEKDAYS_EASTER = 'feriale_tempus_paschatis';
+
+    /**
+     * Ordinary Time weekdays lectionary (Year cycles I, II).
+     *
+     * Contains readings for:
+     * - OrdWeekday1-34[Day] (Monday through Saturday of each week)
+     *
+     * Uses a two-year cycle (I, II) rather than the three-year (A, B, C) cycle.
+     */
+    case WEEKDAYS_ORDINARY = 'feriale_per_annum';
 
     /**
      * Sanctorum (Saints) lectionary (flat structure, no year cycle).
@@ -52,26 +80,43 @@ enum LectionaryCategory: string
     case SANCTORUM = 'sanctorum';
 
     /**
-     * Event keys that belong to the WEEKDAYS_LENT category.
+     * Patterns for detecting WEEKDAYS_ADVENT events.
      */
-    private const array WEEKDAYS_LENT_EVENTS = [
-        'AshWednesday',
-        'MonHolyWeek',
-        'TueHolyWeek',
-        'WedHolyWeek',
+    private const array WEEKDAYS_ADVENT_PATTERNS = [
+        '/^AdventWeekday\d/',
+        '/^AdventWeekdayDec\d+$/',
     ];
 
     /**
-     * Event keys that belong to the WEEKDAYS_EASTER category.
+     * Patterns for detecting WEEKDAYS_CHRISTMAS events.
      */
-    private const array WEEKDAYS_EASTER_EVENTS = [
-        'MonOctaveEaster',
-        'TueOctaveEaster',
-        'WedOctaveEaster',
-        'ThuOctaveEaster',
-        'FriOctaveEaster',
-        'SatOctaveEaster',
+    private const array WEEKDAYS_CHRISTMAS_PATTERNS = [
+        '/^ChristmasWeekday/',
+        '/^DayAfterEpiphany/',
     ];
+
+    /**
+     * Patterns for detecting WEEKDAYS_LENT events.
+     */
+    private const array WEEKDAYS_LENT_PATTERNS = [
+        '/^AshWednesday$/',
+        '/^(Friday|Saturday|Thursday)AfterAshWednesday$/',
+        '/^LentWeekday\d/',
+        '/^(Mon|Tue|Wed)HolyWeek$/',
+    ];
+
+    /**
+     * Patterns for detecting WEEKDAYS_EASTER events.
+     */
+    private const array WEEKDAYS_EASTER_PATTERNS = [
+        '/^(Mon|Tue|Wed|Thu|Fri|Sat)OctaveEaster$/',
+        '/^EasterWeekday\d/',
+    ];
+
+    /**
+     * Patterns for detecting WEEKDAYS_ORDINARY events.
+     */
+    private const array WEEKDAYS_ORDINARY_PATTERNS = ['/^OrdWeekday\d+/'];
 
     /**
      * Event keys that belong to the SANCTORUM category.
@@ -86,23 +131,46 @@ enum LectionaryCategory: string
      */
     public static function forEventKey(string $eventKey): self
     {
-        if (in_array($eventKey, self::WEEKDAYS_LENT_EVENTS, true)) {
-            return self::WEEKDAYS_LENT;
+        // Check pattern-based categories
+        foreach (self::WEEKDAYS_ADVENT_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::WEEKDAYS_ADVENT;
+            }
         }
-        if (in_array($eventKey, self::WEEKDAYS_EASTER_EVENTS, true)) {
-            return self::WEEKDAYS_EASTER;
+        foreach (self::WEEKDAYS_CHRISTMAS_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::WEEKDAYS_CHRISTMAS;
+            }
         }
+        foreach (self::WEEKDAYS_LENT_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::WEEKDAYS_LENT;
+            }
+        }
+        foreach (self::WEEKDAYS_EASTER_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::WEEKDAYS_EASTER;
+            }
+        }
+        foreach (self::WEEKDAYS_ORDINARY_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::WEEKDAYS_ORDINARY;
+            }
+        }
+
+        // Check explicit list for SANCTORUM
         if (in_array($eventKey, self::SANCTORUM_EVENTS, true)) {
             return self::SANCTORUM;
         }
+
         // Default: most temporale events are in the Sunday/Solemnity lectionary
         return self::SUNDAYS_SOLEMNITIES;
     }
 
     /**
-     * Check if this category has year-cycle readings (A, B, C).
+     * Check if this category has three-year cycle readings (A, B, C).
      *
-     * @return bool True if readings vary by liturgical year cycle.
+     * @return bool True if readings vary by liturgical year cycle (A, B, C).
      */
     public function hasYearCycle(): bool
     {
@@ -110,10 +178,24 @@ enum LectionaryCategory: string
     }
 
     /**
+     * Check if this category has two-year cycle readings (I, II).
+     *
+     * Ordinary Time weekdays use a two-year cycle where Year I is used in
+     * odd-numbered years and Year II is used in even-numbered years.
+     *
+     * @return bool True if readings vary by two-year cycle (I, II).
+     */
+    public function hasTwoYearCycle(): bool
+    {
+        return $this === self::WEEKDAYS_ORDINARY;
+    }
+
+    /**
      * Get the JsonData enum case for the folder path.
      *
      * For SUNDAYS_SOLEMNITIES, returns the Year A folder as the base.
-     * Use folderForYear() to get a specific year's folder.
+     * For WEEKDAYS_ORDINARY, returns the Year I folder as the base.
+     * Use folderForYear() or folderForTwoYearCycle() to get a specific year's folder.
      *
      * @return JsonData The folder path enum case.
      */
@@ -121,6 +203,9 @@ enum LectionaryCategory: string
     {
         return match ($this) {
             self::SUNDAYS_SOLEMNITIES => JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_A_FOLDER,
+            self::WEEKDAYS_ORDINARY   => JsonData::LECTIONARY_WEEKDAYS_ORDINARY_I_FOLDER,
+            self::WEEKDAYS_ADVENT     => JsonData::LECTIONARY_WEEKDAYS_ADVENT_FOLDER,
+            self::WEEKDAYS_CHRISTMAS  => JsonData::LECTIONARY_WEEKDAYS_CHRISTMAS_FOLDER,
             self::WEEKDAYS_LENT       => JsonData::LECTIONARY_WEEKDAYS_LENT_FOLDER,
             self::WEEKDAYS_EASTER     => JsonData::LECTIONARY_WEEKDAYS_EASTER_FOLDER,
             self::SANCTORUM           => JsonData::LECTIONARY_SAINTS_FOLDER,
@@ -131,7 +216,8 @@ enum LectionaryCategory: string
      * Get the JsonData enum case for the file path (with locale placeholder).
      *
      * For SUNDAYS_SOLEMNITIES, returns the Year A file as the base.
-     * Use fileForYear() to get a specific year's file.
+     * For WEEKDAYS_ORDINARY, returns the Year I file as the base.
+     * Use fileForYear() or fileForTwoYearCycle() to get a specific year's file.
      *
      * @return JsonData The file path enum case.
      */
@@ -139,9 +225,49 @@ enum LectionaryCategory: string
     {
         return match ($this) {
             self::SUNDAYS_SOLEMNITIES => JsonData::LECTIONARY_SUNDAYS_SOLEMNITIES_A_FILE,
+            self::WEEKDAYS_ORDINARY   => JsonData::LECTIONARY_WEEKDAYS_ORDINARY_I_FILE,
+            self::WEEKDAYS_ADVENT     => JsonData::LECTIONARY_WEEKDAYS_ADVENT_FILE,
+            self::WEEKDAYS_CHRISTMAS  => JsonData::LECTIONARY_WEEKDAYS_CHRISTMAS_FILE,
             self::WEEKDAYS_LENT       => JsonData::LECTIONARY_WEEKDAYS_LENT_FILE,
             self::WEEKDAYS_EASTER     => JsonData::LECTIONARY_WEEKDAYS_EASTER_FILE,
             self::SANCTORUM           => JsonData::LECTIONARY_SAINTS_FILE,
+        };
+    }
+
+    /**
+     * Get the liturgical color(s) for this category.
+     *
+     * @return string[] Array of liturgical color strings.
+     */
+    public function liturgicalColor(): array
+    {
+        return match ($this) {
+            self::WEEKDAYS_ADVENT,
+            self::WEEKDAYS_LENT       => ['purple'],
+            self::WEEKDAYS_CHRISTMAS,
+            self::WEEKDAYS_EASTER     => ['white'],
+            self::WEEKDAYS_ORDINARY   => ['green'],
+            // SUNDAYS_SOLEMNITIES and SANCTORUM have varied colors per event
+            self::SUNDAYS_SOLEMNITIES,
+            self::SANCTORUM           => ['green'],  // Default, but events typically override
+        };
+    }
+
+    /**
+     * Check if this category represents ferial (weekday) events.
+     *
+     * @return bool True if this is a ferial category.
+     */
+    public function isFerial(): bool
+    {
+        return match ($this) {
+            self::WEEKDAYS_ADVENT,
+            self::WEEKDAYS_CHRISTMAS,
+            self::WEEKDAYS_LENT,
+            self::WEEKDAYS_EASTER,
+            self::WEEKDAYS_ORDINARY   => true,
+            self::SUNDAYS_SOLEMNITIES,
+            self::SANCTORUM           => false,
         };
     }
 
@@ -192,37 +318,113 @@ enum LectionaryCategory: string
     }
 
     /**
-     * Get all event keys that belong to this category.
+     * Get the JsonData enum case for a specific two-year cycle's folder.
      *
-     * Note: For SUNDAYS_SOLEMNITIES, this returns null since all events
-     * not in other categories belong here (it's the default).
+     * @param string $year The year cycle ('I' or 'II').
+     * @return JsonData The folder path enum case for the specified year.
+     * @throws \InvalidArgumentException If the year is invalid or category doesn't have two-year cycles.
+     */
+    public function folderForTwoYearCycle(string $year): JsonData
+    {
+        if (!$this->hasTwoYearCycle()) {
+            throw new \InvalidArgumentException(
+                "Lectionary category '{$this->value}' does not have two-year cycles"
+            );
+        }
+
+        return match (strtoupper($year)) {
+            'I'     => JsonData::LECTIONARY_WEEKDAYS_ORDINARY_I_FOLDER,
+            'II'    => JsonData::LECTIONARY_WEEKDAYS_ORDINARY_II_FOLDER,
+            default => throw new \InvalidArgumentException("Invalid two-year cycle: '{$year}'"),
+        };
+    }
+
+    /**
+     * Get the JsonData enum case for a specific two-year cycle's file.
      *
-     * @return string[]|null Array of event keys, or null for the default category.
+     * @param string $year The year cycle ('I' or 'II').
+     * @return JsonData The file path enum case for the specified year.
+     * @throws \InvalidArgumentException If the year is invalid or category doesn't have two-year cycles.
+     */
+    public function fileForTwoYearCycle(string $year): JsonData
+    {
+        if (!$this->hasTwoYearCycle()) {
+            throw new \InvalidArgumentException(
+                "Lectionary category '{$this->value}' does not have two-year cycles"
+            );
+        }
+
+        return match (strtoupper($year)) {
+            'I'     => JsonData::LECTIONARY_WEEKDAYS_ORDINARY_I_FILE,
+            'II'    => JsonData::LECTIONARY_WEEKDAYS_ORDINARY_II_FILE,
+            default => throw new \InvalidArgumentException("Invalid two-year cycle: '{$year}'"),
+        };
+    }
+
+    /**
+     * Get patterns for detecting event keys in this category.
+     *
+     * @return string[]|null Array of regex patterns, or null for SANCTORUM (uses explicit list).
+     */
+    public function getPatterns(): ?array
+    {
+        return match ($this) {
+            self::WEEKDAYS_ADVENT     => self::WEEKDAYS_ADVENT_PATTERNS,
+            self::WEEKDAYS_CHRISTMAS  => self::WEEKDAYS_CHRISTMAS_PATTERNS,
+            self::WEEKDAYS_LENT       => self::WEEKDAYS_LENT_PATTERNS,
+            self::WEEKDAYS_EASTER     => self::WEEKDAYS_EASTER_PATTERNS,
+            self::WEEKDAYS_ORDINARY   => self::WEEKDAYS_ORDINARY_PATTERNS,
+            self::SANCTORUM           => null, // Uses explicit array
+            self::SUNDAYS_SOLEMNITIES => null, // Default category
+        };
+    }
+
+    /**
+     * Get explicit event keys for categories that don't use patterns.
+     *
+     * @return string[]|null Array of event keys, or null for pattern-based/default categories.
      */
     public function eventKeys(): ?array
     {
         return match ($this) {
-            self::WEEKDAYS_LENT       => self::WEEKDAYS_LENT_EVENTS,
-            self::WEEKDAYS_EASTER     => self::WEEKDAYS_EASTER_EVENTS,
             self::SANCTORUM           => self::SANCTORUM_EVENTS,
+            // Pattern-based and default categories return null
+            self::WEEKDAYS_ADVENT,
+            self::WEEKDAYS_CHRISTMAS,
+            self::WEEKDAYS_LENT,
+            self::WEEKDAYS_EASTER,
+            self::WEEKDAYS_ORDINARY,
             self::SUNDAYS_SOLEMNITIES => null,
         };
     }
 
     /**
-     * Get all event keys that belong to non-default categories.
+     * Get all explicit event keys from non-pattern categories.
      *
-     * These are event keys that do NOT belong to SUNDAYS_SOLEMNITIES.
+     * Note: This only returns SANCTORUM events since other categories use patterns.
+     * For pattern-based categories, the event keys must be read from lectionary files.
      *
-     * @return string[] Array of all event keys in special categories.
+     * @return string[] Array of event keys in special explicit categories.
      */
     public static function specialEventKeys(): array
     {
-        return array_merge(
-            self::WEEKDAYS_LENT_EVENTS,
-            self::WEEKDAYS_EASTER_EVENTS,
-            self::SANCTORUM_EVENTS
-        );
+        return self::SANCTORUM_EVENTS;
+    }
+
+    /**
+     * Get all ferial categories (weekday lectionaries).
+     *
+     * @return self[] Array of ferial category cases.
+     */
+    public static function ferialCategories(): array
+    {
+        return [
+            self::WEEKDAYS_ADVENT,
+            self::WEEKDAYS_CHRISTMAS,
+            self::WEEKDAYS_LENT,
+            self::WEEKDAYS_EASTER,
+            self::WEEKDAYS_ORDINARY,
+        ];
     }
 
     /**

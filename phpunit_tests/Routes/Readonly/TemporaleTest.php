@@ -180,6 +180,38 @@ final class TemporaleTest extends ApiTestCase
         $this->assertObjectHasProperty('readings', $monOctaveEaster, 'MonOctaveEaster should have readings property');
     }
 
+    public function testOrdinaryTimeWeekdaysHaveTwoYearCycleReadings(): void
+    {
+        // Ordinary Time weekdays have a two-year cycle (I, II) unlike the three-year cycle (A, B, C) for Sundays
+        $response = self::$http->get('/temporale', [
+            'headers' => ['Accept-Language' => 'en']
+        ]);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string) $response->getBody());
+
+        // Check OrdWeekday1Monday (from Ordinary Time weekday lectionary)
+        $ordWeekday1Monday = array_find($data->events, fn($event) => $event->event_key === 'OrdWeekday1Monday');
+        $this->assertNotNull($ordWeekday1Monday, 'OrdWeekday1Monday event should exist');
+        $this->assertObjectHasProperty('readings', $ordWeekday1Monday, 'OrdWeekday1Monday should have readings property');
+        $this->assertIsObject($ordWeekday1Monday->readings, 'readings should be an object');
+
+        // Should have two-year cycle keys (annum_I, annum_II), not three-year (annum_a/b/c)
+        $this->assertObjectHasProperty('annum_I', $ordWeekday1Monday->readings, 'Ordinary Time weekday should have annum_I');
+        $this->assertObjectHasProperty('annum_II', $ordWeekday1Monday->readings, 'Ordinary Time weekday should have annum_II');
+        $this->assertObjectNotHasProperty('annum_a', $ordWeekday1Monday->readings, 'Ordinary Time weekday should NOT have annum_a');
+
+        // The nested structure should have ferial keys (4 readings, no second_reading)
+        if ($ordWeekday1Monday->readings->annum_I !== null) {
+            $this->assertObjectHasProperty('first_reading', $ordWeekday1Monday->readings->annum_I, 'Should have first_reading');
+            $this->assertObjectHasProperty('gospel', $ordWeekday1Monday->readings->annum_I, 'Should have gospel');
+        }
+
+        // Check grade and color for Ordinary Time weekdays
+        $this->assertSame(0, $ordWeekday1Monday->grade, 'Ordinary Time weekday should have grade 0');
+        $this->assertContains('green', $ordWeekday1Monday->color, 'Ordinary Time weekday should have green color');
+    }
+
     public function testAllTemporaleEventsHaveReadings(): void
     {
         $response = self::$http->get('/temporale', [

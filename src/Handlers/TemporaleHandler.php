@@ -286,6 +286,7 @@ final class TemporaleHandler extends AbstractHandler
      * Handle GET and POST requests to retrieve temporale data.
      *
      * Returns the temporale events with translated names and lectionary readings based on the locale.
+     * Includes synthetic events for ferial days from lectionary folders with grade=0 (WEEKDAY).
      */
     private function handleGetRequest(ResponseInterface $response): ResponseInterface
     {
@@ -296,8 +297,17 @@ final class TemporaleHandler extends AbstractHandler
 
         $temporaleRows = Utilities::jsonFileToObjectArray($temporaleFile);
 
+        // Build a set of existing event keys
+        $existingKeys = [];
+        foreach ($temporaleRows as $row) {
+            if (property_exists($row, 'event_key') && is_string($row->event_key)) {
+                $existingKeys[$row->event_key] = true;
+            }
+        }
+
         // Load translations
         $i18nFile = strtr(JsonData::TEMPORALE_I18N_FILE->path(), ['{locale}' => $this->locale]);
+        $i18nObj  = null;
         if (file_exists($i18nFile)) {
             $i18nObj = Utilities::jsonFileToObject($i18nFile);
 
@@ -327,7 +337,7 @@ final class TemporaleHandler extends AbstractHandler
                     continue;
                 }
 
-                // Check ferial lectionaries (Lent/Easter weekdays) - flat structure, no year cycles
+                // Check ferial lectionaries (weekdays) - flat structure, no year cycles
                 if (property_exists($ferialData, $key)) {
                     $temporaleRows[$idx]->readings = $ferialData->{$key};
                     continue;
@@ -360,6 +370,10 @@ final class TemporaleHandler extends AbstractHandler
                     $temporaleRows[$idx]->readings = $readings;
                 }
             }
+
+            // Generate synthetic events for ferial days not in the main temporale file
+            $ferialEvents  = $this->generateFerialEvents($ferialData, $existingKeys, $i18nObj);
+            $temporaleRows = array_merge($temporaleRows, $ferialEvents);
         }
 
         $response = $response->withHeader('X-Litcal-Temporale-Locale', $this->locale);
@@ -367,6 +381,52 @@ final class TemporaleHandler extends AbstractHandler
             'events' => $temporaleRows,
             'locale' => $this->locale
         ]);
+    }
+
+    /**
+     * Generate synthetic events for ferial days from lectionary data.
+     *
+     * Creates event objects for weekdays that are not in the main temporale file
+     * but have lectionary readings.
+     *
+     * @param \stdClass $ferialData The ferial lectionary data
+     * @param array<string,bool> $existingKeys Keys of events already in main temporale
+     * @param \stdClass|null $i18nObj Translations object
+     * @return \stdClass[] Array of synthetic event objects
+     */
+    private function generateFerialEvents(\stdClass $ferialData, array $existingKeys, ?\stdClass $i18nObj): array
+    {
+        $events = [];
+
+        foreach (get_object_vars($ferialData) as $eventKey => $readings) {
+            // Skip if this event already exists in the main temporale file
+            if (isset($existingKeys[$eventKey])) {
+                continue;
+            }
+
+            $category = LectionaryCategory::forEventKey($eventKey);
+
+            // Only generate events for ferial categories
+            if (!$category->isFerial()) {
+                continue;
+            }
+
+            $event            = new \stdClass();
+            $event->event_key = $eventKey;
+            $event->grade     = 0; // WEEKDAY
+            $event->type      = 'mobile';
+            $event->color     = $category->liturgicalColor();
+            $event->readings  = $readings;
+
+            // Add translation if available
+            if ($i18nObj !== null && property_exists($i18nObj, $eventKey)) {
+                $event->name = $i18nObj->{$eventKey};
+            }
+
+            $events[] = $event;
+        }
+
+        return $events;
     }
 
     /**
@@ -441,37 +501,77 @@ final class TemporaleHandler extends AbstractHandler
     {
         $ferialData = new \stdClass();
 
-        // Lent weekdays (includes Ash Wednesday, Holy Week days)
-        $lentFile = strtr(JsonData::LECTIONARY_WEEKDAYS_LENT_FILE->path(), ['{locale}' => $locale]);
-        if (file_exists($lentFile)) {
-            try {
-                $lentData = Utilities::jsonFileToObject($lentFile);
-                foreach (get_object_vars($lentData) as $key => $value) {
-                    $ferialData->{$key} = $value;
+        // Load all ferial lectionary categories (flat structure - no year cycle)
+        $ferialMappings = [
+            'Advent'    => JsonData::LECTIONARY_WEEKDAYS_ADVENT_FILE,
+            'Christmas' => JsonData::LECTIONARY_WEEKDAYS_CHRISTMAS_FILE,
+            'Lent'      => JsonData::LECTIONARY_WEEKDAYS_LENT_FILE,
+            'Easter'    => JsonData::LECTIONARY_WEEKDAYS_EASTER_FILE,
+        ];
+
+        foreach ($ferialMappings as $season => $jsonDataEnum) {
+            $file = strtr($jsonDataEnum->path(), ['{locale}' => $locale]);
+            if (file_exists($file)) {
+                try {
+                    $seasonData = Utilities::jsonFileToObject($file);
+                    foreach (get_object_vars($seasonData) as $key => $value) {
+                        $ferialData->{$key} = $value;
+                    }
+                } catch (\JsonException | ServiceUnavailableException $e) {
+                    // Skip if file cannot be parsed or is unavailable
+                    $this->debugLogger->debug("Failed to load {$season} weekdays lectionary for locale '{$locale}'", [
+                        'file'  => $file,
+                        'error' => $e->getMessage()
+                    ]);
                 }
+            }
+        }
+
+        // Load Ordinary Time weekdays (two-year cycle: Year I and Year II)
+        $ordinaryYearI  = null;
+        $ordinaryYearII = null;
+
+        $yearIFile = strtr(JsonData::LECTIONARY_WEEKDAYS_ORDINARY_I_FILE->path(), ['{locale}' => $locale]);
+        if (file_exists($yearIFile)) {
+            try {
+                $ordinaryYearI = Utilities::jsonFileToObject($yearIFile);
             } catch (\JsonException | ServiceUnavailableException $e) {
-                // Skip if file cannot be parsed or is unavailable
-                $this->auditLogger->debug("Failed to load Lent weekdays lectionary for locale '{$locale}'", [
-                    'file'  => $lentFile,
+                $this->debugLogger->debug("Failed to load Ordinary Time Year I lectionary for locale '{$locale}'", [
+                    'file'  => $yearIFile,
                     'error' => $e->getMessage()
                 ]);
             }
         }
 
-        // Easter weekdays (includes Easter Octave days)
-        $easterFile = strtr(JsonData::LECTIONARY_WEEKDAYS_EASTER_FILE->path(), ['{locale}' => $locale]);
-        if (file_exists($easterFile)) {
+        $yearIIFile = strtr(JsonData::LECTIONARY_WEEKDAYS_ORDINARY_II_FILE->path(), ['{locale}' => $locale]);
+        if (file_exists($yearIIFile)) {
             try {
-                $easterData = Utilities::jsonFileToObject($easterFile);
-                foreach (get_object_vars($easterData) as $key => $value) {
-                    $ferialData->{$key} = $value;
-                }
+                $ordinaryYearII = Utilities::jsonFileToObject($yearIIFile);
             } catch (\JsonException | ServiceUnavailableException $e) {
-                // Skip if file cannot be parsed or is unavailable
-                $this->auditLogger->debug("Failed to load Easter weekdays lectionary for locale '{$locale}'", [
-                    'file'  => $easterFile,
+                $this->debugLogger->debug("Failed to load Ordinary Time Year II lectionary for locale '{$locale}'", [
+                    'file'  => $yearIIFile,
                     'error' => $e->getMessage()
                 ]);
+            }
+        }
+
+        // Merge Ordinary Time readings with two-year cycle structure (annum_I, annum_II)
+        if ($ordinaryYearI !== null || $ordinaryYearII !== null) {
+            // Get all event keys from both years
+            $yearIKeys  = $ordinaryYearI !== null ? array_keys(get_object_vars($ordinaryYearI)) : [];
+            $yearIIKeys = $ordinaryYearII !== null ? array_keys(get_object_vars($ordinaryYearII)) : [];
+            $allKeys    = array_unique(array_merge($yearIKeys, $yearIIKeys));
+
+            foreach ($allKeys as $eventKey) {
+                $readings           = new \stdClass();
+                $readings->annum_I  = $ordinaryYearI !== null && property_exists($ordinaryYearI, $eventKey)
+                    ? $ordinaryYearI->{$eventKey}
+                    : null;
+                $readings->annum_II = $ordinaryYearII !== null && property_exists($ordinaryYearII, $eventKey)
+                    ? $ordinaryYearII->{$eventKey}
+                    : null;
+
+                $ferialData->{$eventKey} = $readings;
             }
         }
 
