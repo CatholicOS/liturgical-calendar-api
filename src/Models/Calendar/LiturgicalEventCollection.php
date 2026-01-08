@@ -1079,7 +1079,13 @@ final class LiturgicalEventCollection
             } elseif ($litEvent->date >= $AshWednesday->date && $litEvent->date < $HolyThurs->date) {
                 $litEvent->liturgical_season = LitSeason::LENT;
             } elseif ($litEvent->date >= $HolyThurs->date && $litEvent->date < $Easter->date) {
-                $litEvent->liturgical_season = LitSeason::EASTER_TRIDUUM;
+                // The Chrism Mass is celebrated on Holy Thursday morning, before the Triduum begins
+                // (the Triduum starts with the Evening Mass of the Lord's Supper)
+                if ($litEvent->event_key === 'HolyThursChrism') {
+                    $litEvent->liturgical_season = LitSeason::LENT;
+                } else {
+                    $litEvent->liturgical_season = LitSeason::EASTER_TRIDUUM;
+                }
             } elseif ($litEvent->date >= $Easter->date && $litEvent->date <= $Pentecost->date) {
                 $litEvent->liturgical_season = LitSeason::EASTER;
             } else {
