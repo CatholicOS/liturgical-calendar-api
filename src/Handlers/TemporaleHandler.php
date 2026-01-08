@@ -6,6 +6,7 @@ use LiturgicalCalendar\Api\Enum\JsonData;
 use LiturgicalCalendar\Api\Enum\LectionaryCategory;
 use LiturgicalCalendar\Api\Enum\LitColor;
 use LiturgicalCalendar\Api\Enum\LitLocale;
+use LiturgicalCalendar\Api\Enum\LitSeason;
 use LiturgicalCalendar\Api\Enum\ReadingsType;
 use LiturgicalCalendar\Api\FerialEventNameGenerator;
 use LiturgicalCalendar\Api\Handlers\Auth\ClientIpTrait;
@@ -377,6 +378,15 @@ final class TemporaleHandler extends AbstractHandler
             // Generate synthetic events for ferial days not in the main temporale file
             $ferialEvents  = $this->generateFerialEvents($ferialData, $existingKeys, $i18nObj);
             $temporaleRows = array_merge($temporaleRows, $ferialEvents);
+        }
+
+        // Add lectionary_category and liturgical_season to all events
+        foreach ($temporaleRows as $idx => $row) {
+            if (property_exists($row, 'event_key') && is_string($row->event_key)) {
+                $key                                      = $row->event_key;
+                $temporaleRows[$idx]->lectionary_category = LectionaryCategory::forEventKey($key)->value;
+                $temporaleRows[$idx]->liturgical_season   = LitSeason::forEventKey($key)->value;
+            }
         }
 
         $response = $response->withHeader('X-Litcal-Temporale-Locale', $this->locale);

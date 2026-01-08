@@ -14,6 +14,96 @@ enum LitSeason: string
     case ORDINARY_TIME  = 'ORDINARY_TIME';
 
     /**
+     * Patterns for detecting ADVENT events.
+     */
+    private const array ADVENT_PATTERNS = [
+        '/^Advent\d/',
+        '/^AdventWeekday/',
+    ];
+
+    /**
+     * Patterns for detecting CHRISTMAS events.
+     */
+    private const array CHRISTMAS_PATTERNS = [
+        '/^Christmas/',
+        '/^HolyFamily$/',
+        '/^Epiphany/',
+        '/^BaptismLord$/',
+        '/^MaryMotherGod$/',
+        '/^DayAfterEpiphany/',
+    ];
+
+    /**
+     * Patterns for detecting LENT events.
+     */
+    private const array LENT_PATTERNS = [
+        '/^AshWednesday$/',
+        '/^(Friday|Saturday|Thursday)AfterAshWednesday$/',
+        '/^Lent\d/',
+        '/^LentWeekday\d/',
+        '/^PalmSun$/',
+        '/^(Mon|Tue|Wed)HolyWeek$/',
+    ];
+
+    /**
+     * Patterns for detecting EASTER_TRIDUUM events.
+     */
+    private const array EASTER_TRIDUUM_PATTERNS = [
+        '/^HolyThurs$/',
+        '/^GoodFri$/',
+        '/^EasterVigil$/',
+    ];
+
+    /**
+     * Patterns for detecting EASTER events.
+     */
+    private const array EASTER_PATTERNS = [
+        '/^Easter\d*$/',
+        '/^(Mon|Tue|Wed|Thu|Fri|Sat)OctaveEaster$/',
+        '/^EasterWeekday\d/',
+        '/^Ascension$/',
+        '/^Pentecost$/',
+    ];
+
+    /**
+     * Determine the liturgical season for a given temporale event key.
+     *
+     * @param string $eventKey The temporale event key.
+     * @return self The liturgical season for the event.
+     */
+    public static function forEventKey(string $eventKey): self
+    {
+        foreach (self::ADVENT_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::ADVENT;
+            }
+        }
+        foreach (self::CHRISTMAS_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::CHRISTMAS;
+            }
+        }
+        foreach (self::LENT_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::LENT;
+            }
+        }
+        foreach (self::EASTER_TRIDUUM_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::EASTER_TRIDUUM;
+            }
+        }
+        foreach (self::EASTER_PATTERNS as $pattern) {
+            if (preg_match($pattern, $eventKey)) {
+                return self::EASTER;
+            }
+        }
+
+        // Default: Ordinary Time (includes OrdSunday*, OrdWeekday*, solemnities like Trinity, CorpusChristi, etc.)
+        return self::ORDINARY_TIME;
+    }
+
+    /**
      * Translate a liturgical season value into the specified locale.
      *
      * @param string $locale The locale for the translation.

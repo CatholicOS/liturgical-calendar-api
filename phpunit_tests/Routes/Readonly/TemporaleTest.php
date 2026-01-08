@@ -67,6 +67,74 @@ final class TemporaleTest extends ApiTestCase
         $this->assertIsArray($event->color, 'color should be an array');
     }
 
+    public function testEventsHaveLectionaryCategoryAndLiturgicalSeason(): void
+    {
+        $response = self::$http->get('/temporale', []);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string) $response->getBody());
+        $this->assertIsObject($data);
+        $this->assertObjectHasProperty('events', $data);
+
+        $validCategories = [
+            'dominicale_et_festivum',
+            'feriale_tempus_adventus',
+            'feriale_tempus_nativitatis',
+            'feriale_tempus_quadragesimae',
+            'feriale_tempus_paschatis',
+            'feriale_per_annum',
+            'sanctorum'
+        ];
+        $validSeasons    = ['ADVENT', 'CHRISTMAS', 'LENT', 'EASTER_TRIDUUM', 'EASTER', 'ORDINARY_TIME'];
+
+        // Check all events have the required properties
+        foreach ($data->events as $event) {
+            $this->assertObjectHasProperty(
+                'lectionary_category',
+                $event,
+                "Event {$event->event_key} should have lectionary_category property"
+            );
+            $this->assertContains(
+                $event->lectionary_category,
+                $validCategories,
+                "Event {$event->event_key} has invalid lectionary_category: {$event->lectionary_category}"
+            );
+
+            $this->assertObjectHasProperty(
+                'liturgical_season',
+                $event,
+                "Event {$event->event_key} should have liturgical_season property"
+            );
+            $this->assertContains(
+                $event->liturgical_season,
+                $validSeasons,
+                "Event {$event->event_key} has invalid liturgical_season: {$event->liturgical_season}"
+            );
+        }
+
+        // Verify specific mappings
+        $advent1 = array_find($data->events, fn($e) => $e->event_key === 'Advent1');
+        $this->assertNotNull($advent1);
+        $this->assertSame('dominicale_et_festivum', $advent1->lectionary_category);
+        $this->assertSame('ADVENT', $advent1->liturgical_season);
+
+        $easter = array_find($data->events, fn($e) => $e->event_key === 'Easter');
+        $this->assertNotNull($easter);
+        $this->assertSame('dominicale_et_festivum', $easter->lectionary_category);
+        $this->assertSame('EASTER', $easter->liturgical_season);
+
+        $holyThurs = array_find($data->events, fn($e) => $e->event_key === 'HolyThurs');
+        $this->assertNotNull($holyThurs);
+        $this->assertSame('EASTER_TRIDUUM', $holyThurs->liturgical_season);
+
+        // Check a ferial event
+        $ordWeekday = array_find($data->events, fn($e) => str_starts_with($e->event_key, 'OrdWeekday'));
+        if ($ordWeekday !== null) {
+            $this->assertSame('feriale_per_annum', $ordWeekday->lectionary_category);
+            $this->assertSame('ORDINARY_TIME', $ordWeekday->liturgical_season);
+        }
+    }
+
     public function testGetTemporaleIncludesLectionaryReadings(): void
     {
         $response = self::$http->get('/temporale', [

@@ -3559,13 +3559,40 @@
           "readings": {
             "type": "object",
             "description": "Lectionary readings for this event. Structure varies by event type: year-cycle events have annum_a/b/c, ferial events have flat or annum_I/II structure."
+          },
+          "lectionary_category": {
+            "type": "string",
+            "description": "The lectionary category indicating which lectionary file contains this event's readings.",
+            "enum": [
+              "dominicale_et_festivum",
+              "feriale_tempus_adventus",
+              "feriale_tempus_nativitatis",
+              "feriale_tempus_quadragesimae",
+              "feriale_tempus_paschatis",
+              "feriale_per_annum",
+              "sanctorum"
+            ]
+          },
+          "liturgical_season": {
+            "type": "string",
+            "description": "The liturgical season this event belongs to.",
+            "enum": [
+              "ADVENT",
+              "CHRISTMAS",
+              "LENT",
+              "EASTER_TRIDUUM",
+              "EASTER",
+              "ORDINARY_TIME"
+            ]
           }
         },
         "required": [
           "event_key",
           "grade",
           "type",
-          "color"
+          "color",
+          "lectionary_category",
+          "liturgical_season"
         ]
       },
       "TemporalePutRequest": {
