@@ -79,6 +79,30 @@ if (!file_exists($logsFolder)) {
 
 $logFile = $logsFolder . DIRECTORY_SEPARATOR . 'litcalapi-error.log';
 
+/**
+ * TIMEZONE DESIGN DECISION:
+ *
+ * The PHP default timezone is set to Europe/Vatican as the authoritative liturgical timezone.
+ * However, all internal DateTime calculations explicitly use UTC for consistency:
+ *
+ * - src/DateTime.php::fromFormat() creates dates in UTC
+ * - All calendar calculations in CalendarHandler use explicit UTC timezone
+ * - All IntlDateFormatter instances use UTC for consistent formatting
+ *
+ * This is intentional and correct because:
+ * 1. Liturgical events are all-day events (time is always 00:00:00)
+ * 2. UTC avoids daylight saving time complications in date arithmetic
+ * 3. The date portion remains identical whether interpreted as UTC or Europe/Vatican
+ *    since midnight UTC and midnight CET/CEST yield the same calendar date for all-day events
+ *
+ * The Europe/Vatican default serves as:
+ * - A safety net for any code that doesn't specify a timezone explicitly
+ * - The appropriate timezone for iCal output (X-WR-TIMEZONE header)
+ * - Semantic correctness (Vatican is the liturgical authority)
+ *
+ * DO NOT attempt to "align" all timezone usages - the mix of UTC (internal) and
+ * Europe/Vatican (default/external) is by design.
+ */
 ini_set('date.timezone', 'Europe/Vatican');
 
 if (
