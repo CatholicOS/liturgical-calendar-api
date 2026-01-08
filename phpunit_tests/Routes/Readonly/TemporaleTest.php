@@ -327,15 +327,16 @@ final class TemporaleTest extends ApiTestCase
         $eventEn = array_find($dataEn->events, fn($e) => $e->event_key === 'OrdWeekday1Monday');
         $eventLa = array_find($dataLa->events, fn($e) => $e->event_key === 'OrdWeekday1Monday');
 
-        if ($eventEn !== null && $eventLa !== null) {
-            $this->assertObjectHasProperty('name', $eventEn);
-            $this->assertObjectHasProperty('name', $eventLa);
+        // Fail if the event is missing - don't silently pass
+        $this->assertNotNull($eventEn, 'OrdWeekday1Monday should exist for English locale');
+        $this->assertNotNull($eventLa, 'OrdWeekday1Monday should exist for Latin locale');
 
-            // Names should be different for different locales
-            // English should contain "Ordinary Time", Latin should contain "Temporis Ordinarii"
-            $this->assertStringContainsString('Ordinary Time', $eventEn->name, 'English name should contain "Ordinary Time"');
-            $this->assertStringContainsString('Temporis Ordinarii', $eventLa->name, 'Latin name should contain "Temporis Ordinarii"');
-        }
+        $this->assertObjectHasProperty('name', $eventEn);
+        $this->assertObjectHasProperty('name', $eventLa);
+
+        // English should contain "Ordinary Time", Latin should contain "Temporis Ordinarii"
+        $this->assertStringContainsString('Ordinary Time', $eventEn->name, 'English name should contain "Ordinary Time"');
+        $this->assertStringContainsString('Temporis Ordinarii', $eventLa->name, 'Latin name should contain "Temporis Ordinarii"');
     }
 
     public function testAllTemporaleEventsHaveReadings(): void
