@@ -2,8 +2,9 @@
 
 namespace LiturgicalCalendar\Api\Map;
 
-use LiturgicalCalendar\Api\Models\Calendar\LiturgicalEvent;
 use LiturgicalCalendar\Api\DateTime;
+use LiturgicalCalendar\Api\Enum\LitSeason;
+use LiturgicalCalendar\Api\Models\Calendar\LiturgicalEvent;
 
 /**
  * Abstract class for liturgical event maps.
@@ -323,14 +324,15 @@ abstract class AbstractLiturgicalEventMap implements \IteratorAggregate
      */
     private static function compareSeasons(LiturgicalEvent $a, LiturgicalEvent $b): int
     {
-        // Define season order (lower = earlier in liturgical year)
+        // Define season order using enum cases directly for maintainability
+        // (lower = earlier in liturgical year)
         $seasonOrder = [
-            'ADVENT'         => 0,
-            'CHRISTMAS'      => 1,
-            'LENT'           => 2,
-            'EASTER_TRIDUUM' => 3,
-            'EASTER'         => 4,
-            'ORDINARY_TIME'  => 5,
+            LitSeason::ADVENT->value         => 0,
+            LitSeason::CHRISTMAS->value      => 1,
+            LitSeason::LENT->value           => 2,
+            LitSeason::EASTER_TRIDUUM->value => 3,
+            LitSeason::EASTER->value         => 4,
+            LitSeason::ORDINARY_TIME->value  => 5,
         ];
 
         $seasonA = $a->liturgical_season?->value;
