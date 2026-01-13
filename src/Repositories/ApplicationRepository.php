@@ -52,7 +52,10 @@ class ApplicationRepository
 
         /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch();
-        return is_array($result) ? $result : [];
+        if (!is_array($result)) {
+            throw new \RuntimeException('Failed to create application');
+        }
+        return $result;
     }
 
     /**
