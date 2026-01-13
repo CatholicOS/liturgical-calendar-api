@@ -6,6 +6,7 @@ namespace LiturgicalCalendar\Api\Services;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Service for interacting with Zitadel Management API.
@@ -21,6 +22,7 @@ class ZitadelService
     private string $issuer;
     private string $projectId;
     private ?string $machineToken;
+    private ?LoggerInterface $logger;
 
     /**
      * Create Zitadel service.
@@ -28,15 +30,18 @@ class ZitadelService
      * @param string $issuer Zitadel issuer URL
      * @param string $projectId Zitadel project ID
      * @param string|null $machineToken Service account token for management API
+     * @param LoggerInterface|null $logger Optional logger for error logging
      */
     public function __construct(
         string $issuer,
         string $projectId,
-        ?string $machineToken = null
+        ?string $machineToken = null,
+        ?LoggerInterface $logger = null
     ) {
         $this->issuer       = rtrim($issuer, '/');
         $this->projectId    = $projectId;
         $this->machineToken = $machineToken;
+        $this->logger       = $logger;
         $this->httpClient   = new Client([
             'base_uri' => $this->issuer,
             'timeout'  => 30,
@@ -85,6 +90,10 @@ class ZitadelService
             /** @var array<string, mixed>|null */
             return is_array($user) ? $user : null;
         } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to fetch user from Zitadel', [
+                'userId' => $userId,
+                'error'  => $e->getMessage(),
+            ]);
             return null;
         }
     }
@@ -138,6 +147,10 @@ class ZitadelService
 
             return array_values(array_unique($roles));
         } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to fetch user roles from Zitadel', [
+                'userId' => $userId,
+                'error'  => $e->getMessage(),
+            ]);
             return [];
         }
     }
@@ -162,6 +175,11 @@ class ZitadelService
 
             return true;
         } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to grant role in Zitadel', [
+                'userId' => $userId,
+                'role'   => $role,
+                'error'  => $e->getMessage(),
+            ]);
             return false;
         }
     }
@@ -182,6 +200,11 @@ class ZitadelService
 
             return true;
         } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to revoke grant in Zitadel', [
+                'userId'  => $userId,
+                'grantId' => $grantId,
+                'error'   => $e->getMessage(),
+            ]);
             return false;
         }
     }
@@ -217,6 +240,10 @@ class ZitadelService
             /** @var array<int, array<string, mixed>> */
             return is_array($result) ? $result : [];
         } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to search users by email in Zitadel', [
+                'email' => $email,
+                'error' => $e->getMessage(),
+            ]);
             return [];
         }
     }
@@ -234,6 +261,10 @@ class ZitadelService
             /** @var array<string, mixed>|null */
             return is_array($data) ? $data : null;
         } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to fetch OIDC discovery document from Zitadel', [
+                'issuer' => $this->issuer,
+                'error'  => $e->getMessage(),
+            ]);
             return null;
         }
     }
