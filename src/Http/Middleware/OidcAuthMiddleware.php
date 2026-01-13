@@ -14,7 +14,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
  * OIDC Authentication Middleware for Zitadel tokens.
@@ -30,7 +30,6 @@ class OidcAuthMiddleware implements MiddlewareInterface
 {
     private string $issuer;
     private string $clientId;
-    private ?CacheInterface $cache;
     private int $cacheTtl;
 
     /**
@@ -43,18 +42,15 @@ class OidcAuthMiddleware implements MiddlewareInterface
      *
      * @param string $issuer Zitadel issuer URL (e.g., http://localhost:8081)
      * @param string $clientId Zitadel client ID for audience validation
-     * @param CacheInterface|null $cache Optional PSR-16 cache for JWKS
      * @param int $cacheTtl JWKS cache TTL in seconds (default: 3600)
      */
     public function __construct(
         string $issuer,
         string $clientId,
-        ?CacheInterface $cache = null,
         int $cacheTtl = 3600
     ) {
         $this->issuer   = rtrim($issuer, '/');
         $this->clientId = $clientId;
-        $this->cache    = $cache;
         $this->cacheTtl = $cacheTtl;
     }
 
@@ -65,11 +61,10 @@ class OidcAuthMiddleware implements MiddlewareInterface
      * - ZITADEL_ISSUER: Zitadel issuer URL
      * - ZITADEL_CLIENT_ID: Client ID for audience validation
      *
-     * @param CacheInterface|null $cache Optional PSR-16 cache
      * @return self
      * @throws \RuntimeException If required environment variables are missing
      */
-    public static function fromEnv(?CacheInterface $cache = null): self
+    public static function fromEnv(): self
     {
         $issuer   = getenv('ZITADEL_ISSUER');
         $clientId = getenv('ZITADEL_CLIENT_ID');
@@ -80,7 +75,7 @@ class OidcAuthMiddleware implements MiddlewareInterface
             );
         }
 
-        return new self($issuer, $clientId, $cache);
+        return new self($issuer, $clientId);
     }
 
     /**
@@ -193,12 +188,16 @@ class OidcAuthMiddleware implements MiddlewareInterface
         $httpClient  = new Client();
         $httpFactory = new HttpFactory();
 
+        // Use filesystem cache for JWKS (PSR-6 compatible)
+        $cacheDir = dirname(__DIR__, 3) . '/cache';
+        $cache    = new FilesystemAdapter('jwks', $this->cacheTtl, $cacheDir);
+
         // Create cached key set
         self::$keySet = new CachedKeySet(
             $jwksUri,
             $httpClient,
             $httpFactory,
-            $this->cache,
+            $cache,
             $this->cacheTtl,
             true // Rate limit JWKS fetches
         );
@@ -210,31 +209,44 @@ class OidcAuthMiddleware implements MiddlewareInterface
      * Extract user information from token payload.
      *
      * @param object $payload Token payload
-     * @return array User info array
+     * @return array{sub: string|null, email: string|null, email_verified: bool, name: string|null, given_name: string|null, family_name: string|null, preferred_username: string|null, roles: array<string>, project_id?: string} User info array
      */
     private function extractUserInfo(object $payload): array
     {
-        // Standard OIDC claims
+        // Standard OIDC claims - extract and validate types
+        $sub               = $payload->sub ?? null;
+        $email             = $payload->email ?? null;
+        $emailVerified     = $payload->email_verified ?? false;
+        $name              = $payload->name ?? null;
+        $givenName         = $payload->given_name ?? null;
+        $familyName        = $payload->family_name ?? null;
+        $preferredUsername = $payload->preferred_username ?? null;
+
         $user = [
-            'sub'                => $payload->sub ?? null,
-            'email'              => $payload->email ?? null,
-            'email_verified'     => $payload->email_verified ?? false,
-            'name'               => $payload->name ?? null,
-            'given_name'         => $payload->given_name ?? null,
-            'family_name'        => $payload->family_name ?? null,
-            'preferred_username' => $payload->preferred_username ?? null,
+            'sub'                => is_string($sub) ? $sub : null,
+            'email'              => is_string($email) ? $email : null,
+            'email_verified'     => is_bool($emailVerified) ? $emailVerified : false,
+            'name'               => is_string($name) ? $name : null,
+            'given_name'         => is_string($givenName) ? $givenName : null,
+            'family_name'        => is_string($familyName) ? $familyName : null,
+            'preferred_username' => is_string($preferredUsername) ? $preferredUsername : null,
         ];
 
         // Zitadel-specific: Extract project roles
         // Zitadel uses the claim: urn:zitadel:iam:org:project:roles
         $rolesClaimKey = 'urn:zitadel:iam:org:project:roles';
-        $roles         = [];
+        /** @var array<string> $roles */
+        $roles = [];
 
         if (isset($payload->{$rolesClaimKey})) {
             // Zitadel returns roles as object with role name as key
             // e.g., {"admin": {"org_id": "123"}, "developer": {"org_id": "123"}}
             $rolesData = (array) $payload->{$rolesClaimKey};
-            $roles     = array_keys($rolesData);
+            foreach (array_keys($rolesData) as $role) {
+                if (is_string($role)) {
+                    $roles[] = $role;
+                }
+            }
         }
 
         $user['roles'] = $roles;
@@ -242,7 +254,10 @@ class OidcAuthMiddleware implements MiddlewareInterface
         // Also check for Zitadel project ID claim
         $projectIdKey = 'urn:zitadel:iam:org:project:id';
         if (isset($payload->{$projectIdKey})) {
-            $user['project_id'] = $payload->{$projectIdKey};
+            $projectId = $payload->{$projectIdKey};
+            if (is_string($projectId)) {
+                $user['project_id'] = $projectId;
+            }
         }
 
         return $user;
@@ -251,24 +266,27 @@ class OidcAuthMiddleware implements MiddlewareInterface
     /**
      * Check if a user has a specific role.
      *
-     * @param array $oidcUser User array from request attribute
+     * @param array{roles?: array<string>} $oidcUser User array from request attribute
      * @param string $role Role to check
      * @return bool True if user has the role
      */
     public static function hasRole(array $oidcUser, string $role): bool
     {
-        return in_array($role, $oidcUser['roles'] ?? [], true);
+        /** @var array<string> $roles */
+        $roles = $oidcUser['roles'] ?? [];
+        return in_array($role, $roles, true);
     }
 
     /**
      * Check if a user has any of the specified roles.
      *
-     * @param array $oidcUser User array from request attribute
+     * @param array{roles?: array<string>} $oidcUser User array from request attribute
      * @param array<string> $roles Roles to check
      * @return bool True if user has any of the roles
      */
     public static function hasAnyRole(array $oidcUser, array $roles): bool
     {
+        /** @var array<string> $userRoles */
         $userRoles = $oidcUser['roles'] ?? [];
         return !empty(array_intersect($roles, $userRoles));
     }
@@ -276,7 +294,7 @@ class OidcAuthMiddleware implements MiddlewareInterface
     /**
      * Check if a user is an admin.
      *
-     * @param array $oidcUser User array from request attribute
+     * @param array{roles?: array<string>} $oidcUser User array from request attribute
      * @return bool True if user has admin role
      */
     public static function isAdmin(array $oidcUser): bool

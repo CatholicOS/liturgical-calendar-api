@@ -59,7 +59,7 @@ class CalendarPermissionRepository
      * Get all permissions for a user.
      *
      * @param string $userId Zitadel user ID
-     * @return array<array{calendar_type: string, calendar_id: string, permission: string}>
+     * @return array<int, array{calendar_type: string, calendar_id: string, permission: string, granted_at: string}>
      */
     public function getPermissionsForUser(string $userId): array
     {
@@ -72,6 +72,7 @@ class CalendarPermissionRepository
 
         $stmt->execute(['user_id' => $userId]);
 
+        /** @var array<int, array{calendar_type: string, calendar_id: string, permission: string, granted_at: string}> */
         return $stmt->fetchAll();
     }
 
@@ -80,7 +81,7 @@ class CalendarPermissionRepository
      *
      * @param string $calendarType Type: 'national', 'diocesan', 'widerregion'
      * @param string $calendarId Calendar identifier
-     * @return array<array{zitadel_user_id: string, permission: string, granted_at: string}>
+     * @return array<int, array{zitadel_user_id: string, permission: string, granted_at: string, granted_by: string|null}>
      */
     public function getUsersForCalendar(string $calendarType, string $calendarId): array
     {
@@ -97,6 +98,7 @@ class CalendarPermissionRepository
             'calendar_id'   => $calendarId,
         ]);
 
+        /** @var array<int, array{zitadel_user_id: string, permission: string, granted_at: string, granted_by: string|null}> */
         return $stmt->fetchAll();
     }
 

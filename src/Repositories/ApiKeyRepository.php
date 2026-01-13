@@ -40,7 +40,7 @@ class ApiKeyRepository
      * @param string $scope Permission scope: 'read' or 'write'
      * @param int $rateLimitPerHour Rate limit per hour
      * @param \DateTimeInterface|null $expiresAt Optional expiration date
-     * @return array Contains 'key' (plain text, show once) and 'record' (database record)
+     * @return array{key: string, record: array<string, mixed>|false} Contains 'key' (plain text, show once) and 'record' (database record)
      */
     public function generate(
         int $applicationId,
@@ -74,6 +74,7 @@ class ApiKeyRepository
             'expires_at' => $expiresAt?->format('Y-m-d H:i:s'),
         ]);
 
+        /** @var array<string, mixed>|false $record */
         $record = $stmt->fetch();
 
         return [
@@ -86,7 +87,7 @@ class ApiKeyRepository
      * Validate an API key and return its details.
      *
      * @param string $plainKey The plain text API key
-     * @return array|null Key details with application info, or null if invalid
+     * @return array<string, mixed>|null Key details with application info, or null if invalid
      */
     public function validate(string $plainKey): ?array
     {
@@ -103,19 +104,20 @@ class ApiKeyRepository
         );
 
         $stmt->execute(['key_hash' => $keyHash]);
+        /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch();
 
-        if (!$result) {
+        if (!is_array($result)) {
             return null;
         }
 
         // Check if key is active
-        if (!$result['is_active'] || !$result['app_is_active']) {
+        if (empty($result['is_active']) || empty($result['app_is_active'])) {
             return null;
         }
 
         // Check expiration
-        if ($result['expires_at'] !== null) {
+        if ($result['expires_at'] !== null && is_string($result['expires_at'])) {
             $expiresAt = new \DateTimeImmutable($result['expires_at']);
             if ($expiresAt < new \DateTimeImmutable()) {
                 return null;
@@ -123,7 +125,9 @@ class ApiKeyRepository
         }
 
         // Update last used timestamp
-        $this->updateLastUsed($result['id']);
+        if (isset($result['id']) && is_int($result['id'])) {
+            $this->updateLastUsed($result['id']);
+        }
 
         return $result;
     }
@@ -145,7 +149,7 @@ class ApiKeyRepository
      * Get all keys for an application.
      *
      * @param int $applicationId Application ID
-     * @return array<array> List of keys (without hashes)
+     * @return array<int, array<string, mixed>> List of keys (without hashes)
      */
     public function getByApplication(int $applicationId): array
     {
@@ -159,6 +163,7 @@ class ApiKeyRepository
 
         $stmt->execute(['app_id' => $applicationId]);
 
+        /** @var array<int, array<string, mixed>> */
         return $stmt->fetchAll();
     }
 
@@ -166,7 +171,7 @@ class ApiKeyRepository
      * Get a key by ID.
      *
      * @param int $id Key ID
-     * @return array|null Key details or null if not found
+     * @return array<string, mixed>|null Key details or null if not found
      */
     public function getById(int $id): ?array
     {
@@ -180,9 +185,10 @@ class ApiKeyRepository
         );
 
         $stmt->execute(['id' => $id]);
+        /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch();
 
-        return $result ?: null;
+        return is_array($result) ? $result : null;
     }
 
     /**
@@ -235,7 +241,7 @@ class ApiKeyRepository
      *
      * @param int $keyId Current key ID
      * @param string $userId Owner's Zitadel user ID (for authorization)
-     * @return array|null New key details or null if failed
+     * @return array{key: string, record: array<string, mixed>|false}|null New key details or null if failed
      */
     public function rotate(int $keyId, string $userId): ?array
     {
@@ -252,15 +258,21 @@ class ApiKeyRepository
             $this->revoke($keyId, $userId);
 
             // Generate new key with same settings
-            $expiresAt = $oldKey['expires_at']
-                ? new \DateTimeImmutable($oldKey['expires_at'])
+            $expiresAtValue = $oldKey['expires_at'];
+            $expiresAt      = is_string($expiresAtValue)
+                ? new \DateTimeImmutable($expiresAtValue)
                 : null;
 
+            $applicationId = is_int($oldKey['application_id']) ? $oldKey['application_id'] : 0;
+            $oldName       = is_string($oldKey['name']) ? $oldKey['name'] : null;
+            $scope         = is_string($oldKey['scope']) ? $oldKey['scope'] : 'read';
+            $rateLimit     = is_int($oldKey['rate_limit_per_hour']) ? $oldKey['rate_limit_per_hour'] : 1000;
+
             $newKey = $this->generate(
-                $oldKey['application_id'],
-                $oldKey['name'] ? $oldKey['name'] . ' (rotated)' : null,
-                $oldKey['scope'],
-                $oldKey['rate_limit_per_hour'],
+                $applicationId,
+                $oldName !== null ? $oldName . ' (rotated)' : null,
+                $scope,
+                $rateLimit,
                 $expiresAt
             );
 
@@ -295,7 +307,7 @@ class ApiKeyRepository
      * Get usage statistics for a key.
      *
      * @param int $keyId Key ID
-     * @return array Usage statistics
+     * @return array<string, mixed> Usage statistics
      */
     public function getUsageStats(int $keyId): array
     {

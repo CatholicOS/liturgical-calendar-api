@@ -29,7 +29,7 @@ class AuditLogRepository
      * @param string $action Action performed (e.g., 'login', 'create_application')
      * @param string $resourceType Type of resource (e.g., 'application', 'api_key')
      * @param string|null $resourceId Identifier of the affected resource
-     * @param array|null $details Additional details as JSON
+     * @param array<string, mixed>|null $details Additional details as JSON
      * @param string|null $ipAddress Client IP address
      * @param string|null $userAgent Client user agent
      * @param bool $success Whether the action was successful
@@ -70,10 +70,10 @@ class AuditLogRepository
     /**
      * Get audit logs with filtering.
      *
-     * @param array $filters Filtering options
+     * @param array<string, mixed> $filters Filtering options
      * @param int $limit Maximum number of records
      * @param int $offset Offset for pagination
-     * @return array<array> List of log entries
+     * @return array<int, array<string, mixed>> List of log entries
      */
     public function query(array $filters = [], int $limit = 100, int $offset = 0): array
     {
@@ -144,11 +144,12 @@ class AuditLogRepository
 
         $stmt->execute();
 
+        /** @var array<int, array<string, mixed>> $results */
         $results = $stmt->fetchAll();
 
         // Decode JSON details
         foreach ($results as &$row) {
-            if ($row['details'] !== null) {
+            if (isset($row['details']) && is_string($row['details'])) {
                 $row['details'] = json_decode($row['details'], true);
             }
         }
@@ -162,7 +163,7 @@ class AuditLogRepository
      * @param string $userId Zitadel user ID
      * @param int $limit Maximum number of records
      * @param int $offset Offset for pagination
-     * @return array<array> List of log entries
+     * @return array<int, array<string, mixed>> List of log entries
      */
     public function getByUser(string $userId, int $limit = 100, int $offset = 0): array
     {
@@ -175,7 +176,7 @@ class AuditLogRepository
      * @param string $resourceType Resource type
      * @param string $resourceId Resource identifier
      * @param int $limit Maximum number of records
-     * @return array<array> List of log entries
+     * @return array<int, array<string, mixed>> List of log entries
      */
     public function getByResource(string $resourceType, string $resourceId, int $limit = 100): array
     {
@@ -190,7 +191,7 @@ class AuditLogRepository
      *
      * @param int $limit Maximum number of records
      * @param string|null $fromDate Start date (ISO 8601 format)
-     * @return array<array> List of failed actions
+     * @return array<int, array<string, mixed>> List of failed actions
      */
     public function getFailedActions(int $limit = 100, ?string $fromDate = null): array
     {
@@ -206,7 +207,7 @@ class AuditLogRepository
      *
      * @param string $userId Zitadel user ID
      * @param int $limit Maximum number of records
-     * @return array<array> List of login attempts
+     * @return array<int, array<string, mixed>> List of login attempts
      */
     public function getLoginAttempts(string $userId, int $limit = 50): array
     {
@@ -219,7 +220,7 @@ class AuditLogRepository
     /**
      * Count logs matching filters.
      *
-     * @param array $filters Filtering options
+     * @param array<string, mixed> $filters Filtering options
      * @return int Number of matching records
      */
     public function count(array $filters = []): int
@@ -305,7 +306,7 @@ class AuditLogRepository
      * @param string|null $attemptedUserId Attempted user ID (if known)
      * @param string|null $ipAddress Client IP
      * @param string|null $userAgent Client user agent
-     * @param array|null $details Additional details (e.g., reason for failure)
+     * @param array<string, mixed>|null $details Additional details (e.g., reason for failure)
      */
     public function logFailedLogin(
         ?string $attemptedUserId,

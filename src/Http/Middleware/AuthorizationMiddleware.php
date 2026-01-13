@@ -79,7 +79,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        /** @var array|null $oidcUser */
+        /** @var array{sub?: string, roles?: array<string>}|null $oidcUser */
         $oidcUser = $request->getAttribute('oidc_user');
 
         if ($oidcUser === null) {
@@ -91,6 +91,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
             throw new UnauthorizedException('Invalid user token');
         }
 
+        /** @var array<string> $roles */
         $roles = $oidcUser['roles'] ?? [];
 
         // Admin users bypass all checks
@@ -145,20 +146,26 @@ class AuthorizationMiddleware implements MiddlewareInterface
     {
         // Check request attribute (set by router)
         $calendarId = $request->getAttribute($this->calendarIdAttribute);
-        if ($calendarId !== null) {
+        if ($calendarId !== null && ( is_string($calendarId) || is_int($calendarId) )) {
             return (string) $calendarId;
         }
 
         // Check query parameters
         $queryParams = $request->getQueryParams();
         if (isset($queryParams[$this->calendarIdAttribute])) {
-            return (string) $queryParams[$this->calendarIdAttribute];
+            $value = $queryParams[$this->calendarIdAttribute];
+            if (is_string($value) || is_int($value)) {
+                return (string) $value;
+            }
         }
 
         // For POST/PUT/PATCH, check parsed body
         $parsedBody = $request->getParsedBody();
         if (is_array($parsedBody) && isset($parsedBody[$this->calendarIdAttribute])) {
-            return (string) $parsedBody[$this->calendarIdAttribute];
+            $value = $parsedBody[$this->calendarIdAttribute];
+            if (is_string($value) || is_int($value)) {
+                return (string) $value;
+            }
         }
 
         return null;

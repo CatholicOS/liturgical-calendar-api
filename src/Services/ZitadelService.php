@@ -68,7 +68,7 @@ class ZitadelService
      * Get user information by ID.
      *
      * @param string $userId Zitadel user ID
-     * @return array|null User data or null if not found
+     * @return array<string, mixed>|null User data or null if not found
      */
     public function getUser(string $userId): ?array
     {
@@ -78,7 +78,12 @@ class ZitadelService
             ]);
 
             $data = json_decode($response->getBody()->getContents(), true);
-            return $data['user'] ?? null;
+            if (!is_array($data)) {
+                return null;
+            }
+            $user = $data['user'] ?? null;
+            /** @var array<string, mixed>|null */
+            return is_array($user) ? $user : null;
         } catch (GuzzleException $e) {
             return null;
         }
@@ -109,17 +114,29 @@ class ZitadelService
                 ],
             ]);
 
-            $data   = json_decode($response->getBody()->getContents(), true);
+            $data = json_decode($response->getBody()->getContents(), true);
+            if (!is_array($data)) {
+                return [];
+            }
             $grants = $data['result'] ?? [];
 
+            if (!is_array($grants)) {
+                return [];
+            }
+
+            /** @var array<string> $roles */
             $roles = [];
             foreach ($grants as $grant) {
-                if (isset($grant['roleKeys']) && is_array($grant['roleKeys'])) {
-                    $roles = array_merge($roles, $grant['roleKeys']);
+                if (is_array($grant) && isset($grant['roleKeys']) && is_array($grant['roleKeys'])) {
+                    foreach ($grant['roleKeys'] as $roleKey) {
+                        if (is_string($roleKey)) {
+                            $roles[] = $roleKey;
+                        }
+                    }
                 }
             }
 
-            return array_unique($roles);
+            return array_values(array_unique($roles));
         } catch (GuzzleException $e) {
             return [];
         }
@@ -173,7 +190,7 @@ class ZitadelService
      * Search for users by email.
      *
      * @param string $email Email to search for
-     * @return array<array> List of matching users
+     * @return array<int, array<string, mixed>> List of matching users
      */
     public function searchUsersByEmail(string $email): array
     {
@@ -193,7 +210,12 @@ class ZitadelService
             ]);
 
             $data = json_decode($response->getBody()->getContents(), true);
-            return $data['result'] ?? [];
+            if (!is_array($data)) {
+                return [];
+            }
+            $result = $data['result'] ?? [];
+            /** @var array<int, array<string, mixed>> */
+            return is_array($result) ? $result : [];
         } catch (GuzzleException $e) {
             return [];
         }
@@ -202,13 +224,15 @@ class ZitadelService
     /**
      * Get OIDC discovery document.
      *
-     * @return array|null Discovery document or null on error
+     * @return array<string, mixed>|null Discovery document or null on error
      */
     public function getDiscoveryDocument(): ?array
     {
         try {
             $response = $this->httpClient->get('/.well-known/openid-configuration');
-            return json_decode($response->getBody()->getContents(), true);
+            $data     = json_decode($response->getBody()->getContents(), true);
+            /** @var array<string, mixed>|null */
+            return is_array($data) ? $data : null;
         } catch (GuzzleException $e) {
             return null;
         }
@@ -222,7 +246,11 @@ class ZitadelService
     public function getAuthorizationEndpoint(): ?string
     {
         $doc = $this->getDiscoveryDocument();
-        return $doc['authorization_endpoint'] ?? null;
+        if ($doc === null) {
+            return null;
+        }
+        $endpoint = $doc['authorization_endpoint'] ?? null;
+        return is_string($endpoint) ? $endpoint : null;
     }
 
     /**
@@ -233,7 +261,11 @@ class ZitadelService
     public function getTokenEndpoint(): ?string
     {
         $doc = $this->getDiscoveryDocument();
-        return $doc['token_endpoint'] ?? null;
+        if ($doc === null) {
+            return null;
+        }
+        $endpoint = $doc['token_endpoint'] ?? null;
+        return is_string($endpoint) ? $endpoint : null;
     }
 
     /**
@@ -244,7 +276,11 @@ class ZitadelService
     public function getUserinfoEndpoint(): ?string
     {
         $doc = $this->getDiscoveryDocument();
-        return $doc['userinfo_endpoint'] ?? null;
+        if ($doc === null) {
+            return null;
+        }
+        $endpoint = $doc['userinfo_endpoint'] ?? null;
+        return is_string($endpoint) ? $endpoint : null;
     }
 
     /**
@@ -255,7 +291,11 @@ class ZitadelService
     public function getEndSessionEndpoint(): ?string
     {
         $doc = $this->getDiscoveryDocument();
-        return $doc['end_session_endpoint'] ?? null;
+        if ($doc === null) {
+            return null;
+        }
+        $endpoint = $doc['end_session_endpoint'] ?? null;
+        return is_string($endpoint) ? $endpoint : null;
     }
 
     /**
@@ -266,7 +306,11 @@ class ZitadelService
     public function getJwksUri(): ?string
     {
         $doc = $this->getDiscoveryDocument();
-        return $doc['jwks_uri'] ?? null;
+        if ($doc === null) {
+            return null;
+        }
+        $uri = $doc['jwks_uri'] ?? null;
+        return is_string($uri) ? $uri : null;
     }
 
     /**

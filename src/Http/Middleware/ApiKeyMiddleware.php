@@ -77,9 +77,27 @@ class ApiKeyMiddleware implements MiddlewareInterface
             'rate_limit_per_hour' => $keyInfo['rate_limit_per_hour'],
         ]);
 
-        // Log API key usage
-        if ($this->auditRepo !== null) {
-            $this->logUsage($request, $keyInfo);
+        // Log API key usage (validate required fields exist)
+        if (
+            $this->auditRepo !== null
+            && isset($keyInfo['id'], $keyInfo['application_id'], $keyInfo['app_uuid'], $keyInfo['app_name'], $keyInfo['zitadel_user_id'], $keyInfo['scope'], $keyInfo['rate_limit_per_hour'])
+            && is_int($keyInfo['id'])
+            && is_int($keyInfo['application_id'])
+            && is_string($keyInfo['app_uuid'])
+            && is_string($keyInfo['app_name'])
+            && is_string($keyInfo['zitadel_user_id'])
+            && is_string($keyInfo['scope'])
+            && is_int($keyInfo['rate_limit_per_hour'])
+        ) {
+            $this->logUsage($request, [
+                'id'                  => $keyInfo['id'],
+                'application_id'      => $keyInfo['application_id'],
+                'app_uuid'            => $keyInfo['app_uuid'],
+                'app_name'            => $keyInfo['app_name'],
+                'zitadel_user_id'     => $keyInfo['zitadel_user_id'],
+                'scope'               => $keyInfo['scope'],
+                'rate_limit_per_hour' => $keyInfo['rate_limit_per_hour'],
+            ]);
         }
 
         return $handler->handle($request);
@@ -103,7 +121,7 @@ class ApiKeyMiddleware implements MiddlewareInterface
 
         // 2. Check query parameter (fallback)
         $queryParams = $request->getQueryParams();
-        if (isset($queryParams['api_key']) && !empty($queryParams['api_key'])) {
+        if (isset($queryParams['api_key']) && is_string($queryParams['api_key']) && !empty($queryParams['api_key'])) {
             return $queryParams['api_key'];
         }
 
@@ -114,10 +132,14 @@ class ApiKeyMiddleware implements MiddlewareInterface
      * Log API key usage for analytics.
      *
      * @param ServerRequestInterface $request The request
-     * @param array $keyInfo API key info
+     * @param array{id: int, application_id: int, app_uuid: string, app_name: string, zitadel_user_id: string, scope: string, rate_limit_per_hour: int} $keyInfo API key info
      */
     private function logUsage(ServerRequestInterface $request, array $keyInfo): void
     {
+        if ($this->auditRepo === null) {
+            return;
+        }
+
         $ipAddress = $this->getClientIp($request);
         $userAgent = $request->getHeaderLine('User-Agent');
 
@@ -132,7 +154,7 @@ class ApiKeyMiddleware implements MiddlewareInterface
                 'app_name' => $keyInfo['app_name'],
             ],
             $ipAddress,
-            $userAgent ?: null,
+            $userAgent !== '' ? $userAgent : null,
             true
         );
     }
@@ -160,7 +182,8 @@ class ApiKeyMiddleware implements MiddlewareInterface
 
         // Fall back to server params
         $serverParams = $request->getServerParams();
-        return $serverParams['REMOTE_ADDR'] ?? null;
+        $remoteAddr   = $serverParams['REMOTE_ADDR'] ?? null;
+        return is_string($remoteAddr) ? $remoteAddr : null;
     }
 
     /**
@@ -185,10 +208,11 @@ class ApiKeyMiddleware implements MiddlewareInterface
      */
     public static function getRateLimit(ServerRequestInterface $request, int $default = 100): int
     {
+        /** @var array{rate_limit_per_hour?: int}|null $apiKey */
         $apiKey = $request->getAttribute('api_key');
 
-        if ($apiKey !== null && isset($apiKey['rate_limit_per_hour'])) {
-            return (int) $apiKey['rate_limit_per_hour'];
+        if (is_array($apiKey) && isset($apiKey['rate_limit_per_hour'])) {
+            return $apiKey['rate_limit_per_hour'];
         }
 
         return $default;
@@ -202,8 +226,13 @@ class ApiKeyMiddleware implements MiddlewareInterface
      */
     public static function getScope(ServerRequestInterface $request): ?string
     {
+        /** @var array{scope?: string}|null $apiKey */
         $apiKey = $request->getAttribute('api_key');
 
-        return $apiKey['scope'] ?? null;
+        if (is_array($apiKey) && isset($apiKey['scope'])) {
+            return $apiKey['scope'];
+        }
+
+        return null;
     }
 }

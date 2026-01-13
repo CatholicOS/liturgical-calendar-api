@@ -29,7 +29,7 @@ class ApplicationRepository
      * @param string $name Application name
      * @param string|null $description Application description
      * @param string|null $website Application website URL
-     * @return array The created application with UUID
+     * @return array<string, mixed> The created application with UUID
      */
     public function create(
         string $userId,
@@ -50,14 +50,16 @@ class ApplicationRepository
             'website'     => $website,
         ]);
 
-        return $stmt->fetch();
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch();
+        return is_array($result) ? $result : [];
     }
 
     /**
      * Get an application by UUID.
      *
      * @param string $uuid Application UUID
-     * @return array|null The application or null if not found
+     * @return array<string, mixed>|null The application or null if not found
      */
     public function getByUuid(string $uuid): ?array
     {
@@ -68,16 +70,17 @@ class ApplicationRepository
         );
 
         $stmt->execute(['uuid' => $uuid]);
+        /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch();
 
-        return $result ?: null;
+        return is_array($result) ? $result : null;
     }
 
     /**
      * Get an application by ID.
      *
      * @param int $id Application ID
-     * @return array|null The application or null if not found
+     * @return array<string, mixed>|null The application or null if not found
      */
     public function getById(int $id): ?array
     {
@@ -88,16 +91,17 @@ class ApplicationRepository
         );
 
         $stmt->execute(['id' => $id]);
+        /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch();
 
-        return $result ?: null;
+        return is_array($result) ? $result : null;
     }
 
     /**
      * Get all applications for a user.
      *
      * @param string $userId Zitadel user ID
-     * @return array<array> List of applications
+     * @return array<int, array<string, mixed>> List of applications
      */
     public function getByUser(string $userId): array
     {
@@ -110,6 +114,7 @@ class ApplicationRepository
 
         $stmt->execute(['user_id' => $userId]);
 
+        /** @var array<int, array<string, mixed>> */
         return $stmt->fetchAll();
     }
 
@@ -118,8 +123,8 @@ class ApplicationRepository
      *
      * @param string $uuid Application UUID
      * @param string $userId Owner's Zitadel user ID (for authorization)
-     * @param array $data Fields to update (name, description, website)
-     * @return array|null Updated application or null if not found/unauthorized
+     * @param array<string, mixed> $data Fields to update (name, description, website)
+     * @return array<string, mixed>|null Updated application or null if not found/unauthorized
      */
     public function update(string $uuid, string $userId, array $data): ?array
     {
@@ -148,9 +153,10 @@ class ApplicationRepository
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
+        /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch();
 
-        return $result ?: null;
+        return is_array($result) ? $result : null;
     }
 
     /**

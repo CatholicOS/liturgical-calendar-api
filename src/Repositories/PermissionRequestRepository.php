@@ -67,7 +67,7 @@ class PermissionRequestRepository
      * Get a permission request by ID.
      *
      * @param int $id Request ID
-     * @return array|null The request data or null if not found
+     * @return array<string, mixed>|null The request data or null if not found
      */
     public function getById(int $id): ?array
     {
@@ -76,15 +76,16 @@ class PermissionRequestRepository
         );
 
         $stmt->execute(['id' => $id]);
+        /** @var array<string, mixed>|false $result */
         $result = $stmt->fetch();
 
-        return $result ?: null;
+        return is_array($result) ? $result : null;
     }
 
     /**
      * Get all pending permission requests.
      *
-     * @return array<array> List of pending requests
+     * @return array<int, array<string, mixed>> List of pending requests
      */
     public function getPendingRequests(): array
     {
@@ -96,6 +97,7 @@ class PermissionRequestRepository
 
         $stmt->execute();
 
+        /** @var array<int, array<string, mixed>> */
         return $stmt->fetchAll();
     }
 
@@ -103,7 +105,7 @@ class PermissionRequestRepository
      * Get all requests for a specific user.
      *
      * @param string $userId Zitadel user ID
-     * @return array<array> List of requests
+     * @return array<int, array<string, mixed>> List of requests
      */
     public function getRequestsForUser(string $userId): array
     {
@@ -115,6 +117,7 @@ class PermissionRequestRepository
 
         $stmt->execute(['user_id' => $userId]);
 
+        /** @var array<int, array<string, mixed>> */
         return $stmt->fetchAll();
     }
 
@@ -161,12 +164,28 @@ class PermissionRequestRepository
                 return false;
             }
 
+            // Validate required fields
+            $zitadelUserId = isset($request['zitadel_user_id']) && is_string($request['zitadel_user_id'])
+                ? $request['zitadel_user_id']
+                : null;
+            $calendarType  = isset($request['calendar_type']) && is_string($request['calendar_type'])
+                ? $request['calendar_type']
+                : null;
+            $calendarId    = isset($request['calendar_id']) && is_string($request['calendar_id'])
+                ? $request['calendar_id']
+                : null;
+
+            if ($zitadelUserId === null || $calendarType === null || $calendarId === null) {
+                $this->db->rollBack();
+                return false;
+            }
+
             // Grant the permission
             $permRepo = new CalendarPermissionRepository($this->db);
             $permRepo->grantPermission(
-                $request['zitadel_user_id'],
-                $request['calendar_type'],
-                $request['calendar_id'],
+                $zitadelUserId,
+                $calendarType,
+                $calendarId,
                 'write',
                 $reviewedBy
             );
