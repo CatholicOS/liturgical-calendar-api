@@ -1,0 +1,317 @@
+<?php
+
+declare(strict_types=1);
+
+namespace LiturgicalCalendar\Api\Repositories;
+
+use LiturgicalCalendar\Api\Database\Connection;
+use PDO;
+
+/**
+ * Repository for managing API keys.
+ *
+ * API keys are generated for applications and used to authenticate
+ * API requests. Keys are stored as hashes for security.
+ */
+class ApiKeyRepository
+{
+    private PDO $db;
+
+    /**
+     * API key prefix for identification.
+     */
+    private const KEY_PREFIX = 'litcal';
+
+    /**
+     * Length of the random portion of the key.
+     */
+    private const KEY_RANDOM_LENGTH = 32;
+
+    public function __construct(?PDO $db = null)
+    {
+        $this->db = $db ?? Connection::getInstance();
+    }
+
+    /**
+     * Generate a new API key for an application.
+     *
+     * @param int $applicationId Application ID
+     * @param string|null $name Optional name for the key
+     * @param string $scope Permission scope: 'read' or 'write'
+     * @param int $rateLimitPerHour Rate limit per hour
+     * @param \DateTimeInterface|null $expiresAt Optional expiration date
+     * @return array Contains 'key' (plain text, show once) and 'record' (database record)
+     */
+    public function generate(
+        int $applicationId,
+        ?string $name = null,
+        string $scope = 'read',
+        int $rateLimitPerHour = 1000,
+        ?\DateTimeInterface $expiresAt = null
+    ): array {
+        // Generate the key
+        $environment = getenv('APP_ENV') === 'production' ? 'live' : 'test';
+        $randomPart  = bin2hex(random_bytes(self::KEY_RANDOM_LENGTH / 2));
+        $plainKey    = sprintf('%s_%s_%s', self::KEY_PREFIX, $environment, $randomPart);
+
+        // Hash for storage
+        $keyHash   = hash('sha256', $plainKey);
+        $keyPrefix = substr($plainKey, 0, 20);
+
+        $stmt = $this->db->prepare(
+            'INSERT INTO api_keys (application_id, key_hash, key_prefix, name, scope, rate_limit_per_hour, expires_at)
+             VALUES (:app_id, :key_hash, :key_prefix, :name, :scope, :rate_limit, :expires_at)
+             RETURNING id, key_prefix, name, scope, rate_limit_per_hour, is_active, expires_at, created_at'
+        );
+
+        $stmt->execute([
+            'app_id'     => $applicationId,
+            'key_hash'   => $keyHash,
+            'key_prefix' => $keyPrefix,
+            'name'       => $name,
+            'scope'      => $scope,
+            'rate_limit' => $rateLimitPerHour,
+            'expires_at' => $expiresAt?->format('Y-m-d H:i:s'),
+        ]);
+
+        $record = $stmt->fetch();
+
+        return [
+            'key'    => $plainKey,  // Only returned once, never stored
+            'record' => $record,
+        ];
+    }
+
+    /**
+     * Validate an API key and return its details.
+     *
+     * @param string $plainKey The plain text API key
+     * @return array|null Key details with application info, or null if invalid
+     */
+    public function validate(string $plainKey): ?array
+    {
+        $keyHash = hash('sha256', $plainKey);
+
+        $stmt = $this->db->prepare(
+            'SELECT k.id, k.application_id, k.key_prefix, k.name, k.scope,
+                    k.rate_limit_per_hour, k.is_active, k.last_used_at, k.expires_at,
+                    a.uuid AS app_uuid, a.name AS app_name, a.zitadel_user_id,
+                    a.is_active AS app_is_active
+             FROM api_keys k
+             JOIN applications a ON k.application_id = a.id
+             WHERE k.key_hash = :key_hash'
+        );
+
+        $stmt->execute(['key_hash' => $keyHash]);
+        $result = $stmt->fetch();
+
+        if (!$result) {
+            return null;
+        }
+
+        // Check if key is active
+        if (!$result['is_active'] || !$result['app_is_active']) {
+            return null;
+        }
+
+        // Check expiration
+        if ($result['expires_at'] !== null) {
+            $expiresAt = new \DateTimeImmutable($result['expires_at']);
+            if ($expiresAt < new \DateTimeImmutable()) {
+                return null;
+            }
+        }
+
+        // Update last used timestamp
+        $this->updateLastUsed($result['id']);
+
+        return $result;
+    }
+
+    /**
+     * Update the last_used_at timestamp for a key.
+     *
+     * @param int $keyId Key ID
+     */
+    private function updateLastUsed(int $keyId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = :id'
+        );
+        $stmt->execute(['id' => $keyId]);
+    }
+
+    /**
+     * Get all keys for an application.
+     *
+     * @param int $applicationId Application ID
+     * @return array<array> List of keys (without hashes)
+     */
+    public function getByApplication(int $applicationId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT id, key_prefix, name, scope, rate_limit_per_hour, is_active,
+                    last_used_at, expires_at, created_at
+             FROM api_keys
+             WHERE application_id = :app_id
+             ORDER BY created_at DESC'
+        );
+
+        $stmt->execute(['app_id' => $applicationId]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get a key by ID.
+     *
+     * @param int $id Key ID
+     * @return array|null Key details or null if not found
+     */
+    public function getById(int $id): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT k.id, k.application_id, k.key_prefix, k.name, k.scope,
+                    k.rate_limit_per_hour, k.is_active, k.last_used_at, k.expires_at,
+                    k.created_at, a.zitadel_user_id
+             FROM api_keys k
+             JOIN applications a ON k.application_id = a.id
+             WHERE k.id = :id'
+        );
+
+        $stmt->execute(['id' => $id]);
+        $result = $stmt->fetch();
+
+        return $result ?: null;
+    }
+
+    /**
+     * Revoke (deactivate) an API key.
+     *
+     * @param int $keyId Key ID
+     * @param string $userId Owner's Zitadel user ID (for authorization)
+     * @return bool True if revoked, false if not found/unauthorized
+     */
+    public function revoke(int $keyId, string $userId): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE api_keys k
+             SET is_active = FALSE
+             FROM applications a
+             WHERE k.id = :key_id
+               AND k.application_id = a.id
+               AND a.zitadel_user_id = :user_id'
+        );
+
+        $stmt->execute(['key_id' => $keyId, 'user_id' => $userId]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Delete an API key permanently.
+     *
+     * @param int $keyId Key ID
+     * @param string $userId Owner's Zitadel user ID (for authorization)
+     * @return bool True if deleted, false if not found/unauthorized
+     */
+    public function delete(int $keyId, string $userId): bool
+    {
+        $stmt = $this->db->prepare(
+            'DELETE FROM api_keys k
+             USING applications a
+             WHERE k.id = :key_id
+               AND k.application_id = a.id
+               AND a.zitadel_user_id = :user_id'
+        );
+
+        $stmt->execute(['key_id' => $keyId, 'user_id' => $userId]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Rotate an API key (revoke old, create new).
+     *
+     * @param int $keyId Current key ID
+     * @param string $userId Owner's Zitadel user ID (for authorization)
+     * @return array|null New key details or null if failed
+     */
+    public function rotate(int $keyId, string $userId): ?array
+    {
+        $oldKey = $this->getById($keyId);
+
+        if (!$oldKey || $oldKey['zitadel_user_id'] !== $userId) {
+            return null;
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            // Revoke old key
+            $this->revoke($keyId, $userId);
+
+            // Generate new key with same settings
+            $expiresAt = $oldKey['expires_at']
+                ? new \DateTimeImmutable($oldKey['expires_at'])
+                : null;
+
+            $newKey = $this->generate(
+                $oldKey['application_id'],
+                $oldKey['name'] ? $oldKey['name'] . ' (rotated)' : null,
+                $oldKey['scope'],
+                $oldKey['rate_limit_per_hour'],
+                $expiresAt
+            );
+
+            $this->db->commit();
+
+            return $newKey;
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Count active keys for an application.
+     *
+     * @param int $applicationId Application ID
+     * @return int Number of active keys
+     */
+    public function countActiveByApplication(int $applicationId): int
+    {
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM api_keys
+             WHERE application_id = :app_id AND is_active = TRUE'
+        );
+
+        $stmt->execute(['app_id' => $applicationId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Get usage statistics for a key.
+     *
+     * @param int $keyId Key ID
+     * @return array Usage statistics
+     */
+    public function getUsageStats(int $keyId): array
+    {
+        $key = $this->getById($keyId);
+
+        if (!$key) {
+            return [];
+        }
+
+        return [
+            'key_id'              => $keyId,
+            'key_prefix'          => $key['key_prefix'],
+            'last_used_at'        => $key['last_used_at'],
+            'is_active'           => $key['is_active'],
+            'expires_at'          => $key['expires_at'],
+            'rate_limit_per_hour' => $key['rate_limit_per_hour'],
+        ];
+    }
+}
