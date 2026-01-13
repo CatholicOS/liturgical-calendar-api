@@ -288,10 +288,10 @@
         "gospel": "Mark 11:27-33"
     },
     "OrdWeekday9Monday": {
-        "first_reading": "",
-        "responsorial_psalm": "",
-        "gospel_acclamation": "",
-        "gospel": ""
+        "first_reading": "2 Peter 1:2-7",
+        "responsorial_psalm": "Psalm 91:1-2, 14-15ab, 15c-16",
+        "gospel_acclamation": "Revelation 1:5ab",
+        "gospel": "Mark 12:1-12"
     },
     "OrdWeekday9Tuesday": {
         "first_reading": "2 Peter 3:12-15a, 17-18",
@@ -300,10 +300,10 @@
         "gospel": "Mark 12:13-17"
     },
     "OrdWeekday9Wednesday": {
-        "first_reading": "",
-        "responsorial_psalm": "",
-        "gospel_acclamation": "",
-        "gospel": ""
+        "first_reading": "2 Timothy 1:1-3, 6-12",
+        "responsorial_psalm": "Psalm 123:1-2a, 2bcd",
+        "gospel_acclamation": "John 11:25a, 26",
+        "gospel": "Mark 12:18-27"
     },
     "OrdWeekday9Thursday": {
         "first_reading": "2 Timothy 2:8-15",
@@ -312,10 +312,10 @@
         "gospel": "Mark 12:28-34"
     },
     "OrdWeekday9Friday": {
-        "first_reading": "",
-        "responsorial_psalm": "",
-        "gospel_acclamation": "",
-        "gospel": ""
+        "first_reading": "2 Timothy 3:10-17",
+        "responsorial_psalm": "Psalm 119:157, 160, 161, 165, 166, 168",
+        "gospel_acclamation": "John 14:23",
+        "gospel": "Mark 12:35-37"
     },
     "OrdWeekday9Saturday": {
         "first_reading": "2 Timothy 4:1-8",
