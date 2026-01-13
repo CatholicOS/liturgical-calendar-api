@@ -54,9 +54,9 @@ class Connection
         $user     = getenv('DB_USER');
         $password = getenv('DB_PASSWORD');
 
-        return $host !== false
-            && $name !== false
-            && $user !== false
+        return $host !== false && $host !== ''
+            && $name !== false && $name !== ''
+            && $user !== false && $user !== ''
             && $password !== false;
     }
 
