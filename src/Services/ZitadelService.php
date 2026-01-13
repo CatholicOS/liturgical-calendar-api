@@ -394,18 +394,21 @@ class ZitadelService
      * Get authorization headers for Management API.
      *
      * @return array<string, string> Headers
+     * @throws \RuntimeException If machine token is not configured
      */
     private function getAuthHeaders(): array
     {
-        $headers = [
-            'Accept'       => 'application/json',
-            'Content-Type' => 'application/json',
-        ];
-
-        if ($this->machineToken !== null) {
-            $headers['Authorization'] = 'Bearer ' . $this->machineToken;
+        if ($this->machineToken === null) {
+            throw new \RuntimeException(
+                'Zitadel Management API requires a machine token. ' .
+                'Set ZITADEL_MACHINE_TOKEN environment variable or pass machineToken to constructor.'
+            );
         }
 
-        return $headers;
+        return [
+            'Accept'        => 'application/json',
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer ' . $this->machineToken,
+        ];
     }
 }
