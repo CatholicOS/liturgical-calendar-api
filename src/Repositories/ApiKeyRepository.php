@@ -116,10 +116,11 @@ class ApiKeyRepository
             return null;
         }
 
-        // Check expiration
+        // Check expiration (using Europe/Vatican timezone for consistency)
         if ($result['expires_at'] !== null && is_string($result['expires_at'])) {
-            $expiresAt = new \DateTimeImmutable($result['expires_at']);
-            if ($expiresAt < new \DateTimeImmutable()) {
+            $tz        = new \DateTimeZone('Europe/Vatican');
+            $expiresAt = new \DateTimeImmutable($result['expires_at'], $tz);
+            if ($expiresAt < new \DateTimeImmutable('now', $tz)) {
                 return null;
             }
         }
