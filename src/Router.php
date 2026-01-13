@@ -25,10 +25,14 @@ use LiturgicalCalendar\Api\Handlers\Auth\MeHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\RefreshHandler;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
+use LiturgicalCalendar\Api\Http\Middleware\AuthorizationMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\ErrorHandlingMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\HttpsEnforcementMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\JwtAuthMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\LoggingMiddleware;
+use LiturgicalCalendar\Api\Http\Middleware\OidcAuthMiddleware;
+use LiturgicalCalendar\Api\Database\Connection;
+use LiturgicalCalendar\Api\Repositories\CalendarPermissionRepository;
 use LiturgicalCalendar\Api\Http\Server\MiddlewarePipeline;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
@@ -442,12 +446,53 @@ class Router
             $pipeline->pipe(new HttpsEnforcementMiddleware());
         }
 
-        // Apply JWT authentication middleware for protected routes
+        // Apply authentication middleware for protected routes
         if (
             in_array($route, ['data', 'tests', 'temporale'], true)
             && in_array($this->request->getMethod(), [RequestMethod::PUT->value, RequestMethod::PATCH->value, RequestMethod::DELETE->value], true)
         ) {
-            $pipeline->pipe(new JwtAuthMiddleware());
+            // Use OIDC (Zitadel) authentication if configured, otherwise fall back to JWT
+            if (self::isOidcConfigured()) {
+                $pipeline->pipe(OidcAuthMiddleware::fromEnv());
+
+                // Apply authorization middleware with role-based access control
+                // Only apply if database is also configured for permission checks
+                if (Connection::isConfigured()) {
+                    $permissionRepo = new CalendarPermissionRepository();
+
+                    // Determine required role and calendar type based on route
+                    $calendarType = null;
+                    if ($route === 'data' && count($requestPathParts) >= 2) {
+                        $calendarType = match ($requestPathParts[0]) {
+                            PathCategory::NATION->value     => 'national',
+                            PathCategory::DIOCESE->value    => 'diocesan',
+                            PathCategory::WIDERREGION->value => 'widerregion',
+                            default                         => null
+                        };
+
+                        // Set calendar_id attribute for AuthorizationMiddleware
+                        $this->request = $this->request->withAttribute('calendar_id', $requestPathParts[1] ?? null);
+                    }
+
+                    if ($route === 'data') {
+                        $pipeline->pipe(new AuthorizationMiddleware(
+                            $permissionRepo,
+                            'calendar_editor',
+                            $calendarType,
+                            'calendar_id',
+                            'write'
+                        ));
+                    } elseif ($route === 'tests') {
+                        $pipeline->pipe(AuthorizationMiddleware::forTestEditor($permissionRepo));
+                    } elseif ($route === 'temporale') {
+                        // Temporale requires admin role (General Roman Calendar)
+                        $pipeline->pipe(AuthorizationMiddleware::forAdmin($permissionRepo));
+                    }
+                }
+            } else {
+                // Fall back to legacy JWT authentication
+                $pipeline->pipe(new JwtAuthMiddleware());
+            }
         }
 
         $this->response = $pipeline->handle($this->request)
@@ -470,6 +515,20 @@ class Router
         return in_array($serverAddress, $localhostAddresses) ||
                in_array($remoteAddress, $localhostAddresses) ||
                in_array($serverName, $localhostNames);
+    }
+
+    /**
+     * Check if OIDC (Zitadel) authentication is configured.
+     *
+     * @return bool true if ZITADEL_ISSUER and ZITADEL_CLIENT_ID are set
+     */
+    public static function isOidcConfigured(): bool
+    {
+        $issuer   = getenv('ZITADEL_ISSUER');
+        $clientId = getenv('ZITADEL_CLIENT_ID');
+
+        return $issuer !== false && !empty($issuer)
+            && $clientId !== false && !empty($clientId);
     }
 
     private function retrieveRequest(): ServerRequestInterface
