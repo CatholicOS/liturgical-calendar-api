@@ -252,6 +252,13 @@ class ApiKeyRepository
             return null;
         }
 
+        // Validate required fields before starting transaction
+        if (!isset($oldKey['application_id']) || !is_int($oldKey['application_id'])) {
+            throw new \InvalidArgumentException(
+                'Cannot rotate API key: missing or invalid application_id'
+            );
+        }
+
         $this->db->beginTransaction();
 
         try {
@@ -264,7 +271,7 @@ class ApiKeyRepository
                 ? new \DateTimeImmutable($expiresAtValue)
                 : null;
 
-            $applicationId = is_int($oldKey['application_id']) ? $oldKey['application_id'] : 0;
+            $applicationId = $oldKey['application_id'];
             $oldName       = is_string($oldKey['name']) ? $oldKey['name'] : null;
             $scope         = is_string($oldKey['scope']) ? $oldKey['scope'] : 'read';
             $rateLimit     = is_int($oldKey['rate_limit_per_hour']) ? $oldKey['rate_limit_per_hour'] : 1000;
