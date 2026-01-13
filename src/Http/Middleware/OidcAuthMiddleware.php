@@ -33,9 +33,11 @@ class OidcAuthMiddleware implements MiddlewareInterface
     private int $cacheTtl;
 
     /**
-     * Cached JWKS key set.
+     * Cached JWKS key sets, keyed by issuer URL.
+     *
+     * @var array<string, CachedKeySet>
      */
-    private static ?CachedKeySet $keySet = null;
+    private static array $keySets = [];
 
     /**
      * Create the OIDC authentication middleware.
@@ -175,12 +177,14 @@ class OidcAuthMiddleware implements MiddlewareInterface
     /**
      * Get or create cached JWKS key set.
      *
+     * Key sets are cached per issuer to support multiple OIDC providers.
+     *
      * @return CachedKeySet JWKS key set
      */
     private function getKeySet(): CachedKeySet
     {
-        if (self::$keySet !== null) {
-            return self::$keySet;
+        if (isset(self::$keySets[$this->issuer])) {
+            return self::$keySets[$this->issuer];
         }
 
         $jwksUri = $this->issuer . '/oauth/v2/keys';
@@ -193,7 +197,7 @@ class OidcAuthMiddleware implements MiddlewareInterface
         $cache    = new FilesystemAdapter('jwks', $this->cacheTtl, $cacheDir);
 
         // Create cached key set
-        self::$keySet = new CachedKeySet(
+        self::$keySets[$this->issuer] = new CachedKeySet(
             $jwksUri,
             $httpClient,
             $httpFactory,
@@ -202,7 +206,7 @@ class OidcAuthMiddleware implements MiddlewareInterface
             true // Rate limit JWKS fetches
         );
 
-        return self::$keySet;
+        return self::$keySets[$this->issuer];
     }
 
     /**
@@ -303,10 +307,10 @@ class OidcAuthMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Reset the cached key set (useful for testing).
+     * Reset all cached key sets (useful for testing).
      */
     public static function resetKeySetCache(): void
     {
-        self::$keySet = null;
+        self::$keySets = [];
     }
 }
