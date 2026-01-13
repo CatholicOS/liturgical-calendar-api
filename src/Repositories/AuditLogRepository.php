@@ -258,7 +258,7 @@ class AuditLogRepository
     {
         $stmt = $this->db->prepare(
             'DELETE FROM audit_log
-             WHERE created_at < CURRENT_TIMESTAMP - INTERVAL :days DAY'
+             WHERE created_at < CURRENT_TIMESTAMP - make_interval(days => :days)'
         );
 
         $stmt->execute(['days' => $daysToKeep]);
