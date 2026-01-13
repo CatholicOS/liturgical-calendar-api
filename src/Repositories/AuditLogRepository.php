@@ -23,6 +23,64 @@ class AuditLogRepository
     }
 
     /**
+     * Build WHERE clause and params from filters.
+     *
+     * @param array<string, mixed> $filters
+     * @return array{whereClause: string, params: array<string, mixed>}
+     */
+    private function buildWhereClause(array $filters): array
+    {
+        $conditions = [];
+        $params     = [];
+
+        if (isset($filters['user_id'])) {
+            $conditions[]      = 'zitadel_user_id = :user_id';
+            $params['user_id'] = $filters['user_id'];
+        }
+
+        if (isset($filters['action'])) {
+            $conditions[]     = 'action = :action';
+            $params['action'] = $filters['action'];
+        }
+
+        if (isset($filters['resource_type'])) {
+            $conditions[]            = 'resource_type = :resource_type';
+            $params['resource_type'] = $filters['resource_type'];
+        }
+
+        if (isset($filters['resource_id'])) {
+            $conditions[]          = 'resource_id = :resource_id';
+            $params['resource_id'] = $filters['resource_id'];
+        }
+
+        if (isset($filters['success'])) {
+            $conditions[]      = 'success = :success';
+            $params['success'] = $filters['success'] ? 'true' : 'false';
+        }
+
+        if (isset($filters['from_date'])) {
+            $conditions[]        = 'created_at >= :from_date';
+            $params['from_date'] = $filters['from_date'];
+        }
+
+        if (isset($filters['to_date'])) {
+            $conditions[]      = 'created_at <= :to_date';
+            $params['to_date'] = $filters['to_date'];
+        }
+
+        if (isset($filters['ip_address'])) {
+            $conditions[]         = 'ip_address = :ip_address';
+            $params['ip_address'] = $filters['ip_address'];
+        }
+
+        $whereClause = !empty($conditions)
+            ? 'WHERE ' . implode(' AND ', $conditions)
+            : '';
+
+        return ['whereClause' => $whereClause, 'params' => $params];
+    }
+
+    /**
      * Log an action.
      *
      * @param string|null $userId Zitadel user ID of the actor (null for anonymous)
@@ -77,52 +135,7 @@ class AuditLogRepository
      */
     public function query(array $filters = [], int $limit = 100, int $offset = 0): array
     {
-        $conditions = [];
-        $params     = [];
-
-        if (isset($filters['user_id'])) {
-            $conditions[]      = 'zitadel_user_id = :user_id';
-            $params['user_id'] = $filters['user_id'];
-        }
-
-        if (isset($filters['action'])) {
-            $conditions[]     = 'action = :action';
-            $params['action'] = $filters['action'];
-        }
-
-        if (isset($filters['resource_type'])) {
-            $conditions[]            = 'resource_type = :resource_type';
-            $params['resource_type'] = $filters['resource_type'];
-        }
-
-        if (isset($filters['resource_id'])) {
-            $conditions[]          = 'resource_id = :resource_id';
-            $params['resource_id'] = $filters['resource_id'];
-        }
-
-        if (isset($filters['success'])) {
-            $conditions[]      = 'success = :success';
-            $params['success'] = $filters['success'] ? 'true' : 'false';
-        }
-
-        if (isset($filters['from_date'])) {
-            $conditions[]        = 'created_at >= :from_date';
-            $params['from_date'] = $filters['from_date'];
-        }
-
-        if (isset($filters['to_date'])) {
-            $conditions[]      = 'created_at <= :to_date';
-            $params['to_date'] = $filters['to_date'];
-        }
-
-        if (isset($filters['ip_address'])) {
-            $conditions[]         = 'ip_address = :ip_address';
-            $params['ip_address'] = $filters['ip_address'];
-        }
-
-        $whereClause = !empty($conditions)
-            ? 'WHERE ' . implode(' AND ', $conditions)
-            : '';
+        ['whereClause' => $whereClause, 'params' => $params] = $this->buildWhereClause($filters);
 
         $sql = sprintf(
             'SELECT id, zitadel_user_id, action, resource_type, resource_id,
@@ -225,42 +238,7 @@ class AuditLogRepository
      */
     public function count(array $filters = []): int
     {
-        $conditions = [];
-        $params     = [];
-
-        if (isset($filters['user_id'])) {
-            $conditions[]      = 'zitadel_user_id = :user_id';
-            $params['user_id'] = $filters['user_id'];
-        }
-
-        if (isset($filters['action'])) {
-            $conditions[]     = 'action = :action';
-            $params['action'] = $filters['action'];
-        }
-
-        if (isset($filters['resource_type'])) {
-            $conditions[]            = 'resource_type = :resource_type';
-            $params['resource_type'] = $filters['resource_type'];
-        }
-
-        if (isset($filters['success'])) {
-            $conditions[]      = 'success = :success';
-            $params['success'] = $filters['success'] ? 'true' : 'false';
-        }
-
-        if (isset($filters['from_date'])) {
-            $conditions[]        = 'created_at >= :from_date';
-            $params['from_date'] = $filters['from_date'];
-        }
-
-        if (isset($filters['to_date'])) {
-            $conditions[]      = 'created_at <= :to_date';
-            $params['to_date'] = $filters['to_date'];
-        }
-
-        $whereClause = !empty($conditions)
-            ? 'WHERE ' . implode(' AND ', $conditions)
-            : '';
+        ['whereClause' => $whereClause, 'params' => $params] = $this->buildWhereClause($filters);
 
         $sql = sprintf('SELECT COUNT(*) FROM audit_log %s', $whereClause);
 
