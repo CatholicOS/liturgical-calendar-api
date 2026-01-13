@@ -24,6 +24,9 @@ class ZitadelService
     private ?string $machineToken;
     private ?LoggerInterface $logger;
 
+    /** @var array<string, mixed>|null */
+    private ?array $discoveryDocument = null;
+
     /**
      * Create Zitadel service.
      *
@@ -251,15 +254,25 @@ class ZitadelService
     /**
      * Get OIDC discovery document.
      *
+     * The document is cached after the first successful fetch to avoid
+     * repeated HTTP requests.
+     *
      * @return array<string, mixed>|null Discovery document or null on error
      */
     public function getDiscoveryDocument(): ?array
     {
+        if ($this->discoveryDocument !== null) {
+            return $this->discoveryDocument;
+        }
+
         try {
             $response = $this->httpClient->get('/.well-known/openid-configuration');
             $data     = json_decode($response->getBody()->getContents(), true);
-            /** @var array<string, mixed>|null */
-            return is_array($data) ? $data : null;
+            if (is_array($data)) {
+                /** @var array<string, mixed> $data */
+                $this->discoveryDocument = $data;
+            }
+            return $this->discoveryDocument;
         } catch (GuzzleException $e) {
             $this->logger?->warning('Failed to fetch OIDC discovery document from Zitadel', [
                 'issuer' => $this->issuer,
