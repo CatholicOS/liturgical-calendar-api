@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace LiturgicalCalendar\Api\Repositories;
 
 use LiturgicalCalendar\Api\Database\Connection;
+use LiturgicalCalendar\Api\Enum\CalendarType;
+use LiturgicalCalendar\Api\Enum\PermissionLevel;
 use PDO;
 
 /**
@@ -27,15 +29,15 @@ class CalendarPermissionRepository
      * Check if a user has a specific permission for a calendar.
      *
      * @param string $userId Zitadel user ID (sub claim)
-     * @param string $calendarType Type: 'national', 'diocesan', 'widerregion'
+     * @param CalendarType $calendarType Type of calendar
      * @param string $calendarId Calendar identifier: 'USA', 'BOSTON', 'Americas', etc.
-     * @param string $permission Permission level: 'read' or 'write'
+     * @param PermissionLevel $permission Permission level
      */
     public function hasPermission(
         string $userId,
-        string $calendarType,
+        CalendarType $calendarType,
         string $calendarId,
-        string $permission
+        PermissionLevel $permission
     ): bool {
         $stmt = $this->db->prepare(
             'SELECT 1 FROM user_calendar_permissions
@@ -47,9 +49,9 @@ class CalendarPermissionRepository
 
         $stmt->execute([
             'user_id'       => $userId,
-            'calendar_type' => $calendarType,
+            'calendar_type' => $calendarType->value,
             'calendar_id'   => $calendarId,
-            'permission'    => $permission,
+            'permission'    => $permission->value,
         ]);
 
         return $stmt->fetchColumn() !== false;
@@ -79,11 +81,11 @@ class CalendarPermissionRepository
     /**
      * Get all users with permissions for a specific calendar.
      *
-     * @param string $calendarType Type: 'national', 'diocesan', 'widerregion'
+     * @param CalendarType $calendarType Type of calendar
      * @param string $calendarId Calendar identifier
      * @return array<int, array{zitadel_user_id: string, permission: string, granted_at: string, granted_by: string|null}>
      */
-    public function getUsersForCalendar(string $calendarType, string $calendarId): array
+    public function getUsersForCalendar(CalendarType $calendarType, string $calendarId): array
     {
         $stmt = $this->db->prepare(
             'SELECT zitadel_user_id, permission, granted_at, granted_by
@@ -94,7 +96,7 @@ class CalendarPermissionRepository
         );
 
         $stmt->execute([
-            'calendar_type' => $calendarType,
+            'calendar_type' => $calendarType->value,
             'calendar_id'   => $calendarId,
         ]);
 
@@ -106,17 +108,17 @@ class CalendarPermissionRepository
      * Grant a permission to a user for a specific calendar.
      *
      * @param string $userId Zitadel user ID to grant permission to
-     * @param string $calendarType Type: 'national', 'diocesan', 'widerregion'
+     * @param CalendarType $calendarType Type of calendar
      * @param string $calendarId Calendar identifier
-     * @param string $permission Permission level: 'read' or 'write'
+     * @param PermissionLevel $permission Permission level
      * @param string|null $grantedBy Zitadel user ID of the admin granting the permission
      * @return bool True if permission was granted, false if already exists
      */
     public function grantPermission(
         string $userId,
-        string $calendarType,
+        CalendarType $calendarType,
         string $calendarId,
-        string $permission,
+        PermissionLevel $permission,
         ?string $grantedBy = null
     ): bool {
         $stmt = $this->db->prepare(
@@ -128,9 +130,9 @@ class CalendarPermissionRepository
 
         $stmt->execute([
             'user_id'       => $userId,
-            'calendar_type' => $calendarType,
+            'calendar_type' => $calendarType->value,
             'calendar_id'   => $calendarId,
-            'permission'    => $permission,
+            'permission'    => $permission->value,
             'granted_by'    => $grantedBy,
         ]);
 
@@ -141,16 +143,16 @@ class CalendarPermissionRepository
      * Revoke a permission from a user for a specific calendar.
      *
      * @param string $userId Zitadel user ID
-     * @param string $calendarType Type: 'national', 'diocesan', 'widerregion'
+     * @param CalendarType $calendarType Type of calendar
      * @param string $calendarId Calendar identifier
-     * @param string $permission Permission level: 'read' or 'write'
+     * @param PermissionLevel $permission Permission level
      * @return bool True if permission was revoked, false if it didn't exist
      */
     public function revokePermission(
         string $userId,
-        string $calendarType,
+        CalendarType $calendarType,
         string $calendarId,
-        string $permission
+        PermissionLevel $permission
     ): bool {
         $stmt = $this->db->prepare(
             'DELETE FROM user_calendar_permissions
@@ -162,9 +164,9 @@ class CalendarPermissionRepository
 
         $stmt->execute([
             'user_id'       => $userId,
-            'calendar_type' => $calendarType,
+            'calendar_type' => $calendarType->value,
             'calendar_id'   => $calendarId,
-            'permission'    => $permission,
+            'permission'    => $permission->value,
         ]);
 
         return $stmt->rowCount() > 0;

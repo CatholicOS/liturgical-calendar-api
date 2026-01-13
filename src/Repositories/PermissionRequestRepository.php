@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace LiturgicalCalendar\Api\Repositories;
 
 use LiturgicalCalendar\Api\Database\Connection;
+use LiturgicalCalendar\Api\Enum\CalendarType;
+use LiturgicalCalendar\Api\Enum\PermissionLevel;
 use PDO;
 
 /**
@@ -28,7 +30,7 @@ class PermissionRequestRepository
      * @param string $userId Zitadel user ID making the request
      * @param string $userEmail User's email (for display in admin UI)
      * @param string $userName User's name (for display in admin UI)
-     * @param string $calendarType Type: 'national', 'diocesan', 'widerregion'
+     * @param CalendarType $calendarType Type of calendar
      * @param string $calendarId Calendar identifier
      * @param string|null $justification Reason for requesting access
      * @param string|null $credentials User's credentials/affiliation
@@ -38,7 +40,7 @@ class PermissionRequestRepository
         string $userId,
         string $userEmail,
         string $userName,
-        string $calendarType,
+        CalendarType $calendarType,
         string $calendarId,
         ?string $justification = null,
         ?string $credentials = null
@@ -54,7 +56,7 @@ class PermissionRequestRepository
             'user_id'       => $userId,
             'user_email'    => $userEmail,
             'user_name'     => $userName,
-            'calendar_type' => $calendarType,
+            'calendar_type' => $calendarType->value,
             'calendar_id'   => $calendarId,
             'justification' => $justification,
             'credentials'   => $credentials,
@@ -165,17 +167,24 @@ class PermissionRequestRepository
             }
 
             // Validate required fields
-            $zitadelUserId = isset($request['zitadel_user_id']) && is_string($request['zitadel_user_id'])
+            $zitadelUserId   = isset($request['zitadel_user_id']) && is_string($request['zitadel_user_id'])
                 ? $request['zitadel_user_id']
                 : null;
-            $calendarType  = isset($request['calendar_type']) && is_string($request['calendar_type'])
+            $calendarTypeStr = isset($request['calendar_type']) && is_string($request['calendar_type'])
                 ? $request['calendar_type']
                 : null;
-            $calendarId    = isset($request['calendar_id']) && is_string($request['calendar_id'])
+            $calendarId      = isset($request['calendar_id']) && is_string($request['calendar_id'])
                 ? $request['calendar_id']
                 : null;
 
-            if ($zitadelUserId === null || $calendarType === null || $calendarId === null) {
+            if ($zitadelUserId === null || $calendarTypeStr === null || $calendarId === null) {
+                $this->db->rollBack();
+                return false;
+            }
+
+            // Convert string to enum
+            $calendarType = CalendarType::tryFrom($calendarTypeStr);
+            if ($calendarType === null) {
                 $this->db->rollBack();
                 return false;
             }
@@ -186,7 +195,7 @@ class PermissionRequestRepository
                 $zitadelUserId,
                 $calendarType,
                 $calendarId,
-                'write',
+                PermissionLevel::WRITE,
                 $reviewedBy
             );
 
@@ -230,11 +239,11 @@ class PermissionRequestRepository
      * Check if a user has a pending request for a specific calendar.
      *
      * @param string $userId Zitadel user ID
-     * @param string $calendarType Type: 'national', 'diocesan', 'widerregion'
+     * @param CalendarType $calendarType Type of calendar
      * @param string $calendarId Calendar identifier
      * @return bool True if a pending request exists
      */
-    public function hasPendingRequest(string $userId, string $calendarType, string $calendarId): bool
+    public function hasPendingRequest(string $userId, CalendarType $calendarType, string $calendarId): bool
     {
         $stmt = $this->db->prepare(
             "SELECT 1 FROM permission_requests
@@ -246,7 +255,7 @@ class PermissionRequestRepository
 
         $stmt->execute([
             'user_id'       => $userId,
-            'calendar_type' => $calendarType,
+            'calendar_type' => $calendarType->value,
             'calendar_id'   => $calendarId,
         ]);
 

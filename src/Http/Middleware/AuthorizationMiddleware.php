@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace LiturgicalCalendar\Api\Http\Middleware;
 
+use LiturgicalCalendar\Api\Enum\CalendarType;
+use LiturgicalCalendar\Api\Enum\PermissionLevel;
 use LiturgicalCalendar\Api\Http\Exception\ForbiddenException;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Repositories\CalendarPermissionRepository;
@@ -33,7 +35,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
     /**
      * Calendar type for permission check (null = no calendar check).
      */
-    private ?string $calendarType;
+    private ?CalendarType $calendarType;
 
     /**
      * Request attribute name for calendar ID.
@@ -43,23 +45,23 @@ class AuthorizationMiddleware implements MiddlewareInterface
     /**
      * Permission level required.
      */
-    private string $permissionLevel;
+    private PermissionLevel $permissionLevel;
 
     /**
      * Create authorization middleware.
      *
      * @param CalendarPermissionRepository $permissionRepo Permission repository
      * @param string $requiredRole Required Zitadel role (e.g., 'calendar_editor')
-     * @param string|null $calendarType Calendar type for permission check (null = no check)
+     * @param CalendarType|null $calendarType Calendar type for permission check (null = no check)
      * @param string $calendarIdAttribute Request attribute name containing calendar ID
-     * @param string $permissionLevel Required permission level ('read' or 'write')
+     * @param PermissionLevel $permissionLevel Required permission level
      */
     public function __construct(
         CalendarPermissionRepository $permissionRepo,
         string $requiredRole,
-        ?string $calendarType = null,
+        ?CalendarType $calendarType = null,
         string $calendarIdAttribute = 'calendar_id',
-        string $permissionLevel = 'write'
+        PermissionLevel $permissionLevel = PermissionLevel::WRITE
     ) {
         $this->permissionRepo      = $permissionRepo;
         $this->requiredRole        = $requiredRole;
@@ -122,8 +124,8 @@ class AuthorizationMiddleware implements MiddlewareInterface
                     throw new ForbiddenException(
                         sprintf(
                             'No %s permission for %s calendar: %s',
-                            $this->permissionLevel,
-                            $this->calendarType,
+                            $this->permissionLevel->value,
+                            $this->calendarType->value,
                             $calendarId
                         )
                     );
@@ -175,19 +177,19 @@ class AuthorizationMiddleware implements MiddlewareInterface
      * Create middleware for calendar editor role with calendar permission.
      *
      * @param CalendarPermissionRepository $permissionRepo Permission repository
-     * @param string $calendarType Calendar type (national, diocesan, widerregion)
+     * @param CalendarType $calendarType Calendar type
      * @return self Configured middleware instance
      */
     public static function forCalendarEditor(
         CalendarPermissionRepository $permissionRepo,
-        string $calendarType
+        CalendarType $calendarType
     ): self {
         return new self(
             $permissionRepo,
             'calendar_editor',
             $calendarType,
             'calendar_id',
-            'write'
+            PermissionLevel::WRITE
         );
     }
 
@@ -204,7 +206,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
             'developer',
             null,
             'calendar_id',
-            'read'
+            PermissionLevel::READ
         );
     }
 
@@ -221,7 +223,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
             'test_editor',
             null,
             'calendar_id',
-            'write'
+            PermissionLevel::WRITE
         );
     }
 
@@ -238,7 +240,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
             'admin',
             null,
             'calendar_id',
-            'write'
+            PermissionLevel::WRITE
         );
     }
 }

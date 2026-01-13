@@ -8,7 +8,9 @@ use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Enum\CacheDuration;
+use LiturgicalCalendar\Api\Enum\CalendarType;
 use LiturgicalCalendar\Api\Enum\PathCategory;
+use LiturgicalCalendar\Api\Enum\PermissionLevel;
 use LiturgicalCalendar\Api\Handlers\CalendarHandler;
 use LiturgicalCalendar\Api\Handlers\EasterHandler;
 use LiturgicalCalendar\Api\Handlers\EventsHandler;
@@ -464,10 +466,10 @@ class Router
                     $calendarType = null;
                     if ($route === 'data' && count($requestPathParts) >= 2) {
                         $calendarType = match ($requestPathParts[0]) {
-                            PathCategory::NATION->value     => 'national',
-                            PathCategory::DIOCESE->value    => 'diocesan',
-                            PathCategory::WIDERREGION->value => 'widerregion',
-                            default                         => null
+                            PathCategory::NATION->value      => CalendarType::NATIONAL,
+                            PathCategory::DIOCESE->value     => CalendarType::DIOCESAN,
+                            PathCategory::WIDERREGION->value => CalendarType::WIDERREGION,
+                            default                          => null
                         };
 
                         // Set calendar_id attribute for AuthorizationMiddleware
@@ -480,7 +482,7 @@ class Router
                             'calendar_editor',
                             $calendarType,
                             'calendar_id',
-                            'write'
+                            PermissionLevel::WRITE
                         ));
                     } elseif ($route === 'tests') {
                         $pipeline->pipe(AuthorizationMiddleware::forTestEditor($permissionRepo));
