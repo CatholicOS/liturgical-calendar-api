@@ -10,6 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * API Key Middleware for optional API key authentication.
@@ -27,19 +28,23 @@ class ApiKeyMiddleware implements MiddlewareInterface
 {
     private ApiKeyRepository $apiKeyRepo;
     private ?AuditLogRepository $auditRepo;
+    private ?LoggerInterface $logger;
 
     /**
      * Create API key middleware.
      *
      * @param ApiKeyRepository $apiKeyRepo API key repository
      * @param AuditLogRepository|null $auditRepo Optional audit log repository
+     * @param LoggerInterface|null $logger Optional logger for deprecation warnings
      */
     public function __construct(
         ApiKeyRepository $apiKeyRepo,
-        ?AuditLogRepository $auditRepo = null
+        ?AuditLogRepository $auditRepo = null,
+        ?LoggerInterface $logger = null
     ) {
         $this->apiKeyRepo = $apiKeyRepo;
         $this->auditRepo  = $auditRepo;
+        $this->logger     = $logger;
     }
 
     /**
@@ -119,9 +124,22 @@ class ApiKeyMiddleware implements MiddlewareInterface
             return $headerKey;
         }
 
-        // 2. Check query parameter (fallback)
+        // 2. Check query parameter (fallback - deprecated)
         $queryParams = $request->getQueryParams();
         if (isset($queryParams['api_key']) && is_string($queryParams['api_key']) && !empty($queryParams['api_key'])) {
+            // Log deprecation warning - query parameter API keys are less secure
+            // as they may appear in server logs, browser history, and referrer headers
+            if ($this->logger !== null) {
+                $this->logger->warning(
+                    'API key provided via query parameter (deprecated). ' .
+                    'Use X-Api-Key header instead for improved security.',
+                    [
+                        'path'       => $request->getUri()->getPath(),
+                        'method'     => $request->getMethod(),
+                        'ip_address' => $this->getClientIp($request),
+                    ]
+                );
+            }
             return $queryParams['api_key'];
         }
 
