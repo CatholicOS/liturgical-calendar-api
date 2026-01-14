@@ -114,6 +114,9 @@ class Connection
                 PDO::ATTR_TIMEOUT            => 5,
             ]);
 
+            // Set session timezone for consistent date/time operations
+            $pdo->exec("SET timezone TO 'Europe/Vatican'");
+
             return $pdo;
         } catch (PDOException $e) {
             throw new RuntimeException(
