@@ -412,10 +412,41 @@ class ZitadelService
     }
 
     /**
+     * Update roles in an existing grant.
+     *
+     * Uses PUT to replace the roles array in a grant.
+     *
+     * @param string $userId Zitadel user ID
+     * @param string $grantId Grant ID
+     * @param array<string> $roles New roles array
+     * @return bool True if successful
+     */
+    public function updateGrant(string $userId, string $grantId, array $roles): bool
+    {
+        try {
+            $this->httpClient->put("/management/v1/users/{$userId}/grants/{$grantId}", [
+                'headers' => $this->getAuthHeaders(),
+                'json'    => ['roleKeys' => $roles],
+            ]);
+
+            return true;
+        } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to update grant in Zitadel', [
+                'userId'  => $userId,
+                'grantId' => $grantId,
+                'roles'   => $roles,
+                'error'   => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Revoke a specific role from a user.
      *
-     * Finds the grant containing the role and revokes it.
-     * Note: This revokes the entire grant, which may contain multiple roles.
+     * Finds the grant containing the role and either:
+     * - Updates the grant with remaining roles (if multiple roles exist)
+     * - Revokes the entire grant (if this is the only role)
      *
      * @param string $userId Zitadel user ID
      * @param string $role Role to revoke
@@ -428,7 +459,18 @@ class ZitadelService
 
         foreach ($grants as $grant) {
             if (in_array($role, $grant['roles'], true)) {
-                return $this->revokeGrant($userId, $grant['grantId']);
+                $remainingRoles = array_values(array_filter(
+                    $grant['roles'],
+                    fn(string $r): bool => $r !== $role
+                ));
+
+                // If this was the only role, revoke the entire grant
+                if (empty($remainingRoles)) {
+                    return $this->revokeGrant($userId, $grant['grantId']);
+                }
+
+                // Otherwise, update the grant with remaining roles
+                return $this->updateGrant($userId, $grant['grantId'], $remainingRoles);
             }
         }
 
