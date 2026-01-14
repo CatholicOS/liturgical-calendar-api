@@ -235,6 +235,13 @@ class AuthorizationMiddleware implements MiddlewareInterface
     /**
      * Create middleware for admin-only access.
      *
+     * Note: In process(), admin users bypass all checks (line 100-102) before
+     * the role check happens. This means the middleware would never throw
+     * ForbiddenException for missing role since admins always pass. This is
+     * intentional: by requiring the 'admin' role, non-admin users are blocked
+     * at line 105-109, while admin users pass via the bypass at line 100-102.
+     * The factory effectively ensures only admins can access protected endpoints.
+     *
      * @param CalendarPermissionRepository $permissionRepo Permission repository
      * @return self Configured middleware instance
      */
