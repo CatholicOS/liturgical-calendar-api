@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS role_requests (
     reviewed_by VARCHAR(255),              -- Admin's Zitadel user ID
     review_notes TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    reviewed_at TIMESTAMP
+    reviewed_at TIMESTAMP,
+    CONSTRAINT chk_requested_role CHECK (requested_role IN ('developer', 'calendar_editor', 'test_editor')),
+    CONSTRAINT chk_role_request_status CHECK (status IN ('pending', 'approved', 'rejected'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_role_requests_status ON role_requests(status);
@@ -36,7 +38,9 @@ CREATE TABLE IF NOT EXISTS user_calendar_permissions (
     permission VARCHAR(10) NOT NULL,        -- 'read', 'write'
     granted_by VARCHAR(255),                -- Zitadel user ID of admin who granted
     granted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(zitadel_user_id, calendar_type, calendar_id, permission)
+    UNIQUE(zitadel_user_id, calendar_type, calendar_id, permission),
+    CONSTRAINT chk_calendar_type CHECK (calendar_type IN ('national', 'diocesan', 'widerregion')),
+    CONSTRAINT chk_permission CHECK (permission IN ('read', 'write'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_calendar_perms ON user_calendar_permissions(zitadel_user_id, calendar_type);
@@ -55,7 +59,9 @@ CREATE TABLE IF NOT EXISTS permission_requests (
     reviewed_by VARCHAR(255),
     review_notes TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    reviewed_at TIMESTAMP
+    reviewed_at TIMESTAMP,
+    CONSTRAINT chk_perm_req_calendar_type CHECK (calendar_type IN ('national', 'diocesan', 'widerregion')),
+    CONSTRAINT chk_perm_req_status CHECK (status IN ('pending', 'approved', 'rejected'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_permission_requests_status ON permission_requests(status);
@@ -87,7 +93,9 @@ CREATE TABLE IF NOT EXISTS api_keys (
     is_active BOOLEAN DEFAULT TRUE,
     last_used_at TIMESTAMP,
     expires_at TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_scope CHECK (scope IN ('read', 'write')),
+    CONSTRAINT chk_rate_limit CHECK (rate_limit_per_hour > 0)
 );
 
 CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
