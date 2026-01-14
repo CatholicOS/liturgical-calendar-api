@@ -265,11 +265,13 @@ class ApiKeyRepository
             // Revoke old key
             $this->revoke($keyId, $userId);
 
-            // Generate new key with same settings
+            // Generate new key with same settings (using Europe/Vatican timezone for consistency)
             $expiresAtValue = $oldKey['expires_at'];
-            $expiresAt      = is_string($expiresAtValue)
-                ? new \DateTimeImmutable($expiresAtValue)
-                : null;
+            $expiresAt      = null;
+            if (is_string($expiresAtValue)) {
+                $tz        = new \DateTimeZone('Europe/Vatican');
+                $expiresAt = new \DateTimeImmutable($expiresAtValue, $tz);
+            }
 
             $applicationId = $oldKey['application_id'];
             $oldName       = is_string($oldKey['name']) ? $oldKey['name'] : null;
