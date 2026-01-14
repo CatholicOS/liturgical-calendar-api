@@ -116,7 +116,7 @@ class AuditLogRepository
             'action'        => $action,
             'resource_type' => $resourceType,
             'resource_id'   => $resourceId,
-            'details'       => $details !== null ? json_encode($details) : null,
+            'details'       => $details !== null ? ( json_encode($details) ?: null ) : null,
             'ip_address'    => $ipAddress,
             'user_agent'    => $userAgent,
             'success'       => $success ? 'true' : 'false',
