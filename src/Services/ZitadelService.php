@@ -54,10 +54,11 @@ class ZitadelService
     /**
      * Create service from environment variables.
      *
+     * @param LoggerInterface|null $logger Optional logger for error logging
      * @return self
      * @throws \RuntimeException If required environment variables are missing
      */
-    public static function fromEnv(): self
+    public static function fromEnv(?LoggerInterface $logger = null): self
     {
         $issuer       = getenv('ZITADEL_ISSUER');
         $projectId    = getenv('ZITADEL_PROJECT_ID');
@@ -69,7 +70,7 @@ class ZitadelService
             );
         }
 
-        return new self($issuer, $projectId, $machineToken);
+        return new self($issuer, $projectId, $machineToken, $logger);
     }
 
     /**
