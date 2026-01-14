@@ -28,6 +28,16 @@ class ZitadelService
     private ?array $discoveryDocument = null;
 
     /**
+     * Timestamp when discovery document was fetched.
+     */
+    private ?int $discoveryFetchedAt = null;
+
+    /**
+     * TTL for cached discovery document (1 hour).
+     */
+    private const DISCOVERY_TTL_SECONDS = 3600;
+
+    /**
      * Create Zitadel service.
      *
      * @param string $issuer Zitadel issuer URL
@@ -479,8 +489,11 @@ class ZitadelService
      */
     public function getDiscoveryDocument(): ?array
     {
-        if ($this->discoveryDocument !== null) {
-            return $this->discoveryDocument;
+        // Return cached document if still valid
+        if ($this->discoveryDocument !== null && $this->discoveryFetchedAt !== null) {
+            if (time() - $this->discoveryFetchedAt < self::DISCOVERY_TTL_SECONDS) {
+                return $this->discoveryDocument;
+            }
         }
 
         try {
@@ -488,7 +501,8 @@ class ZitadelService
             $data     = json_decode($response->getBody()->getContents(), true);
             if (is_array($data)) {
                 /** @var array<string, mixed> $data */
-                $this->discoveryDocument = $data;
+                $this->discoveryDocument  = $data;
+                $this->discoveryFetchedAt = time();
             }
             return $this->discoveryDocument;
         } catch (GuzzleException $e) {
