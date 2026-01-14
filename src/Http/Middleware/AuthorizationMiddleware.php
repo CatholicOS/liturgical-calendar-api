@@ -196,11 +196,16 @@ class AuthorizationMiddleware implements MiddlewareInterface
     /**
      * Create middleware for developer role.
      *
+     * Developers only need the Zitadel role, not calendar-specific permissions.
+     * The permission level is unused since calendarType is null.
+     *
      * @param CalendarPermissionRepository $permissionRepo Permission repository
      * @return self Configured middleware instance
      */
     public static function forDeveloper(CalendarPermissionRepository $permissionRepo): self
     {
+        // calendarType=null means no calendar permission check is performed,
+        // so the permission level parameter is unused (role check only)
         return new self(
             $permissionRepo,
             'developer',
