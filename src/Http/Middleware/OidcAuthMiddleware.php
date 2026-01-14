@@ -68,10 +68,14 @@ class OidcAuthMiddleware implements MiddlewareInterface
      */
     public static function fromEnv(): self
     {
-        $issuer   = getenv('ZITADEL_ISSUER');
-        $clientId = getenv('ZITADEL_CLIENT_ID');
+        // Check both getenv() and $_ENV since Dotenv may not always populate putenv()
+        $issuerEnv   = getenv('ZITADEL_ISSUER') ?: ( $_ENV['ZITADEL_ISSUER'] ?? '' );
+        $clientIdEnv = getenv('ZITADEL_CLIENT_ID') ?: ( $_ENV['ZITADEL_CLIENT_ID'] ?? '' );
 
-        if ($issuer === false || $clientId === false) {
+        $issuer   = is_string($issuerEnv) ? $issuerEnv : '';
+        $clientId = is_string($clientIdEnv) ? $clientIdEnv : '';
+
+        if (empty($issuer) || empty($clientId)) {
             throw new \RuntimeException(
                 'Missing required environment variables: ZITADEL_ISSUER, ZITADEL_CLIENT_ID'
             );
@@ -90,6 +94,11 @@ class OidcAuthMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        // Skip authentication for OPTIONS preflight requests (CORS)
+        if ($request->getMethod() === 'OPTIONS') {
+            return $handler->handle($request);
+        }
+
         $token = $this->extractToken($request);
 
         if ($token === null) {

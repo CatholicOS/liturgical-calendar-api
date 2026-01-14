@@ -52,6 +52,21 @@ class ZitadelService
     }
 
     /**
+     * Check if Zitadel service is configured.
+     *
+     * @return bool True if required environment variables are set
+     */
+    public static function isConfigured(): bool
+    {
+        // Check both getenv() and $_ENV since Dotenv may not always populate putenv()
+        $issuer    = getenv('ZITADEL_ISSUER') ?: ( $_ENV['ZITADEL_ISSUER'] ?? '' );
+        $projectId = getenv('ZITADEL_PROJECT_ID') ?: ( $_ENV['ZITADEL_PROJECT_ID'] ?? '' );
+        $token     = getenv('ZITADEL_MACHINE_TOKEN') ?: ( $_ENV['ZITADEL_MACHINE_TOKEN'] ?? '' );
+
+        return !empty($issuer) && !empty($projectId) && !empty($token);
+    }
+
+    /**
      * Create service from environment variables.
      *
      * @param LoggerInterface|null $logger Optional logger for error logging
@@ -60,11 +75,16 @@ class ZitadelService
      */
     public static function fromEnv(?LoggerInterface $logger = null): self
     {
-        $issuer       = getenv('ZITADEL_ISSUER');
-        $projectId    = getenv('ZITADEL_PROJECT_ID');
-        $machineToken = getenv('ZITADEL_MACHINE_TOKEN') ?: null;
+        // Check both getenv() and $_ENV since Dotenv may not always populate putenv()
+        $issuerEnv       = getenv('ZITADEL_ISSUER') ?: ( $_ENV['ZITADEL_ISSUER'] ?? '' );
+        $projectIdEnv    = getenv('ZITADEL_PROJECT_ID') ?: ( $_ENV['ZITADEL_PROJECT_ID'] ?? '' );
+        $machineTokenEnv = getenv('ZITADEL_MACHINE_TOKEN') ?: ( $_ENV['ZITADEL_MACHINE_TOKEN'] ?? null );
 
-        if ($issuer === false || $projectId === false) {
+        $issuer       = is_string($issuerEnv) ? $issuerEnv : '';
+        $projectId    = is_string($projectIdEnv) ? $projectIdEnv : '';
+        $machineToken = is_string($machineTokenEnv) ? $machineTokenEnv : null;
+
+        if (empty($issuer) || empty($projectId)) {
             throw new \RuntimeException(
                 'Missing required environment variables: ZITADEL_ISSUER, ZITADEL_PROJECT_ID'
             );
@@ -160,6 +180,18 @@ class ZitadelService
     }
 
     /**
+     * Assign a role to a user (alias for grantRole).
+     *
+     * @param string $userId Zitadel user ID
+     * @param string $role Role name to assign
+     * @return bool True if successful
+     */
+    public function assignUserRole(string $userId, string $role): bool
+    {
+        return $this->grantRole($userId, $role);
+    }
+
+    /**
      * Grant a role to a user.
      *
      * @param string $userId Zitadel user ID
@@ -211,6 +243,191 @@ class ZitadelService
             ]);
             return false;
         }
+    }
+
+    /**
+     * List all user grants for the project.
+     *
+     * Returns users who have been granted roles in this project.
+     *
+     * @param int $limit Maximum number of results (default 100)
+     * @param int $offset Offset for pagination (default 0)
+     * @return array{users: array<int, array<string, mixed>>, total: int}
+     */
+    public function listProjectUsers(int $limit = 100, int $offset = 0): array
+    {
+        try {
+            $response = $this->httpClient->post('/management/v1/users/grants/_search', [
+                'headers' => $this->getAuthHeaders(),
+                'json'    => [
+                    'queries' => [
+                        [
+                            'projectIdQuery' => [
+                                'projectId' => $this->projectId,
+                            ],
+                        ],
+                    ],
+                    'limit'   => $limit,
+                    'offset'  => $offset,
+                ],
+            ]);
+
+            $data = json_decode($response->getBody()->getContents(), true);
+            if (!is_array($data)) {
+                return ['users' => [], 'total' => 0];
+            }
+
+            $grants  = $data['result'] ?? [];
+            $details = $data['details'] ?? [];
+            $total   = 0;
+            if (is_array($details) && isset($details['totalResult'])) {
+                $totalResult = $details['totalResult'];
+                $total       = is_int($totalResult) || is_string($totalResult) ? (int) $totalResult : 0;
+            }
+
+            if (!is_array($grants)) {
+                return ['users' => [], 'total' => 0];
+            }
+
+            // Group grants by user and include grant details
+            $usersMap = [];
+            foreach ($grants as $grant) {
+                if (!is_array($grant)) {
+                    continue;
+                }
+
+                $userId = $grant['userId'] ?? null;
+                if (!is_string($userId)) {
+                    continue;
+                }
+
+                if (!isset($usersMap[$userId])) {
+                    $usersMap[$userId] = [
+                        'userId'      => $userId,
+                        'username'    => $grant['userName'] ?? '',
+                        'email'       => $grant['email'] ?? '',
+                        'displayName' => $grant['displayName'] ?? '',
+                        'firstName'   => $grant['firstName'] ?? '',
+                        'lastName'    => $grant['lastName'] ?? '',
+                        'grants'      => [],
+                    ];
+                }
+
+                $grantId  = $grant['id'] ?? null;
+                $roleKeys = $grant['roleKeys'] ?? [];
+
+                if (is_string($grantId) && is_array($roleKeys)) {
+                    $usersMap[$userId]['grants'][] = [
+                        'grantId' => $grantId,
+                        'roles'   => array_values(array_filter($roleKeys, 'is_string')),
+                        'state'   => $grant['state'] ?? null,
+                    ];
+                }
+            }
+
+            /** @var array<int, array<string, mixed>> $users */
+            $users = array_values($usersMap);
+
+            return ['users' => $users, 'total' => $total];
+        } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to list project users from Zitadel', [
+                'projectId' => $this->projectId,
+                'error'     => $e->getMessage(),
+            ]);
+            return ['users' => [], 'total' => 0];
+        }
+    }
+
+    /**
+     * Get all grants for a specific user in the project.
+     *
+     * @param string $userId Zitadel user ID
+     * @return array<int, array{grantId: string, roles: array<string>, state: mixed}>
+     */
+    public function getUserGrantsWithIds(string $userId): array
+    {
+        try {
+            $response = $this->httpClient->post('/management/v1/users/grants/_search', [
+                'headers' => $this->getAuthHeaders(),
+                'json'    => [
+                    'queries' => [
+                        [
+                            'userIdQuery' => ['userId' => $userId],
+                        ],
+                        [
+                            'projectIdQuery' => [
+                                'projectId' => $this->projectId,
+                            ],
+                        ],
+                    ],
+                ],
+            ]);
+
+            $data = json_decode($response->getBody()->getContents(), true);
+            if (!is_array($data)) {
+                return [];
+            }
+
+            $grants = $data['result'] ?? [];
+            if (!is_array($grants)) {
+                return [];
+            }
+
+            $result = [];
+            foreach ($grants as $grant) {
+                if (!is_array($grant)) {
+                    continue;
+                }
+
+                $grantId  = $grant['id'] ?? null;
+                $roleKeys = $grant['roleKeys'] ?? [];
+
+                if (is_string($grantId) && is_array($roleKeys)) {
+                    $result[] = [
+                        'grantId' => $grantId,
+                        'roles'   => array_values(array_filter($roleKeys, 'is_string')),
+                        'state'   => $grant['state'] ?? null,
+                    ];
+                }
+            }
+
+            return $result;
+        } catch (GuzzleException $e) {
+            $this->logger?->warning('Failed to get user grants from Zitadel', [
+                'userId' => $userId,
+                'error'  => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Revoke a specific role from a user.
+     *
+     * Finds the grant containing the role and revokes it.
+     * Note: This revokes the entire grant, which may contain multiple roles.
+     *
+     * @param string $userId Zitadel user ID
+     * @param string $role Role to revoke
+     * @return bool True if successful
+     */
+    public function revokeUserRole(string $userId, string $role): bool
+    {
+        // Find the grant containing this role
+        $grants = $this->getUserGrantsWithIds($userId);
+
+        foreach ($grants as $grant) {
+            if (in_array($role, $grant['roles'], true)) {
+                return $this->revokeGrant($userId, $grant['grantId']);
+            }
+        }
+
+        $this->logger?->warning('Role not found for user in Zitadel', [
+            'userId' => $userId,
+            'role'   => $role,
+        ]);
+
+        return false;
     }
 
     /**

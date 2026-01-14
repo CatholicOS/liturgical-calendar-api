@@ -1,0 +1,276 @@
+<?php
+
+declare(strict_types=1);
+
+namespace LiturgicalCalendar\Api\Repositories;
+
+use LiturgicalCalendar\Api\Database\Connection;
+use PDO;
+
+/**
+ * Repository for managing role request workflow.
+ *
+ * Handles the lifecycle of role requests from creation
+ * through approval or rejection. When approved, roles
+ * are assigned in Zitadel via the Management API.
+ */
+class RoleRequestRepository
+{
+    private PDO $db;
+
+    /**
+     * Valid roles that can be requested.
+     */
+    public const VALID_ROLES = ['developer', 'calendar_editor', 'test_editor'];
+
+    public function __construct(?PDO $db = null)
+    {
+        $this->db = $db ?? Connection::getInstance();
+    }
+
+    /**
+     * Create a new role request.
+     *
+     * @param string $userId Zitadel user ID making the request
+     * @param string $userEmail User's email (for display in admin UI)
+     * @param string $userName User's name (for display in admin UI)
+     * @param string $requestedRole Role being requested
+     * @param string|null $justification Reason for requesting the role
+     * @return string The UUID of the created request
+     * @throws \InvalidArgumentException If the requested role is invalid
+     */
+    public function createRequest(
+        string $userId,
+        string $userEmail,
+        string $userName,
+        string $requestedRole,
+        ?string $justification = null
+    ): string {
+        if (!in_array($requestedRole, self::VALID_ROLES, true)) {
+            throw new \InvalidArgumentException(
+                sprintf('Invalid role: %s. Valid roles are: %s', $requestedRole, implode(', ', self::VALID_ROLES))
+            );
+        }
+
+        $stmt = $this->db->prepare(
+            'INSERT INTO role_requests
+                (zitadel_user_id, user_email, user_name, requested_role, justification)
+             VALUES (:user_id, :user_email, :user_name, :requested_role, :justification)
+             RETURNING id'
+        );
+
+        $stmt->execute([
+            'user_id'        => $userId,
+            'user_email'     => $userEmail,
+            'user_name'      => $userName,
+            'requested_role' => $requestedRole,
+            'justification'  => $justification,
+        ]);
+
+        $id = $stmt->fetchColumn();
+        return is_string($id) ? $id : '';
+    }
+
+    /**
+     * Get a role request by ID.
+     *
+     * @param string $id Request UUID
+     * @return array<string, mixed>|null The request data or null if not found
+     */
+    public function getById(string $id): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM role_requests WHERE id = :id'
+        );
+
+        $stmt->execute(['id' => $id]);
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch();
+
+        return is_array($result) ? $result : null;
+    }
+
+    /**
+     * Get all pending role requests.
+     *
+     * @return array<int, array<string, mixed>> List of pending requests
+     */
+    public function getPendingRequests(): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM role_requests
+             WHERE status = 'pending'
+             ORDER BY created_at ASC"
+        );
+
+        $stmt->execute();
+
+        /** @var array<int, array<string, mixed>> */
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get all requests for a specific user.
+     *
+     * @param string $userId Zitadel user ID
+     * @return array<int, array<string, mixed>> List of requests
+     */
+    public function getRequestsForUser(string $userId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM role_requests
+             WHERE zitadel_user_id = :user_id
+             ORDER BY created_at DESC'
+        );
+
+        $stmt->execute(['user_id' => $userId]);
+
+        /** @var array<int, array<string, mixed>> */
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Check if a user has a pending request for a specific role.
+     *
+     * @param string $userId Zitadel user ID
+     * @param string $role Role to check
+     * @return bool True if a pending request exists
+     */
+    public function hasPendingRequest(string $userId, string $role): bool
+    {
+        $stmt = $this->db->prepare(
+            "SELECT 1 FROM role_requests
+             WHERE zitadel_user_id = :user_id
+               AND requested_role = :role
+               AND status = 'pending'"
+        );
+
+        $stmt->execute([
+            'user_id' => $userId,
+            'role'    => $role,
+        ]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Check if a user has any approved role.
+     *
+     * @param string $userId Zitadel user ID
+     * @return bool True if user has at least one approved role request
+     */
+    public function hasApprovedRole(string $userId): bool
+    {
+        $stmt = $this->db->prepare(
+            "SELECT 1 FROM role_requests
+             WHERE zitadel_user_id = :user_id
+               AND status = 'approved'
+             LIMIT 1"
+        );
+
+        $stmt->execute(['user_id' => $userId]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /**
+     * Approve a role request.
+     *
+     * Note: This only updates the database. The caller is responsible
+     * for actually assigning the role in Zitadel via the Management API.
+     *
+     * @param string $requestId Request UUID
+     * @param string $reviewedBy Zitadel user ID of the admin approving
+     * @param string|null $notes Optional review notes
+     * @return array<string, mixed>|null The approved request data, or null if not found/already processed
+     */
+    public function approveRequest(string $requestId, string $reviewedBy, ?string $notes = null): ?array
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE role_requests
+             SET status = 'approved',
+                 reviewed_by = :reviewed_by,
+                 review_notes = :notes,
+                 reviewed_at = CURRENT_TIMESTAMP
+             WHERE id = :id AND status = 'pending'
+             RETURNING *"
+        );
+
+        $stmt->execute([
+            'id'          => $requestId,
+            'reviewed_by' => $reviewedBy,
+            'notes'       => $notes,
+        ]);
+
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch();
+
+        return is_array($result) ? $result : null;
+    }
+
+    /**
+     * Reject a role request.
+     *
+     * @param string $requestId Request UUID
+     * @param string $reviewedBy Zitadel user ID of the admin rejecting
+     * @param string|null $notes Reason for rejection
+     * @return bool True if rejected successfully
+     */
+    public function rejectRequest(string $requestId, string $reviewedBy, ?string $notes = null): bool
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE role_requests
+             SET status = 'rejected',
+                 reviewed_by = :reviewed_by,
+                 review_notes = :notes,
+                 reviewed_at = CURRENT_TIMESTAMP
+             WHERE id = :id AND status = 'pending'"
+        );
+
+        $stmt->execute([
+            'id'          => $requestId,
+            'reviewed_by' => $reviewedBy,
+            'notes'       => $notes,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Get counts of requests by status.
+     *
+     * @return array{pending: int, approved: int, rejected: int}
+     */
+    public function getRequestCounts(): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT status, COUNT(*) as count
+             FROM role_requests
+             GROUP BY status'
+        );
+
+        $stmt->execute();
+
+        $counts = [
+            'pending'  => 0,
+            'approved' => 0,
+            'rejected' => 0,
+        ];
+
+        while ($row = $stmt->fetch()) {
+            if (is_array($row) && isset($row['status'], $row['count'])) {
+                $statusValue = $row['status'];
+                $countValue  = $row['count'];
+                if (is_string($statusValue) && ( is_int($countValue) || is_string($countValue) )) {
+                    $status = $statusValue;
+                    $count  = (int) $countValue;
+                    if (isset($counts[$status])) {
+                        $counts[$status] = $count;
+                    }
+                }
+            }
+        }
+
+        return $counts;
+    }
+}

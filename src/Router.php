@@ -25,6 +25,10 @@ use LiturgicalCalendar\Api\Handlers\Auth\LoginHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\LogoutHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\MeHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\RefreshHandler;
+use LiturgicalCalendar\Api\Handlers\Auth\RoleRequestHandler;
+use LiturgicalCalendar\Api\Handlers\Admin\NotificationsHandler;
+use LiturgicalCalendar\Api\Handlers\Admin\RoleRequestAdminHandler;
+use LiturgicalCalendar\Api\Handlers\Admin\UsersHandler;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Middleware\AuthorizationMiddleware;
@@ -314,7 +318,7 @@ class Router
                 break;
             case 'auth':
                 // Handle authentication routes
-                if (count($requestPathParts) === 1) {
+                if (count($requestPathParts) >= 1) {
                     $authRoute = $requestPathParts[0];
                     if ($authRoute === 'login') {
                         $loginHandler  = new LoginHandler();
@@ -328,6 +332,44 @@ class Router
                     } elseif ($authRoute === 'me') {
                         $meHandler     = new MeHandler();
                         $this->handler = $meHandler;
+                    } elseif ($authRoute === 'role-requests') {
+                        // Role request routes for authenticated users
+                        // POST /auth/role-requests - Create new request
+                        // GET /auth/role-requests - Get user's own requests
+                        // GET /auth/role-requests/status - Check if user needs to request a role
+                        $roleRequestHandler = new RoleRequestHandler();
+                        $this->handler      = $roleRequestHandler;
+                    } else {
+                        $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
+                        $this->emitResponse();
+                    }
+                } else {
+                    $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
+                    $this->emitResponse();
+                }
+                break;
+            case 'admin':
+                // Handle admin routes
+                if (count($requestPathParts) >= 1) {
+                    $adminRoute = $requestPathParts[0];
+                    if ($adminRoute === 'role-requests') {
+                        // Admin role request management routes
+                        // GET /admin/role-requests - List all pending requests
+                        // POST /admin/role-requests/{id}/approve - Approve a request
+                        // POST /admin/role-requests/{id}/reject - Reject a request
+                        $roleRequestAdminHandler = new RoleRequestAdminHandler();
+                        $this->handler           = $roleRequestAdminHandler;
+                    } elseif ($adminRoute === 'notifications') {
+                        // Admin notifications route
+                        // GET /admin/notifications - Get counts of pending items
+                        $notificationsHandler = new NotificationsHandler();
+                        $this->handler        = $notificationsHandler;
+                    } elseif ($adminRoute === 'users') {
+                        // Admin users management routes
+                        // GET /admin/users - List all users with roles
+                        // DELETE /admin/users/{userId}/roles/{role} - Revoke a role
+                        $usersHandler  = new UsersHandler();
+                        $this->handler = $usersHandler;
                     } else {
                         $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
                         $this->emitResponse();
@@ -443,9 +485,20 @@ class Router
         $pipeline->pipe(new ErrorHandlingMiddleware($this->psr17Factory, self::$debug, $allowedOrigins)); // outermost middleware
         $pipeline->pipe(new LoggingMiddleware(self::$debug));
 
-        // Apply HTTPS enforcement middleware for auth routes in production
-        if ($route === 'auth') {
+        // Apply HTTPS enforcement middleware for auth and admin routes in production
+        if (in_array($route, ['auth', 'admin'], true)) {
             $pipeline->pipe(new HttpsEnforcementMiddleware());
+        }
+
+        // Apply OIDC authentication for role-requests routes (auth and admin)
+        // These routes need the oidc_user attribute set before the handler checks authentication
+        if (
+            ( $route === 'auth' && count($requestPathParts) >= 1 && $requestPathParts[0] === 'role-requests' )
+            || $route === 'admin'
+        ) {
+            if (self::isOidcConfigured()) {
+                $pipeline->pipe(OidcAuthMiddleware::fromEnv());
+            }
         }
 
         // Apply authentication middleware for protected routes
@@ -526,11 +579,11 @@ class Router
      */
     public static function isOidcConfigured(): bool
     {
-        $issuer   = getenv('ZITADEL_ISSUER');
-        $clientId = getenv('ZITADEL_CLIENT_ID');
+        // Check both getenv() and $_ENV since Dotenv may not always populate putenv()
+        $issuer   = getenv('ZITADEL_ISSUER') ?: ( $_ENV['ZITADEL_ISSUER'] ?? '' );
+        $clientId = getenv('ZITADEL_CLIENT_ID') ?: ( $_ENV['ZITADEL_CLIENT_ID'] ?? '' );
 
-        return $issuer !== false && !empty($issuer)
-            && $clientId !== false && !empty($clientId);
+        return !empty($issuer) && !empty($clientId);
     }
 
     private function retrieveRequest(): ServerRequestInterface
