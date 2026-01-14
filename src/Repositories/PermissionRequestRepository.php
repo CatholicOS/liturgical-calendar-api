@@ -131,10 +131,15 @@ class PermissionRequestRepository
      * @param int $requestId Request ID
      * @param string $reviewedBy Zitadel user ID of the admin approving
      * @param string|null $notes Optional review notes
+     * @param PermissionLevel $permissionLevel Permission level to grant (defaults to WRITE)
      * @return bool True if approved successfully
      */
-    public function approveRequest(int $requestId, string $reviewedBy, ?string $notes = null): bool
-    {
+    public function approveRequest(
+        int $requestId,
+        string $reviewedBy,
+        ?string $notes = null,
+        PermissionLevel $permissionLevel = PermissionLevel::WRITE
+    ): bool {
         $this->db->beginTransaction();
 
         try {
@@ -195,7 +200,7 @@ class PermissionRequestRepository
                 $zitadelUserId,
                 $calendarType,
                 $calendarId,
-                PermissionLevel::WRITE,
+                $permissionLevel,
                 $reviewedBy
             );
 
