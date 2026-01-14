@@ -138,6 +138,11 @@ class RoleRequestRepository
      */
     public function hasPendingRequest(string $userId, string $role): bool
     {
+        // Defense-in-depth: invalid roles can't have pending requests
+        if (!in_array($role, self::VALID_ROLES, true)) {
+            return false;
+        }
+
         $stmt = $this->db->prepare(
             "SELECT 1 FROM role_requests
              WHERE zitadel_user_id = :user_id
