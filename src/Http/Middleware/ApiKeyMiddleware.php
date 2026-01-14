@@ -66,8 +66,12 @@ class ApiKeyMiddleware implements MiddlewareInterface
         $keyInfo = $this->apiKeyRepo->validate($apiKey);
 
         if ($keyInfo === null) {
-            // Invalid key - continue without authentication
-            // Could optionally throw UnauthorizedException here
+            // Invalid key - log for abuse detection and continue without authentication
+            $this->logger?->info('Invalid API key provided', [
+                'path'       => $request->getUri()->getPath(),
+                'method'     => $request->getMethod(),
+                'ip_address' => $this->getClientIp($request),
+            ]);
             return $handler->handle($request);
         }
 
