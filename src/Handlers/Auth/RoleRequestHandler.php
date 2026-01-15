@@ -67,7 +67,7 @@ final class RoleRequestHandler extends AbstractHandler
         $response = $response->withHeader('Content-Type', $mime);
 
         // Check authentication via OIDC token in request attribute
-        /** @var array{sub?: string, email?: string, name?: string, roles?: array<string>}|null $oidcUser */
+        /** @var array{sub?: string, email?: string, name?: string, preferred_username?: string, roles?: array<string>}|null $oidcUser */
         $oidcUser = $request->getAttribute('oidc_user');
 
         if ($oidcUser === null) {
