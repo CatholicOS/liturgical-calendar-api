@@ -1,5 +1,9 @@
 -- Migration: Convert integer IDs to UUIDs
--- Requires pgcrypto extension: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- Requires pgcrypto extension (created in 001_create_rbac_tables.sql)
+-- Note: CREATE EXTENSION causes implicit commit, so it must be run before this migration
+
+-- Wrap all DDL changes in a transaction for atomic execution
+BEGIN;
 
 -- ============================================
 -- role_requests table
@@ -76,3 +80,5 @@ ALTER TABLE audit_log DROP CONSTRAINT IF EXISTS audit_log_pkey;
 ALTER TABLE audit_log DROP COLUMN IF EXISTS id;
 ALTER TABLE audit_log RENAME COLUMN uuid_id TO id;
 ALTER TABLE audit_log ADD PRIMARY KEY (id);
+
+COMMIT;
