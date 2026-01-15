@@ -168,6 +168,7 @@ final class UsersHandler extends AbstractHandler
         $success = $zitadel->revokeUserRole($userId, $role);
 
         if (!$success) {
+            $response = $response->withStatus(StatusCode::INTERNAL_SERVER_ERROR->value);
             return $this->encodeResponseBody($response, [
                 'success' => false,
                 'message' => 'Failed to revoke role in Zitadel',
