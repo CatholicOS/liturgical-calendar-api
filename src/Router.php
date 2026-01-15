@@ -552,6 +552,41 @@ class Router
             } else {
                 // Fall back to legacy JWT authentication
                 $pipeline->pipe(new JwtAuthMiddleware());
+
+                // Apply the same authorization middleware for JWT flow
+                // JwtAuthMiddleware now sets oidc_user attribute for compatibility
+                if (Connection::isConfigured()) {
+                    $permissionRepo = new CalendarPermissionRepository();
+
+                    // Determine required role and calendar type based on route
+                    $calendarType = null;
+                    if ($route === 'data' && count($requestPathParts) >= 2) {
+                        $calendarType = match ($requestPathParts[0]) {
+                            PathCategory::NATION->value      => CalendarType::NATIONAL,
+                            PathCategory::DIOCESE->value     => CalendarType::DIOCESAN,
+                            PathCategory::WIDERREGION->value => CalendarType::WIDERREGION,
+                            default                          => null
+                        };
+
+                        // Set calendar_id attribute for AuthorizationMiddleware
+                        $this->request = $this->request->withAttribute('calendar_id', $requestPathParts[1] ?? null);
+                    }
+
+                    if ($route === 'data') {
+                        $pipeline->pipe(new AuthorizationMiddleware(
+                            $permissionRepo,
+                            'calendar_editor',
+                            $calendarType,
+                            'calendar_id',
+                            PermissionLevel::WRITE
+                        ));
+                    } elseif ($route === 'tests') {
+                        $pipeline->pipe(AuthorizationMiddleware::forTestEditor($permissionRepo));
+                    } elseif ($route === 'temporale') {
+                        // Temporale requires admin role (General Roman Calendar)
+                        $pipeline->pipe(AuthorizationMiddleware::forAdmin($permissionRepo));
+                    }
+                }
             }
         }
 
