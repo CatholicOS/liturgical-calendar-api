@@ -102,12 +102,14 @@ final class RoleRequestAdminHandler extends AbstractHandler
         }
 
         // POST requires an action (approve/reject)
-        if (count($pathParts) < 4) {
+        $partCount = count($pathParts);
+        if ($partCount < 4) {
             throw new ValidationException('Invalid request path');
         }
 
-        $requestId = $pathParts[2];
-        $action    = $pathParts[3];
+        // Parse from the end to handle different route prefixes
+        $action    = $pathParts[$partCount - 1];
+        $requestId = $pathParts[$partCount - 2];
 
         // Validate UUID format
         if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $requestId)) {
