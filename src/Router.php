@@ -579,11 +579,7 @@ class Router
      */
     public static function isOidcConfigured(): bool
     {
-        // Check both getenv() and $_ENV since Dotenv may not always populate putenv()
-        $issuer   = getenv('ZITADEL_ISSUER') ?: ( $_ENV['ZITADEL_ISSUER'] ?? '' );
-        $clientId = getenv('ZITADEL_CLIENT_ID') ?: ( $_ENV['ZITADEL_CLIENT_ID'] ?? '' );
-
-        return !empty($issuer) && !empty($clientId);
+        return OidcAuthMiddleware::isConfigured();
     }
 
     private function retrieveRequest(): ServerRequestInterface

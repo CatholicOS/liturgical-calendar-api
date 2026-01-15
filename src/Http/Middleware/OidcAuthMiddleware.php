@@ -57,6 +57,20 @@ class OidcAuthMiddleware implements MiddlewareInterface
     }
 
     /**
+     * Check if OIDC authentication is configured.
+     *
+     * @return bool True if required environment variables are set
+     */
+    public static function isConfigured(): bool
+    {
+        // Check both getenv() and $_ENV since Dotenv may not always populate putenv()
+        $issuer   = getenv('ZITADEL_ISSUER') ?: ( $_ENV['ZITADEL_ISSUER'] ?? '' );
+        $clientId = getenv('ZITADEL_CLIENT_ID') ?: ( $_ENV['ZITADEL_CLIENT_ID'] ?? '' );
+
+        return !empty($issuer) && !empty($clientId);
+    }
+
+    /**
      * Create middleware from environment variables.
      *
      * Required environment variables:
