@@ -108,7 +108,9 @@ class OidcAuthMiddleware implements MiddlewareInterface
         try {
             $payload = $this->validateToken($token);
         } catch (\Exception $e) {
-            throw new UnauthorizedException('Invalid token: ' . $e->getMessage());
+            // Log full details for debugging, return generic message to client
+            error_log('OIDC token validation failed: ' . $e->getMessage());
+            throw new UnauthorizedException('Invalid or expired token');
         }
 
         // Validate issuer
