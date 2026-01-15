@@ -98,7 +98,7 @@ final class NotificationsHandler extends AbstractHandler
                     'user_email' => $req['user_email'] ?? '',
                     'role'       => $req['requested_role'] ?? '',
                     'created_at' => $req['created_at'] ?? '',
-                    'url'        => 'admin-role-requests.php',
+                    'url'        => '/admin/role-requests',
                 ];
             }
 
