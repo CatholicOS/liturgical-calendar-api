@@ -498,6 +498,11 @@ class Router
         ) {
             if (self::isOidcConfigured()) {
                 $pipeline->pipe(OidcAuthMiddleware::fromEnv());
+            } else {
+                // Admin and role-request routes require OIDC authentication for Zitadel integration
+                throw new ServiceUnavailableException(
+                    'OIDC authentication is not configured. Admin features require Zitadel integration.'
+                );
             }
         }
 
