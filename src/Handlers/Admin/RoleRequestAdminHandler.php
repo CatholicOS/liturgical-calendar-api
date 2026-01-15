@@ -167,42 +167,63 @@ final class RoleRequestAdminHandler extends AbstractHandler
         ?string $notes
     ): ResponseInterface {
         $repo = $this->getRepository();
+        $db   = Connection::getInstance();
 
-        // Approve in database
-        $approvedRequest = $repo->approveRequest($requestId, $adminId, $notes);
+        $db->beginTransaction();
 
-        if ($approvedRequest === null) {
-            throw new NotFoundException('Request not found or already processed');
-        }
+        try {
+            // Approve in database
+            $approvedRequest = $repo->approveRequest($requestId, $adminId, $notes);
 
-        // Assign role in Zitadel
-        $userIdValue   = $approvedRequest['zitadel_user_id'] ?? null;
-        $requestedRole = $approvedRequest['requested_role'] ?? null;
-        $userId        = is_string($userIdValue) ? $userIdValue : '';
-        $role          = is_string($requestedRole) ? $requestedRole : '';
-
-        $roleAssigned = false;
-        $zitadelError = null;
-
-        if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
-            try {
-                $zitadel = ZitadelService::fromEnv();
-                $zitadel->assignUserRole($userId, $role);
-                $roleAssigned = true;
-            } catch (\Exception $e) {
-                $zitadelError = $e->getMessage();
+            if ($approvedRequest === null) {
+                $db->rollBack();
+                throw new NotFoundException('Request not found or already processed');
             }
-        }
 
-        return $this->encodeResponseBody($response, [
-            'success'       => true,
-            'request'       => $approvedRequest,
-            'role_assigned' => $roleAssigned,
-            'zitadel_error' => $zitadelError,
-            'message'       => $roleAssigned
-                ? 'Request approved and role assigned in Zitadel'
-                : 'Request approved but role assignment failed. Please assign manually.',
-        ]);
+            // Assign role in Zitadel
+            $userIdValue   = $approvedRequest['zitadel_user_id'] ?? null;
+            $requestedRole = $approvedRequest['requested_role'] ?? null;
+            $userId        = is_string($userIdValue) ? $userIdValue : '';
+            $role          = is_string($requestedRole) ? $requestedRole : '';
+
+            $roleAssigned = false;
+            $zitadelError = null;
+
+            if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
+                try {
+                    $zitadel = ZitadelService::fromEnv();
+                    $zitadel->assignUserRole($userId, $role);
+                    $roleAssigned = true;
+                } catch (\Exception $e) {
+                    // Rollback database changes if Zitadel assignment fails
+                    $db->rollBack();
+                    throw new \RuntimeException(
+                        'Failed to assign role in Zitadel: ' . $e->getMessage(),
+                        0,
+                        $e
+                    );
+                }
+            }
+
+            $db->commit();
+
+            return $this->encodeResponseBody($response, [
+                'success'       => true,
+                'request'       => $approvedRequest,
+                'role_assigned' => $roleAssigned,
+                'zitadel_error' => $zitadelError,
+                'message'       => $roleAssigned
+                    ? 'Request approved and role assigned in Zitadel'
+                    : 'Request approved (Zitadel not configured)',
+            ]);
+        } catch (NotFoundException $e) {
+            throw $e;
+        } catch (\RuntimeException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
     }
 
     /**
