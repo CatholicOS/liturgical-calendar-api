@@ -25,6 +25,8 @@ class ApplicationRepository
     /**
      * Create a new application.
      *
+     * Applications are created with 'pending' status and must be approved by an admin.
+     *
      * @param string $userId Zitadel user ID of the owner
      * @param string $name Application name
      * @param string|null $description Application description
@@ -38,9 +40,9 @@ class ApplicationRepository
         ?string $website = null
     ): array {
         $stmt = $this->db->prepare(
-            'INSERT INTO applications (zitadel_user_id, name, description, website)
-             VALUES (:user_id, :name, :description, :website)
-             RETURNING id, uuid, name, description, website, is_active, created_at, updated_at'
+            'INSERT INTO applications (zitadel_user_id, name, description, website, status)
+             VALUES (:user_id, :name, :description, :website, :status)
+             RETURNING id, name, description, website, status, is_active, created_at, updated_at'
         );
 
         $stmt->execute([
@@ -48,6 +50,7 @@ class ApplicationRepository
             'name'        => $name,
             'description' => $description,
             'website'     => $website,
+            'status'      => 'pending',
         ]);
 
         /** @var array<string, mixed>|false $result */
@@ -67,9 +70,10 @@ class ApplicationRepository
     public function getByUuid(string $uuid): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT id, uuid, zitadel_user_id, name, description, website, is_active, created_at, updated_at
+            'SELECT id, zitadel_user_id, name, description, website, status,
+                    reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at
              FROM applications
-             WHERE uuid = :uuid'
+             WHERE id = :uuid'
         );
 
         $stmt->execute(['uuid' => $uuid]);
@@ -80,15 +84,16 @@ class ApplicationRepository
     }
 
     /**
-     * Get an application by ID.
+     * Get an application by ID (UUID).
      *
-     * @param int $id Application ID
+     * @param string $id Application ID (UUID)
      * @return array<string, mixed>|null The application or null if not found
      */
-    public function getById(int $id): ?array
+    public function getById(string $id): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT id, uuid, zitadel_user_id, name, description, website, is_active, created_at, updated_at
+            'SELECT id, zitadel_user_id, name, description, website, status,
+                    reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at
              FROM applications
              WHERE id = :id'
         );
@@ -109,7 +114,8 @@ class ApplicationRepository
     public function getByUser(string $userId): array
     {
         $stmt = $this->db->prepare(
-            'SELECT id, uuid, name, description, website, is_active, created_at, updated_at
+            'SELECT id, name, description, website, status,
+                    reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at
              FROM applications
              WHERE zitadel_user_id = :user_id
              ORDER BY created_at DESC'
@@ -124,7 +130,7 @@ class ApplicationRepository
     /**
      * Update an application.
      *
-     * @param string $uuid Application UUID
+     * @param string $uuid Application UUID (id)
      * @param string $userId Owner's Zitadel user ID (for authorization)
      * @param array<string, mixed> $data Fields to update (name, description, website)
      * @return array<string, mixed>|null Updated application or null if not found/unauthorized
@@ -133,7 +139,7 @@ class ApplicationRepository
     {
         $allowedFields = ['name', 'description', 'website'];
         $updates       = [];
-        $params        = ['uuid' => $uuid, 'user_id' => $userId];
+        $params        = ['id' => $uuid, 'user_id' => $userId];
 
         foreach ($allowedFields as $field) {
             if (array_key_exists($field, $data)) {
@@ -149,8 +155,8 @@ class ApplicationRepository
         $updates[] = 'updated_at = CURRENT_TIMESTAMP';
 
         $sql = sprintf(
-            'UPDATE applications SET %s WHERE uuid = :uuid AND zitadel_user_id = :user_id
-             RETURNING id, uuid, name, description, website, is_active, created_at, updated_at',
+            'UPDATE applications SET %s WHERE id = :id AND zitadel_user_id = :user_id
+             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at',
             implode(', ', $updates)
         );
 
@@ -168,7 +174,7 @@ class ApplicationRepository
      * This soft-deletes the application by setting is_active to false.
      * All associated API keys will also be invalidated.
      *
-     * @param string $uuid Application UUID
+     * @param string $uuid Application UUID (id)
      * @param string $userId Owner's Zitadel user ID (for authorization)
      * @return bool True if deactivated, false if not found/unauthorized
      */
@@ -177,10 +183,10 @@ class ApplicationRepository
         $stmt = $this->db->prepare(
             'UPDATE applications
              SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
-             WHERE uuid = :uuid AND zitadel_user_id = :user_id'
+             WHERE id = :id AND zitadel_user_id = :user_id'
         );
 
-        $stmt->execute(['uuid' => $uuid, 'user_id' => $userId]);
+        $stmt->execute(['id' => $uuid, 'user_id' => $userId]);
 
         return $stmt->rowCount() > 0;
     }
@@ -188,7 +194,7 @@ class ApplicationRepository
     /**
      * Reactivate an application.
      *
-     * @param string $uuid Application UUID
+     * @param string $uuid Application UUID (id)
      * @param string $userId Owner's Zitadel user ID (for authorization)
      * @return bool True if reactivated, false if not found/unauthorized
      */
@@ -197,10 +203,10 @@ class ApplicationRepository
         $stmt = $this->db->prepare(
             'UPDATE applications
              SET is_active = TRUE, updated_at = CURRENT_TIMESTAMP
-             WHERE uuid = :uuid AND zitadel_user_id = :user_id'
+             WHERE id = :id AND zitadel_user_id = :user_id'
         );
 
-        $stmt->execute(['uuid' => $uuid, 'user_id' => $userId]);
+        $stmt->execute(['id' => $uuid, 'user_id' => $userId]);
 
         return $stmt->rowCount() > 0;
     }
@@ -210,7 +216,7 @@ class ApplicationRepository
      *
      * This will cascade delete all associated API keys.
      *
-     * @param string $uuid Application UUID
+     * @param string $uuid Application UUID (id)
      * @param string $userId Owner's Zitadel user ID (for authorization)
      * @return bool True if deleted, false if not found/unauthorized
      */
@@ -218,10 +224,10 @@ class ApplicationRepository
     {
         $stmt = $this->db->prepare(
             'DELETE FROM applications
-             WHERE uuid = :uuid AND zitadel_user_id = :user_id'
+             WHERE id = :id AND zitadel_user_id = :user_id'
         );
 
-        $stmt->execute(['uuid' => $uuid, 'user_id' => $userId]);
+        $stmt->execute(['id' => $uuid, 'user_id' => $userId]);
 
         return $stmt->rowCount() > 0;
     }
@@ -229,7 +235,7 @@ class ApplicationRepository
     /**
      * Check if a user owns an application.
      *
-     * @param string $uuid Application UUID
+     * @param string $uuid Application UUID (id)
      * @param string $userId Zitadel user ID
      * @return bool True if the user owns the application
      */
@@ -237,10 +243,10 @@ class ApplicationRepository
     {
         $stmt = $this->db->prepare(
             'SELECT 1 FROM applications
-             WHERE uuid = :uuid AND zitadel_user_id = :user_id'
+             WHERE id = :id AND zitadel_user_id = :user_id'
         );
 
-        $stmt->execute(['uuid' => $uuid, 'user_id' => $userId]);
+        $stmt->execute(['id' => $uuid, 'user_id' => $userId]);
 
         return $stmt->fetchColumn() !== false;
     }
@@ -260,5 +266,238 @@ class ApplicationRepository
         $stmt->execute(['user_id' => $userId]);
 
         return (int) $stmt->fetchColumn();
+    }
+
+    // ========================================
+    // Admin Approval Methods
+    // ========================================
+
+    /**
+     * Get all pending applications awaiting review.
+     *
+     * @return array<int, array<string, mixed>> List of pending applications
+     */
+    public function getPendingApplications(): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website,
+                    a.status, a.is_active, a.created_at, a.updated_at
+             FROM applications a
+             WHERE a.status = :status
+             ORDER BY a.created_at ASC'
+        );
+
+        $stmt->execute(['status' => 'pending']);
+
+        /** @var array<int, array<string, mixed>> */
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get all applications with optional status filter.
+     *
+     * @param string|null $status Filter by status (pending, approved, rejected, revoked)
+     * @return array<int, array<string, mixed>> List of applications
+     */
+    public function getAllApplications(?string $status = null): array
+    {
+        if ($status !== null) {
+            $stmt = $this->db->prepare(
+                'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website,
+                        a.status, a.reviewed_by, a.review_notes, a.reviewed_at,
+                        a.is_active, a.created_at, a.updated_at
+                 FROM applications a
+                 WHERE a.status = :status
+                 ORDER BY a.created_at DESC'
+            );
+            $stmt->execute(['status' => $status]);
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website,
+                        a.status, a.reviewed_by, a.review_notes, a.reviewed_at,
+                        a.is_active, a.created_at, a.updated_at
+                 FROM applications a
+                 ORDER BY a.created_at DESC'
+            );
+            $stmt->execute();
+        }
+
+        /** @var array<int, array<string, mixed>> */
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Count pending applications.
+     *
+     * @return int Number of pending applications
+     */
+    public function countPendingApplications(): int
+    {
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM applications WHERE status = :status'
+        );
+
+        $stmt->execute(['status' => 'pending']);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Approve an application.
+     *
+     * @param string $uuid Application UUID
+     * @param string $adminId Admin's Zitadel user ID
+     * @param string|null $notes Optional approval notes
+     * @return array<string, mixed>|null Updated application or null if not found
+     */
+    public function approveApplication(string $uuid, string $adminId, ?string $notes = null): ?array
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE applications
+             SET status = :status,
+                 reviewed_by = :admin_id,
+                 review_notes = :notes,
+                 reviewed_at = CURRENT_TIMESTAMP,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :uuid AND status IN (:pending, :rejected)
+             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
+        );
+
+        $stmt->execute([
+            'uuid'     => $uuid,
+            'status'   => 'approved',
+            'admin_id' => $adminId,
+            'notes'    => $notes,
+            'pending'  => 'pending',
+            'rejected' => 'rejected',
+        ]);
+
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch();
+
+        return is_array($result) ? $result : null;
+    }
+
+    /**
+     * Reject an application.
+     *
+     * @param string $uuid Application UUID
+     * @param string $adminId Admin's Zitadel user ID
+     * @param string|null $notes Rejection reason/notes
+     * @return array<string, mixed>|null Updated application or null if not found
+     */
+    public function rejectApplication(string $uuid, string $adminId, ?string $notes = null): ?array
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE applications
+             SET status = :status,
+                 reviewed_by = :admin_id,
+                 review_notes = :notes,
+                 reviewed_at = CURRENT_TIMESTAMP,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :uuid AND status = :pending
+             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
+        );
+
+        $stmt->execute([
+            'uuid'     => $uuid,
+            'status'   => 'rejected',
+            'admin_id' => $adminId,
+            'notes'    => $notes,
+            'pending'  => 'pending',
+        ]);
+
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch();
+
+        return is_array($result) ? $result : null;
+    }
+
+    /**
+     * Revoke a previously approved application.
+     *
+     * @param string $uuid Application UUID
+     * @param string $adminId Admin's Zitadel user ID
+     * @param string|null $notes Revocation reason/notes
+     * @return array<string, mixed>|null Updated application or null if not found
+     */
+    public function revokeApplication(string $uuid, string $adminId, ?string $notes = null): ?array
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE applications
+             SET status = :status,
+                 reviewed_by = :admin_id,
+                 review_notes = :notes,
+                 reviewed_at = CURRENT_TIMESTAMP,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :uuid AND status = :approved
+             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
+        );
+
+        $stmt->execute([
+            'uuid'     => $uuid,
+            'status'   => 'revoked',
+            'admin_id' => $adminId,
+            'notes'    => $notes,
+            'approved' => 'approved',
+        ]);
+
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch();
+
+        return is_array($result) ? $result : null;
+    }
+
+    /**
+     * Resubmit a rejected application for review.
+     *
+     * Resets the status to 'pending' so the developer can request re-review.
+     *
+     * @param string $uuid Application UUID
+     * @param string $userId Owner's Zitadel user ID (for authorization)
+     * @return array<string, mixed>|null Updated application or null if not found/unauthorized
+     */
+    public function resubmitApplication(string $uuid, string $userId): ?array
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE applications
+             SET status = :new_status,
+                 review_notes = NULL,
+                 reviewed_by = NULL,
+                 reviewed_at = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :uuid AND zitadel_user_id = :user_id AND status = :rejected
+             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
+        );
+
+        $stmt->execute([
+            'uuid'       => $uuid,
+            'user_id'    => $userId,
+            'new_status' => 'pending',
+            'rejected'   => 'rejected',
+        ]);
+
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch();
+
+        return is_array($result) ? $result : null;
+    }
+
+    /**
+     * Check if an application is approved.
+     *
+     * @param string $uuid Application UUID
+     * @return bool True if the application is approved and active
+     */
+    public function isApproved(string $uuid): bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT 1 FROM applications
+             WHERE id = :uuid AND status = :status AND is_active = TRUE'
+        );
+
+        $stmt->execute(['uuid' => $uuid, 'status' => 'approved']);
+
+        return $stmt->fetchColumn() !== false;
     }
 }

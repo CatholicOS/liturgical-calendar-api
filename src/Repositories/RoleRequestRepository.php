@@ -242,9 +242,64 @@ class RoleRequestRepository
     }
 
     /**
+     * Revoke a previously approved role request.
+     *
+     * @param string $requestId Request UUID
+     * @param string $reviewedBy Zitadel user ID of the admin revoking
+     * @param string|null $notes Reason for revocation
+     * @return bool True if revoked successfully
+     */
+    public function revokeRequest(string $requestId, string $reviewedBy, ?string $notes = null): bool
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE role_requests
+             SET status = 'revoked',
+                 reviewed_by = :reviewed_by,
+                 review_notes = :notes,
+                 reviewed_at = CURRENT_TIMESTAMP
+             WHERE id = :id AND status = 'approved'"
+        );
+
+        $stmt->execute([
+            'id'          => $requestId,
+            'reviewed_by' => $reviewedBy,
+            'notes'       => $notes,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Get all role requests with optional status filter.
+     *
+     * @param string|null $status Filter by status (pending, approved, rejected, revoked)
+     * @return array<int, array<string, mixed>> List of requests
+     */
+    public function getAllRequests(?string $status = null): array
+    {
+        if ($status !== null) {
+            $stmt = $this->db->prepare(
+                'SELECT * FROM role_requests
+                 WHERE status = :status
+                 ORDER BY created_at DESC'
+            );
+            $stmt->execute(['status' => $status]);
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT * FROM role_requests
+                 ORDER BY created_at DESC'
+            );
+            $stmt->execute();
+        }
+
+        /** @var array<int, array<string, mixed>> */
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Get counts of requests by status.
      *
-     * @return array{pending: int, approved: int, rejected: int}
+     * @return array{pending: int, approved: int, rejected: int, revoked: int}
      */
     public function getRequestCounts(): array
     {
@@ -260,6 +315,7 @@ class RoleRequestRepository
             'pending'  => 0,
             'approved' => 0,
             'rejected' => 0,
+            'revoked'  => 0,
         ];
 
         while ($row = $stmt->fetch()) {

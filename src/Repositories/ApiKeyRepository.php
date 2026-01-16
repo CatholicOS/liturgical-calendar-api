@@ -35,7 +35,7 @@ class ApiKeyRepository
     /**
      * Generate a new API key for an application.
      *
-     * @param int $applicationId Application ID
+     * @param string $applicationId Application UUID
      * @param string|null $name Optional name for the key
      * @param string $scope Permission scope: 'read' or 'write'
      * @param int $rateLimitPerHour Rate limit per hour
@@ -43,7 +43,7 @@ class ApiKeyRepository
      * @return array{key: string, record: array<string, mixed>|false} Contains 'key' (plain text, show once) and 'record' (database record)
      */
     public function generate(
-        int $applicationId,
+        string $applicationId,
         ?string $name = null,
         string $scope = 'read',
         int $rateLimitPerHour = 1000,
@@ -96,8 +96,8 @@ class ApiKeyRepository
         $stmt = $this->db->prepare(
             'SELECT k.id, k.application_id, k.key_prefix, k.name, k.scope,
                     k.rate_limit_per_hour, k.is_active, k.last_used_at, k.expires_at,
-                    a.uuid AS app_uuid, a.name AS app_name, a.zitadel_user_id,
-                    a.is_active AS app_is_active
+                    a.id AS app_uuid, a.name AS app_name, a.zitadel_user_id,
+                    a.is_active AS app_is_active, a.status AS app_status
              FROM api_keys k
              JOIN applications a ON k.application_id = a.id
              WHERE k.key_hash = :key_hash'
@@ -111,8 +111,13 @@ class ApiKeyRepository
             return null;
         }
 
-        // Check if key is active
+        // Check if key and application are active, and application is approved
         if (empty($result['is_active']) || empty($result['app_is_active'])) {
+            return null;
+        }
+
+        // Check application status (only approved applications can use API keys)
+        if (!isset($result['app_status']) || $result['app_status'] !== 'approved') {
             return null;
         }
 
@@ -126,7 +131,7 @@ class ApiKeyRepository
         }
 
         // Update last used timestamp
-        if (isset($result['id']) && is_int($result['id'])) {
+        if (isset($result['id']) && is_string($result['id'])) {
             $this->updateLastUsed($result['id']);
         }
 
@@ -136,9 +141,9 @@ class ApiKeyRepository
     /**
      * Update the last_used_at timestamp for a key.
      *
-     * @param int $keyId Key ID
+     * @param string $keyId Key UUID
      */
-    private function updateLastUsed(int $keyId): void
+    private function updateLastUsed(string $keyId): void
     {
         $stmt = $this->db->prepare(
             'UPDATE api_keys SET last_used_at = CURRENT_TIMESTAMP WHERE id = :id'
@@ -149,10 +154,10 @@ class ApiKeyRepository
     /**
      * Get all keys for an application.
      *
-     * @param int $applicationId Application ID
+     * @param string $applicationId Application UUID
      * @return array<int, array<string, mixed>> List of keys (without hashes)
      */
-    public function getByApplication(int $applicationId): array
+    public function getByApplication(string $applicationId): array
     {
         $stmt = $this->db->prepare(
             'SELECT id, key_prefix, name, scope, rate_limit_per_hour, is_active,
@@ -171,10 +176,10 @@ class ApiKeyRepository
     /**
      * Get a key by ID.
      *
-     * @param int $id Key ID
+     * @param string $id Key UUID
      * @return array<string, mixed>|null Key details or null if not found
      */
-    public function getById(int $id): ?array
+    public function getById(string $id): ?array
     {
         $stmt = $this->db->prepare(
             'SELECT k.id, k.application_id, k.key_prefix, k.name, k.scope,
@@ -195,11 +200,11 @@ class ApiKeyRepository
     /**
      * Revoke (deactivate) an API key.
      *
-     * @param int $keyId Key ID
+     * @param string $keyId Key UUID
      * @param string $userId Owner's Zitadel user ID (for authorization)
      * @return bool True if revoked, false if not found/unauthorized
      */
-    public function revoke(int $keyId, string $userId): bool
+    public function revoke(string $keyId, string $userId): bool
     {
         $stmt = $this->db->prepare(
             'UPDATE api_keys k
@@ -218,11 +223,11 @@ class ApiKeyRepository
     /**
      * Delete an API key permanently.
      *
-     * @param int $keyId Key ID
+     * @param string $keyId Key UUID
      * @param string $userId Owner's Zitadel user ID (for authorization)
      * @return bool True if deleted, false if not found/unauthorized
      */
-    public function delete(int $keyId, string $userId): bool
+    public function delete(string $keyId, string $userId): bool
     {
         $stmt = $this->db->prepare(
             'DELETE FROM api_keys k
@@ -240,11 +245,11 @@ class ApiKeyRepository
     /**
      * Rotate an API key (revoke old, create new).
      *
-     * @param int $keyId Current key ID
+     * @param string $keyId Current key UUID
      * @param string $userId Owner's Zitadel user ID (for authorization)
      * @return array{key: string, record: array<string, mixed>|false}|null New key details or null if failed
      */
-    public function rotate(int $keyId, string $userId): ?array
+    public function rotate(string $keyId, string $userId): ?array
     {
         $oldKey = $this->getById($keyId);
 
@@ -253,7 +258,7 @@ class ApiKeyRepository
         }
 
         // Validate required fields before starting transaction
-        if (!isset($oldKey['application_id']) || !is_int($oldKey['application_id'])) {
+        if (!isset($oldKey['application_id']) || !is_string($oldKey['application_id'])) {
             throw new \InvalidArgumentException(
                 'Cannot rotate API key: missing or invalid application_id'
             );
@@ -298,10 +303,10 @@ class ApiKeyRepository
     /**
      * Count active keys for an application.
      *
-     * @param int $applicationId Application ID
+     * @param string $applicationId Application UUID
      * @return int Number of active keys
      */
-    public function countActiveByApplication(int $applicationId): int
+    public function countActiveByApplication(string $applicationId): int
     {
         $stmt = $this->db->prepare(
             'SELECT COUNT(*) FROM api_keys
@@ -316,10 +321,10 @@ class ApiKeyRepository
     /**
      * Get usage statistics for a key.
      *
-     * @param int $keyId Key ID
+     * @param string $keyId Key UUID
      * @return array<string, mixed> Usage statistics
      */
-    public function getUsageStats(int $keyId): array
+    public function getUsageStats(string $keyId): array
     {
         $key = $this->getById($keyId);
 

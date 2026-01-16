@@ -332,6 +332,17 @@ class OidcAuthMiddleware implements MiddlewareInterface
     }
 
     /**
+     * Check if a user has the developer role.
+     *
+     * @param array{roles?: array<string>} $oidcUser User array from request attribute
+     * @return bool True if user has developer role
+     */
+    public static function hasDeveloperRole(array $oidcUser): bool
+    {
+        return self::hasRole($oidcUser, 'developer');
+    }
+
+    /**
      * Reset all cached key sets (useful for testing).
      */
     public static function resetKeySetCache(): void

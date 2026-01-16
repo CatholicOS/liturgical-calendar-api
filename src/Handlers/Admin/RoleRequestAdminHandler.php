@@ -98,7 +98,7 @@ final class RoleRequestAdminHandler extends AbstractHandler
         // admin/role-requests/{id}/reject
 
         if ($method === RequestMethod::GET) {
-            return $this->listPendingRequests($response);
+            return $this->listRequests($request, $response);
         }
 
         // POST requires an action (approve/reject)
@@ -130,23 +130,65 @@ final class RoleRequestAdminHandler extends AbstractHandler
             return $this->rejectRequest($response, $requestId, $adminId, $notes);
         }
 
-        throw new ValidationException('Invalid action. Use "approve" or "reject"');
+        if ($action === 'revoke') {
+            return $this->revokeRequest($response, $requestId, $adminId, $notes);
+        }
+
+        throw new ValidationException('Invalid action. Use "approve", "reject", or "revoke"');
     }
 
     /**
-     * List all pending role requests.
+     * List role requests with optional status filter.
      *
+     * Query parameters:
+     * - status: Filter by status (pending, approved, rejected). If omitted, returns all.
+     *
+     * @param ServerRequestInterface $request
      * @param ResponseInterface $response
      * @return ResponseInterface
      */
-    private function listPendingRequests(ResponseInterface $response): ResponseInterface
-    {
-        $repo     = $this->getRepository();
-        $requests = $repo->getPendingRequests();
+    private function listRequests(
+        ServerRequestInterface $request,
+        ResponseInterface $response
+    ): ResponseInterface {
+        $repo         = $this->getRepository();
+        $queryParams  = $request->getQueryParams();
+        $statusFilter = isset($queryParams['status']) && is_string($queryParams['status'])
+            ? $queryParams['status']
+            : null;
+
+        // Validate status if provided
+        $validStatuses = ['pending', 'approved', 'rejected', 'revoked'];
+        if ($statusFilter !== null && !in_array($statusFilter, $validStatuses, true)) {
+            throw new ValidationException(
+                sprintf('Invalid status. Valid values are: %s', implode(', ', $validStatuses))
+            );
+        }
+
+        $requests = $repo->getAllRequests($statusFilter);
         $counts   = $repo->getRequestCounts();
 
+        // Group requests by status for frontend convenience
+        $grouped = [
+            'pending'  => [],
+            'approved' => [],
+            'rejected' => [],
+            'revoked'  => [],
+        ];
+
+        foreach ($requests as $req) {
+            $status = $req['status'] ?? 'pending';
+            if (is_string($status) && isset($grouped[$status])) {
+                $grouped[$status][] = $req;
+            }
+        }
+
         return $this->encodeResponseBody($response, [
-            'pending_requests' => $requests,
+            'requests'         => $requests,
+            'pending_requests' => $grouped['pending'],  // Backward compatibility
+            'approved'         => $grouped['approved'],
+            'rejected'         => $grouped['rejected'],
+            'revoked'          => $grouped['revoked'],
             'counts'           => $counts,
         ]);
     }
@@ -253,5 +295,95 @@ final class RoleRequestAdminHandler extends AbstractHandler
             'success' => true,
             'message' => 'Request rejected',
         ]);
+    }
+
+    /**
+     * Revoke a previously approved role request.
+     *
+     * This removes the role from Zitadel and marks the request as revoked.
+     *
+     * @param ResponseInterface $response
+     * @param string $requestId Request UUID
+     * @param string $adminId
+     * @param string|null $notes
+     * @return ResponseInterface
+     */
+    private function revokeRequest(
+        ResponseInterface $response,
+        string $requestId,
+        string $adminId,
+        ?string $notes
+    ): ResponseInterface {
+        $repo = $this->getRepository();
+        $db   = Connection::getInstance();
+
+        // First, get the request details before revoking
+        $requests      = $repo->getAllRequests('approved');
+        $targetRequest = null;
+        foreach ($requests as $req) {
+            if (( $req['id'] ?? '' ) === $requestId) {
+                $targetRequest = $req;
+                break;
+            }
+        }
+
+        if ($targetRequest === null) {
+            throw new NotFoundException('Approved request not found');
+        }
+
+        $db->beginTransaction();
+
+        try {
+            // Revoke in database
+            $revoked = $repo->revokeRequest($requestId, $adminId, $notes);
+
+            if (!$revoked) {
+                $db->rollBack();
+                throw new NotFoundException('Request not found or not in approved status');
+            }
+
+            // Remove role from Zitadel
+            $userIdValue   = $targetRequest['zitadel_user_id'] ?? null;
+            $requestedRole = $targetRequest['requested_role'] ?? null;
+            $userId        = is_string($userIdValue) ? $userIdValue : '';
+            $role          = is_string($requestedRole) ? $requestedRole : '';
+
+            $roleRemoved  = false;
+            $zitadelError = null;
+
+            if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
+                try {
+                    $zitadel = ZitadelService::fromEnv();
+                    $zitadel->revokeUserRole($userId, $role);
+                    $roleRemoved = true;
+                } catch (\Exception $e) {
+                    // Rollback database changes if Zitadel removal fails
+                    $db->rollBack();
+                    throw new \RuntimeException(
+                        'Failed to remove role in Zitadel: ' . $e->getMessage(),
+                        0,
+                        $e
+                    );
+                }
+            }
+
+            $db->commit();
+
+            return $this->encodeResponseBody($response, [
+                'success'       => true,
+                'role_removed'  => $roleRemoved,
+                'zitadel_error' => $zitadelError,
+                'message'       => $roleRemoved
+                    ? 'Request revoked and role removed from Zitadel'
+                    : 'Request revoked (Zitadel not configured)',
+            ]);
+        } catch (NotFoundException $e) {
+            throw $e;
+        } catch (\RuntimeException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
     }
 }

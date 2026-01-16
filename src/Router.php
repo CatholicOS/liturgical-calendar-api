@@ -26,9 +26,11 @@ use LiturgicalCalendar\Api\Handlers\Auth\LogoutHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\MeHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\RefreshHandler;
 use LiturgicalCalendar\Api\Handlers\Auth\RoleRequestHandler;
+use LiturgicalCalendar\Api\Handlers\Admin\ApplicationAdminHandler;
 use LiturgicalCalendar\Api\Handlers\Admin\NotificationsHandler;
 use LiturgicalCalendar\Api\Handlers\Admin\RoleRequestAdminHandler;
 use LiturgicalCalendar\Api\Handlers\Admin\UsersHandler;
+use LiturgicalCalendar\Api\Handlers\ApplicationsHandler;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ServiceUnavailableException;
 use LiturgicalCalendar\Api\Http\Middleware\AuthorizationMiddleware;
@@ -370,6 +372,16 @@ class Router
                         // DELETE /admin/users/{userId}/roles/{role} - Revoke a role
                         $usersHandler  = new UsersHandler();
                         $this->handler = $usersHandler;
+                    } elseif ($adminRoute === 'applications') {
+                        // Admin application management routes
+                        // GET /admin/applications - List all applications (optional status filter)
+                        // GET /admin/applications/pending - List pending applications
+                        // GET /admin/applications/{uuid} - Get single application details
+                        // POST /admin/applications/{uuid}/approve - Approve an application
+                        // POST /admin/applications/{uuid}/reject - Reject an application
+                        // POST /admin/applications/{uuid}/revoke - Revoke an approved application
+                        $applicationAdminHandler = new ApplicationAdminHandler();
+                        $this->handler           = $applicationAdminHandler;
                     } else {
                         $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
                         $this->emitResponse();
@@ -378,6 +390,20 @@ class Router
                     $this->response = new Response(StatusCode::NOT_FOUND->value, [], null, $this->request->getProtocolVersion(), StatusCode::NOT_FOUND->reason());
                     $this->emitResponse();
                 }
+                break;
+            case 'applications':
+                // Developer applications and API keys management
+                // GET /applications - List user's applications
+                // POST /applications - Create new application
+                // GET /applications/{uuid} - Get single application
+                // PATCH /applications/{uuid} - Update application
+                // DELETE /applications/{uuid} - Delete application
+                // GET /applications/{uuid}/keys - List keys for application
+                // POST /applications/{uuid}/keys - Generate new API key
+                // DELETE /applications/{uuid}/keys/{keyId} - Revoke/delete key
+                // POST /applications/{uuid}/keys/{keyId}/rotate - Rotate key
+                $applicationsHandler = new ApplicationsHandler();
+                $this->handler       = $applicationsHandler;
                 break;
             case 'data':
                 $regionalDataHandler = new RegionalDataHandler($requestPathParts);
@@ -485,23 +511,24 @@ class Router
         $pipeline->pipe(new ErrorHandlingMiddleware($this->psr17Factory, self::$debug, $allowedOrigins)); // outermost middleware
         $pipeline->pipe(new LoggingMiddleware(self::$debug));
 
-        // Apply HTTPS enforcement middleware for auth and admin routes in production
-        if (in_array($route, ['auth', 'admin'], true)) {
+        // Apply HTTPS enforcement middleware for auth, admin, and applications routes in production
+        if (in_array($route, ['auth', 'admin', 'applications'], true)) {
             $pipeline->pipe(new HttpsEnforcementMiddleware());
         }
 
-        // Apply OIDC authentication for role-requests routes (auth and admin)
+        // Apply OIDC authentication for role-requests routes (auth), admin, and applications
         // These routes need the oidc_user attribute set before the handler checks authentication
         if (
             ( $route === 'auth' && count($requestPathParts) >= 1 && $requestPathParts[0] === 'role-requests' )
             || $route === 'admin'
+            || $route === 'applications'
         ) {
             if (self::isOidcConfigured()) {
                 $pipeline->pipe(OidcAuthMiddleware::fromEnv());
             } else {
-                // Admin and role-request routes require OIDC authentication for Zitadel integration
+                // Admin, role-request, and applications routes require OIDC authentication
                 throw new ServiceUnavailableException(
-                    'OIDC authentication is not configured. Admin features require Zitadel integration.'
+                    'OIDC authentication is not configured. These features require Zitadel integration.'
                 );
             }
         }
