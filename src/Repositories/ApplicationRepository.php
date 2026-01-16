@@ -86,23 +86,14 @@ class ApplicationRepository
     /**
      * Get an application by ID (UUID).
      *
+     * Alias for getByUuid() to provide a consistent interface.
+     *
      * @param string $id Application ID (UUID)
      * @return array<string, mixed>|null The application or null if not found
      */
     public function getById(string $id): ?array
     {
-        $stmt = $this->db->prepare(
-            'SELECT id, zitadel_user_id, name, description, website, status,
-                    reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at
-             FROM applications
-             WHERE id = :id'
-        );
-
-        $stmt->execute(['id' => $id]);
-        /** @var array<string, mixed>|false $result */
-        $result = $stmt->fetch();
-
-        return is_array($result) ? $result : null;
+        return $this->getByUuid($id);
     }
 
     /**
