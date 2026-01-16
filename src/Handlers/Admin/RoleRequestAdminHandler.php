@@ -198,6 +198,10 @@ final class RoleRequestAdminHandler extends AbstractHandler
     /**
      * Approve a role request.
      *
+     * The database transaction is committed before calling Zitadel to avoid
+     * holding locks during external API calls. If Zitadel sync fails, the
+     * request remains approved but with a 'failed' sync status for retry.
+     *
      * @param ResponseInterface $response
      * @param string $requestId Request UUID
      * @param string $adminId
@@ -211,63 +215,53 @@ final class RoleRequestAdminHandler extends AbstractHandler
         ?string $notes
     ): ResponseInterface {
         $repo = $this->getRepository();
-        $db   = Connection::getInstance();
 
-        $db->beginTransaction();
+        // Step 1: Approve in database (no external calls inside transaction)
+        $approvedRequest = $repo->approveRequest($requestId, $adminId, $notes);
 
-        try {
-            // Approve in database
-            $approvedRequest = $repo->approveRequest($requestId, $adminId, $notes);
-
-            if ($approvedRequest === null) {
-                $db->rollBack();
-                throw new NotFoundException('Request not found or already processed');
-            }
-
-            // Assign role in Zitadel
-            $userIdValue   = $approvedRequest['zitadel_user_id'] ?? null;
-            $requestedRole = $approvedRequest['requested_role'] ?? null;
-            $userId        = is_string($userIdValue) ? $userIdValue : '';
-            $role          = is_string($requestedRole) ? $requestedRole : '';
-
-            $roleAssigned = false;
-            $zitadelError = null;
-
-            if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
-                try {
-                    $zitadel = ZitadelService::fromEnv();
-                    $zitadel->assignUserRole($userId, $role);
-                    $roleAssigned = true;
-                } catch (\Exception $e) {
-                    // Rollback database changes if Zitadel assignment fails
-                    $db->rollBack();
-                    throw new \RuntimeException(
-                        'Failed to assign role in Zitadel: ' . $e->getMessage(),
-                        0,
-                        $e
-                    );
-                }
-            }
-
-            $db->commit();
-
-            return $this->encodeResponseBody($response, [
-                'success'       => true,
-                'request'       => $approvedRequest,
-                'role_assigned' => $roleAssigned,
-                'zitadel_error' => $zitadelError,
-                'message'       => $roleAssigned
-                    ? 'Request approved and role assigned in Zitadel'
-                    : 'Request approved (Zitadel not configured)',
-            ]);
-        } catch (NotFoundException $e) {
-            throw $e;
-        } catch (\RuntimeException $e) {
-            throw $e;
-        } catch (\Exception $e) {
-            $db->rollBack();
-            throw $e;
+        if ($approvedRequest === null) {
+            throw new NotFoundException('Request not found or already processed');
         }
+
+        // Extract user/role info for Zitadel sync
+        $userIdValue   = $approvedRequest['zitadel_user_id'] ?? null;
+        $requestedRole = $approvedRequest['requested_role'] ?? null;
+        $userId        = is_string($userIdValue) ? $userIdValue : '';
+        $role          = is_string($requestedRole) ? $requestedRole : '';
+
+        $roleAssigned = false;
+        $zitadelError = null;
+
+        // Step 2: Sync to Zitadel outside transaction (DB already committed)
+        if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
+            // Mark sync as pending
+            $repo->updateZitadelSyncStatus($requestId, 'pending');
+
+            try {
+                $zitadel = ZitadelService::fromEnv();
+                $zitadel->assignUserRole($userId, $role);
+                $roleAssigned = true;
+
+                // Mark sync as successful
+                $repo->updateZitadelSyncStatus($requestId, 'synced');
+            } catch (\Exception $e) {
+                // Mark sync as failed (request remains approved for retry)
+                $zitadelError = $e->getMessage();
+                $repo->updateZitadelSyncStatus($requestId, 'failed', $zitadelError);
+            }
+        }
+
+        return $this->encodeResponseBody($response, [
+            'success'       => true,
+            'request'       => $approvedRequest,
+            'role_assigned' => $roleAssigned,
+            'zitadel_error' => $zitadelError,
+            'message'       => $roleAssigned
+                ? 'Request approved and role assigned in Zitadel'
+                : ( $zitadelError !== null
+                    ? 'Request approved but Zitadel sync failed (will retry)'
+                    : 'Request approved (Zitadel not configured)' ),
+        ]);
     }
 
     /**
@@ -303,6 +297,9 @@ final class RoleRequestAdminHandler extends AbstractHandler
      * Revoke a previously approved role request.
      *
      * This removes the role from Zitadel and marks the request as revoked.
+     * The database transaction is committed before calling Zitadel to avoid
+     * holding locks during external API calls. If Zitadel sync fails, the
+     * request remains revoked but with a 'failed' sync status for retry.
      *
      * @param ResponseInterface $response
      * @param string $requestId Request UUID
@@ -317,7 +314,6 @@ final class RoleRequestAdminHandler extends AbstractHandler
         ?string $notes
     ): ResponseInterface {
         $repo = $this->getRepository();
-        $db   = Connection::getInstance();
 
         // Get the approved request by ID (targeted query instead of full-scan)
         $targetRequest = $repo->getByIdWithStatus($requestId, 'approved');
@@ -326,59 +322,50 @@ final class RoleRequestAdminHandler extends AbstractHandler
             throw new NotFoundException('Approved request not found');
         }
 
-        $db->beginTransaction();
+        // Step 1: Revoke in database (no external calls inside transaction)
+        $revoked = $repo->revokeRequest($requestId, $adminId, $notes);
 
-        try {
-            // Revoke in database
-            $revoked = $repo->revokeRequest($requestId, $adminId, $notes);
-
-            if (!$revoked) {
-                $db->rollBack();
-                throw new NotFoundException('Request not found or not in approved status');
-            }
-
-            // Remove role from Zitadel
-            $userIdValue   = $targetRequest['zitadel_user_id'] ?? null;
-            $requestedRole = $targetRequest['requested_role'] ?? null;
-            $userId        = is_string($userIdValue) ? $userIdValue : '';
-            $role          = is_string($requestedRole) ? $requestedRole : '';
-
-            $roleRemoved  = false;
-            $zitadelError = null;
-
-            if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
-                try {
-                    $zitadel = ZitadelService::fromEnv();
-                    $zitadel->revokeUserRole($userId, $role);
-                    $roleRemoved = true;
-                } catch (\Exception $e) {
-                    // Rollback database changes if Zitadel removal fails
-                    $db->rollBack();
-                    throw new \RuntimeException(
-                        'Failed to remove role in Zitadel: ' . $e->getMessage(),
-                        0,
-                        $e
-                    );
-                }
-            }
-
-            $db->commit();
-
-            return $this->encodeResponseBody($response, [
-                'success'       => true,
-                'role_removed'  => $roleRemoved,
-                'zitadel_error' => $zitadelError,
-                'message'       => $roleRemoved
-                    ? 'Request revoked and role removed from Zitadel'
-                    : 'Request revoked (Zitadel not configured)',
-            ]);
-        } catch (NotFoundException $e) {
-            throw $e;
-        } catch (\RuntimeException $e) {
-            throw $e;
-        } catch (\Exception $e) {
-            $db->rollBack();
-            throw $e;
+        if (!$revoked) {
+            throw new NotFoundException('Request not found or not in approved status');
         }
+
+        // Extract user/role info for Zitadel sync
+        $userIdValue   = $targetRequest['zitadel_user_id'] ?? null;
+        $requestedRole = $targetRequest['requested_role'] ?? null;
+        $userId        = is_string($userIdValue) ? $userIdValue : '';
+        $role          = is_string($requestedRole) ? $requestedRole : '';
+
+        $roleRemoved  = false;
+        $zitadelError = null;
+
+        // Step 2: Sync to Zitadel outside transaction (DB already committed)
+        if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
+            // Mark sync as pending
+            $repo->updateZitadelSyncStatus($requestId, 'pending');
+
+            try {
+                $zitadel = ZitadelService::fromEnv();
+                $zitadel->revokeUserRole($userId, $role);
+                $roleRemoved = true;
+
+                // Mark sync as successful
+                $repo->updateZitadelSyncStatus($requestId, 'synced');
+            } catch (\Exception $e) {
+                // Mark sync as failed (request remains revoked for retry)
+                $zitadelError = $e->getMessage();
+                $repo->updateZitadelSyncStatus($requestId, 'failed', $zitadelError);
+            }
+        }
+
+        return $this->encodeResponseBody($response, [
+            'success'       => true,
+            'role_removed'  => $roleRemoved,
+            'zitadel_error' => $zitadelError,
+            'message'       => $roleRemoved
+                ? 'Request revoked and role removed from Zitadel'
+                : ( $zitadelError !== null
+                    ? 'Request revoked but Zitadel sync failed (will retry)'
+                    : 'Request revoked (Zitadel not configured)' ),
+        ]);
     }
 }

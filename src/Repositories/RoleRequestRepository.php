@@ -372,4 +372,43 @@ class RoleRequestRepository
 
         return $counts;
     }
+
+    /**
+     * Update the Zitadel sync status for a role request.
+     *
+     * Used to track whether role assignment/revocation was successfully
+     * synced to Zitadel after the database transaction is committed.
+     *
+     * @param string $requestId Request UUID
+     * @param string $syncStatus Sync status: 'pending', 'synced', or 'failed'
+     * @param string|null $errorMessage Error message if sync failed
+     * @return bool True if updated successfully
+     */
+    public function updateZitadelSyncStatus(
+        string $requestId,
+        string $syncStatus,
+        ?string $errorMessage = null
+    ): bool {
+        $validSyncStatuses = ['pending', 'synced', 'failed'];
+        if (!in_array($syncStatus, $validSyncStatuses, true)) {
+            throw new \InvalidArgumentException(
+                sprintf('Invalid sync status: %s. Valid values are: %s', $syncStatus, implode(', ', $validSyncStatuses))
+            );
+        }
+
+        $stmt = $this->db->prepare(
+            'UPDATE role_requests
+             SET zitadel_sync_status = :sync_status,
+                 zitadel_sync_error = :error_message
+             WHERE id = :id'
+        );
+
+        $stmt->execute([
+            'id'            => $requestId,
+            'sync_status'   => $syncStatus,
+            'error_message' => $errorMessage,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
 }
