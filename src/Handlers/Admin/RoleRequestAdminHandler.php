@@ -159,11 +159,10 @@ final class RoleRequestAdminHandler extends AbstractHandler
             ? $queryParams['status']
             : null;
 
-        // Validate status if provided
-        $validStatuses = ['pending', 'approved', 'rejected', 'revoked'];
-        if ($statusFilter !== null && !in_array($statusFilter, $validStatuses, true)) {
+        // Validate status if provided (use repository constant to avoid drift)
+        if ($statusFilter !== null && !in_array($statusFilter, RoleRequestRepository::VALID_STATUSES, true)) {
             throw new ValidationException(
-                sprintf('Invalid status. Valid values are: %s', implode(', ', $validStatuses))
+                sprintf('Invalid status. Valid values are: %s', implode(', ', RoleRequestRepository::VALID_STATUSES))
             );
         }
 
