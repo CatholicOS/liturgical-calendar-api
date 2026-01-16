@@ -319,6 +319,57 @@ class ApiKeyRepository
     }
 
     /**
+     * Count active keys for multiple applications in a single query.
+     *
+     * Avoids N+1 queries when listing applications with their key counts.
+     *
+     * @param array<string> $applicationIds List of application UUIDs
+     * @return array<string, int> Map of application_id => count
+     */
+    public function countActiveByApplications(array $applicationIds): array
+    {
+        if (empty($applicationIds)) {
+            return [];
+        }
+
+        // Build placeholders for IN clause
+        $placeholders = [];
+        $params       = [];
+        foreach ($applicationIds as $i => $id) {
+            $placeholder           = ":app_id_{$i}";
+            $placeholders[]        = $placeholder;
+            $params["app_id_{$i}"] = $id;
+        }
+
+        $inClause = implode(', ', $placeholders);
+        $stmt     = $this->db->prepare(
+            "SELECT application_id, COUNT(*) as count FROM api_keys
+             WHERE application_id IN ({$inClause}) AND is_active = TRUE
+             GROUP BY application_id"
+        );
+
+        $stmt->execute($params);
+
+        $counts = [];
+        // Initialize all IDs with 0 (applications with no keys won't be in result)
+        foreach ($applicationIds as $id) {
+            $counts[$id] = 0;
+        }
+
+        while ($row = $stmt->fetch()) {
+            if (is_array($row) && isset($row['application_id'], $row['count'])) {
+                $appId = $row['application_id'];
+                $count = $row['count'];
+                if (is_string($appId) && ( is_int($count) || is_string($count) )) {
+                    $counts[$appId] = (int) $count;
+                }
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
      * Get usage statistics for a key.
      *
      * @param string $keyId Key UUID

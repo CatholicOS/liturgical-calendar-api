@@ -190,11 +190,22 @@ final class ApplicationsHandler extends AbstractHandler
     {
         $applications = $this->appRepo->getByUser($userId);
 
+        // Collect all application IDs for bulk key count query (avoid N+1)
+        $appIds = [];
+        foreach ($applications as $app) {
+            if (isset($app['id']) && is_string($app['id'])) {
+                $appIds[] = $app['id'];
+            }
+        }
+
+        // Get all key counts in a single query
+        $keyCounts = $this->keyRepo->countActiveByApplications($appIds);
+
         // Add key counts and uuid alias to each application
         foreach ($applications as &$app) {
             if (isset($app['id']) && is_string($app['id'])) {
                 $app['uuid']      = $app['id']; // Alias for frontend compatibility
-                $app['key_count'] = $this->keyRepo->countActiveByApplication($app['id']);
+                $app['key_count'] = $keyCounts[$app['id']] ?? 0;
             }
         }
 
