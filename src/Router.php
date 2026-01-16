@@ -544,85 +544,70 @@ class Router
             // Use OIDC (Zitadel) authentication if configured, otherwise fall back to JWT
             if (self::isOidcConfigured()) {
                 $pipeline->pipe(OidcAuthMiddleware::fromEnv());
-
-                // Apply authorization middleware with role-based access control
-                // Only apply if database is also configured for permission checks
-                if (Connection::isConfigured()) {
-                    $permissionRepo = new CalendarPermissionRepository();
-
-                    // Determine required role and calendar type based on route
-                    $calendarType = null;
-                    if ($route === 'data' && count($requestPathParts) >= 2) {
-                        $calendarType = match ($requestPathParts[0]) {
-                            PathCategory::NATION->value      => CalendarType::NATIONAL,
-                            PathCategory::DIOCESE->value     => CalendarType::DIOCESAN,
-                            PathCategory::WIDERREGION->value => CalendarType::WIDERREGION,
-                            default                          => null
-                        };
-
-                        // Set calendar_id attribute for AuthorizationMiddleware
-                        $this->request = $this->request->withAttribute('calendar_id', $requestPathParts[1] ?? null);
-                    }
-
-                    if ($route === 'data') {
-                        $pipeline->pipe(new AuthorizationMiddleware(
-                            $permissionRepo,
-                            'calendar_editor',
-                            $calendarType,
-                            'calendar_id',
-                            PermissionLevel::WRITE
-                        ));
-                    } elseif ($route === 'tests') {
-                        $pipeline->pipe(AuthorizationMiddleware::forTestEditor($permissionRepo));
-                    } elseif ($route === 'temporale') {
-                        // Temporale requires admin role (General Roman Calendar)
-                        $pipeline->pipe(AuthorizationMiddleware::forAdmin($permissionRepo));
-                    }
-                }
             } else {
                 // Fall back to legacy JWT authentication
+                // JwtAuthMiddleware sets oidc_user attribute for compatibility with AuthorizationMiddleware
                 $pipeline->pipe(new JwtAuthMiddleware());
-
-                // Apply the same authorization middleware for JWT flow
-                // JwtAuthMiddleware now sets oidc_user attribute for compatibility
-                if (Connection::isConfigured()) {
-                    $permissionRepo = new CalendarPermissionRepository();
-
-                    // Determine required role and calendar type based on route
-                    $calendarType = null;
-                    if ($route === 'data' && count($requestPathParts) >= 2) {
-                        $calendarType = match ($requestPathParts[0]) {
-                            PathCategory::NATION->value      => CalendarType::NATIONAL,
-                            PathCategory::DIOCESE->value     => CalendarType::DIOCESAN,
-                            PathCategory::WIDERREGION->value => CalendarType::WIDERREGION,
-                            default                          => null
-                        };
-
-                        // Set calendar_id attribute for AuthorizationMiddleware
-                        $this->request = $this->request->withAttribute('calendar_id', $requestPathParts[1] ?? null);
-                    }
-
-                    if ($route === 'data') {
-                        $pipeline->pipe(new AuthorizationMiddleware(
-                            $permissionRepo,
-                            'calendar_editor',
-                            $calendarType,
-                            'calendar_id',
-                            PermissionLevel::WRITE
-                        ));
-                    } elseif ($route === 'tests') {
-                        $pipeline->pipe(AuthorizationMiddleware::forTestEditor($permissionRepo));
-                    } elseif ($route === 'temporale') {
-                        // Temporale requires admin role (General Roman Calendar)
-                        $pipeline->pipe(AuthorizationMiddleware::forAdmin($permissionRepo));
-                    }
-                }
             }
+
+            // Apply authorization middleware with role-based access control
+            // (shared between OIDC and JWT paths)
+            $this->configureAuthorizationPipeline($pipeline, $route, $requestPathParts);
         }
 
         $this->response = $pipeline->handle($this->request)
             ->withHeader('X-Request-Id', $this->requestId);
         $this->emitResponse();
+    }
+
+    /**
+     * Configure authorization middleware for the pipeline.
+     *
+     * Extracts common authorization logic to avoid duplication between OIDC and JWT paths.
+     *
+     * @param MiddlewarePipeline $pipeline The middleware pipeline to configure
+     * @param string $route The current route being handled
+     * @param array<int, string> $requestPathParts The parsed path parts after the route
+     */
+    private function configureAuthorizationPipeline(
+        MiddlewarePipeline $pipeline,
+        string $route,
+        array $requestPathParts
+    ): void {
+        if (!Connection::isConfigured()) {
+            return;
+        }
+
+        $permissionRepo = new CalendarPermissionRepository();
+
+        // Determine required role and calendar type based on route
+        $calendarType = null;
+        if ($route === 'data' && count($requestPathParts) >= 2) {
+            $calendarType = match ($requestPathParts[0]) {
+                PathCategory::NATION->value      => CalendarType::NATIONAL,
+                PathCategory::DIOCESE->value     => CalendarType::DIOCESAN,
+                PathCategory::WIDERREGION->value => CalendarType::WIDERREGION,
+                default                          => null
+            };
+
+            // Set calendar_id attribute for AuthorizationMiddleware
+            $this->request = $this->request->withAttribute('calendar_id', $requestPathParts[1] ?? null);
+        }
+
+        if ($route === 'data') {
+            $pipeline->pipe(new AuthorizationMiddleware(
+                $permissionRepo,
+                'calendar_editor',
+                $calendarType,
+                'calendar_id',
+                PermissionLevel::WRITE
+            ));
+        } elseif ($route === 'tests') {
+            $pipeline->pipe(AuthorizationMiddleware::forTestEditor($permissionRepo));
+        } elseif ($route === 'temporale') {
+            // Temporale requires admin role (General Roman Calendar)
+            $pipeline->pipe(AuthorizationMiddleware::forAdmin($permissionRepo));
+        }
     }
 
     /**
