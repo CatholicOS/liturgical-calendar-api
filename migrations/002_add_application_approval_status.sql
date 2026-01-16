@@ -1,10 +1,20 @@
 -- Add approval status workflow to applications table
 -- Run this migration to enable application approval workflow
 
--- Add status column with check constraint
+-- Add status column (without constraint for idempotency)
 ALTER TABLE applications
-ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'
-    CONSTRAINT chk_application_status CHECK (status IN ('pending', 'approved', 'rejected', 'revoked'));
+ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';
+
+-- Add check constraint separately (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'chk_application_status'
+    ) THEN
+        ALTER TABLE applications ADD CONSTRAINT chk_application_status
+            CHECK (status IN ('pending', 'approved', 'rejected', 'revoked'));
+    END IF;
+END $$;
 
 -- Add admin review tracking columns
 ALTER TABLE applications
