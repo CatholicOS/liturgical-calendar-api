@@ -6,6 +6,7 @@ namespace LiturgicalCalendar\Api\Handlers;
 
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
+use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ForbiddenException;
@@ -52,14 +53,15 @@ final class ApplicationsHandler extends AbstractHandler
     {
         parent::__construct();
 
-        $this->allowedRequestMethods = [
+        $this->allowedRequestMethods      = [
             RequestMethod::GET,
             RequestMethod::POST,
             RequestMethod::PATCH,
             RequestMethod::DELETE
         ];
-        $this->allowedAcceptHeaders  = [AcceptHeader::JSON];
-        $this->allowCredentials      = true;
+        $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
+        $this->allowedRequestContentTypes = [RequestContentType::JSON];
+        $this->allowCredentials           = true;
 
         $this->appRepo = new ApplicationRepository();
         $this->keyRepo = new ApiKeyRepository();
