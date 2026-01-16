@@ -575,7 +575,9 @@ class Router
         array $requestPathParts
     ): void {
         if (!Connection::isConfigured()) {
-            return;
+            throw new ServiceUnavailableException(
+                'Database not configured. Protected routes require database connection.'
+            );
         }
 
         $permissionRepo = new CalendarPermissionRepository();
