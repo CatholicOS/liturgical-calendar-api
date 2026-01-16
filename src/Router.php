@@ -39,6 +39,7 @@ use LiturgicalCalendar\Api\Http\Middleware\HttpsEnforcementMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\JwtAuthMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\LoggingMiddleware;
 use LiturgicalCalendar\Api\Http\Middleware\OidcAuthMiddleware;
+use LiturgicalCalendar\Api\Http\Middleware\OidcAvailabilityMiddleware;
 use LiturgicalCalendar\Api\Database\Connection;
 use LiturgicalCalendar\Api\Repositories\CalendarPermissionRepository;
 use LiturgicalCalendar\Api\Http\Server\MiddlewarePipeline;
@@ -523,13 +524,15 @@ class Router
             || $route === 'admin'
             || $route === 'applications'
         ) {
+            // Check OIDC availability within the pipeline so ErrorHandlingMiddleware catches exceptions
+            // and CORS headers are applied properly
+            $pipeline->pipe(new OidcAvailabilityMiddleware(
+                self::isOidcConfigured(),
+                'OIDC authentication is not configured. These features require Zitadel integration.'
+            ));
+
             if (self::isOidcConfigured()) {
                 $pipeline->pipe(OidcAuthMiddleware::fromEnv());
-            } else {
-                // Admin, role-request, and applications routes require OIDC authentication
-                throw new ServiceUnavailableException(
-                    'OIDC authentication is not configured. These features require Zitadel integration.'
-                );
             }
         }
 
