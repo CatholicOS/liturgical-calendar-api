@@ -3,5 +3,12 @@
 
 -- Drop and recreate the constraint to include 'revoked'
 ALTER TABLE role_requests DROP CONSTRAINT IF EXISTS chk_role_request_status;
-ALTER TABLE role_requests ADD CONSTRAINT chk_role_request_status
-    CHECK (status IN ('pending', 'approved', 'rejected', 'revoked'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'chk_role_request_status'
+    ) THEN
+        ALTER TABLE role_requests ADD CONSTRAINT chk_role_request_status
+            CHECK (status IN ('pending', 'approved', 'rejected', 'revoked'));
+    END IF;
+END $$;
