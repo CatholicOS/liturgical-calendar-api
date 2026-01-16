@@ -111,9 +111,16 @@ class RoleRequestRepository
      * @param string $id Request UUID
      * @param string|null $status Optional status filter (pending, approved, rejected, revoked)
      * @return array<string, mixed>|null The request data or null if not found/status mismatch
+     * @throws \InvalidArgumentException If status is not a valid value
      */
     public function getByIdWithStatus(string $id, ?string $status = null): ?array
     {
+        if ($status !== null && !in_array($status, self::VALID_STATUSES, true)) {
+            throw new \InvalidArgumentException(
+                sprintf('Invalid status filter: %s. Valid values are: %s', $status, implode(', ', self::VALID_STATUSES))
+            );
+        }
+
         if ($status !== null) {
             $stmt = $this->db->prepare(
                 'SELECT * FROM role_requests WHERE id = :id AND status = :status'
