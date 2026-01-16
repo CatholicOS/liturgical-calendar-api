@@ -10,7 +10,6 @@ use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
 use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
-use LiturgicalCalendar\Api\Http\Enum\ReturnTypeParam;
 use LiturgicalCalendar\Api\Http\Enum\StatusCode;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Exception\ForbiddenException;
@@ -66,24 +65,7 @@ final class RoleRequestAdminHandler extends AbstractHandler
         $response = $this->setAccessControlAllowOriginHeader($request, $response);
         $this->validateRequestMethod($request);
 
-        // Check return_type query parameter first, then fall back to Accept header
-        $queryParams = $request->getQueryParams();
-        $returnType  = isset($queryParams['return_type']) && is_string($queryParams['return_type'])
-            ? strtoupper($queryParams['return_type'])
-            : null;
-
-        if ($returnType !== null) {
-            // This endpoint only supports JSON - validate return_type
-            if ($returnType !== ReturnTypeParam::JSON->value) {
-                throw new ValidationException(
-                    sprintf('Invalid return_type: %s. This endpoint only supports JSON.', $returnType)
-                );
-            }
-            $mime = AcceptHeader::JSON->value;
-        } else {
-            // Fall back to Accept header negotiation
-            $mime = $this->validateAcceptHeader($request, AcceptabilityLevel::LAX);
-        }
+        $mime     = $this->validateAcceptHeader($request, AcceptabilityLevel::LAX);
         $response = $response->withHeader('Content-Type', $mime);
 
         // Check authentication via OIDC token
