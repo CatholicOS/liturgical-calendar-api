@@ -43,6 +43,7 @@ class RoleRequestRepository
      * @param string|null $justification Reason for requesting the role
      * @return string The UUID of the created request
      * @throws \InvalidArgumentException If the requested role is invalid
+     * @throws \RuntimeException If the insert fails and no ID is returned
      */
     public function createRequest(
         string $userId,
@@ -73,7 +74,16 @@ class RoleRequestRepository
         ]);
 
         $id = $stmt->fetchColumn();
-        return is_string($id) ? $id : '';
+        if (!is_string($id) || $id === '') {
+            throw new \RuntimeException(
+                sprintf(
+                    'Failed to create role request: INSERT did not return an ID (user_id=%s, role=%s)',
+                    $userId,
+                    $requestedRole
+                )
+            );
+        }
+        return $id;
     }
 
     /**
