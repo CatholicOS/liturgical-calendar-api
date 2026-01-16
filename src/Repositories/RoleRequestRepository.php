@@ -23,6 +23,11 @@ class RoleRequestRepository
      */
     public const VALID_ROLES = ['developer', 'calendar_editor', 'test_editor'];
 
+    /**
+     * Valid statuses for role requests.
+     */
+    public const VALID_STATUSES = ['pending', 'approved', 'rejected', 'revoked'];
+
     public function __construct(?PDO $db = null)
     {
         $this->db = $db ?? Connection::getInstance();
@@ -301,10 +306,16 @@ class RoleRequestRepository
      *
      * @param string|null $status Filter by status (pending, approved, rejected, revoked)
      * @return array<int, array<string, mixed>> List of requests
+     * @throws \InvalidArgumentException If status is not a valid value
      */
     public function getAllRequests(?string $status = null): array
     {
         if ($status !== null) {
+            if (!in_array($status, self::VALID_STATUSES, true)) {
+                throw new \InvalidArgumentException(
+                    sprintf('Invalid status filter: %s. Valid values are: %s', $status, implode(', ', self::VALID_STATUSES))
+                );
+            }
             $stmt = $this->db->prepare(
                 'SELECT * FROM role_requests
                  WHERE status = :status
