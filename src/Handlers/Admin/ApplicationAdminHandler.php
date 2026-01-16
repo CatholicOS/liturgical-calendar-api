@@ -8,6 +8,7 @@ use LiturgicalCalendar\Api\Database\Connection;
 use LiturgicalCalendar\Api\Handlers\AbstractHandler;
 use LiturgicalCalendar\Api\Http\Enum\AcceptabilityLevel;
 use LiturgicalCalendar\Api\Http\Enum\AcceptHeader;
+use LiturgicalCalendar\Api\Http\Enum\RequestContentType;
 use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Exception\ForbiddenException;
@@ -40,9 +41,10 @@ final class ApplicationAdminHandler extends AbstractHandler
     {
         parent::__construct();
 
-        $this->allowedRequestMethods = [RequestMethod::GET, RequestMethod::POST];
-        $this->allowedAcceptHeaders  = [AcceptHeader::JSON];
-        $this->allowCredentials      = true;
+        $this->allowedRequestMethods      = [RequestMethod::GET, RequestMethod::POST];
+        $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
+        $this->allowedRequestContentTypes = [RequestContentType::JSON];
+        $this->allowCredentials           = true;
     }
 
     private function getRepository(): ApplicationRepository
