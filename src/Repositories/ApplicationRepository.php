@@ -149,6 +149,10 @@ class ApplicationRepository
         }
 
         if (empty($updates)) {
+            // Verify ownership before returning record to prevent data leakage
+            if (!$this->isOwner($uuid, $userId)) {
+                return null;
+            }
             return $this->getByUuid($uuid);
         }
 
