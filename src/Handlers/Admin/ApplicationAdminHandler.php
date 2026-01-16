@@ -14,11 +14,13 @@ use LiturgicalCalendar\Api\Http\Exception\ValidationException;
 use LiturgicalCalendar\Api\Http\Exception\ForbiddenException;
 use LiturgicalCalendar\Api\Http\Exception\NotFoundException;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use LiturgicalCalendar\Api\Http\Middleware\OidcAuthMiddleware;
 use LiturgicalCalendar\Api\Repositories\ApplicationRepository;
 use LiturgicalCalendar\Api\Services\ZitadelService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Application Admin Handler
@@ -36,6 +38,7 @@ use Psr\Http\Message\ServerRequestInterface;
 final class ApplicationAdminHandler extends AbstractHandler
 {
     private ?ApplicationRepository $repository = null;
+    private LoggerInterface $logger;
 
     public function __construct()
     {
@@ -45,6 +48,8 @@ final class ApplicationAdminHandler extends AbstractHandler
         $this->allowedAcceptHeaders       = [AcceptHeader::JSON];
         $this->allowedRequestContentTypes = [RequestContentType::JSON];
         $this->allowCredentials           = true;
+
+        $this->logger = LoggerFactory::create('admin', null, 30, false, true, false);
     }
 
     private function getRepository(): ApplicationRepository
@@ -211,7 +216,9 @@ final class ApplicationAdminHandler extends AbstractHandler
             }
         } catch (\Exception $e) {
             // Log error but don't fail - just return applications without enrichment
-            error_log('Failed to fetch user details from Zitadel: ' . $e->getMessage());
+            $this->logger->warning('Failed to fetch user details from Zitadel', [
+                'error' => $e->getMessage(),
+            ]);
         }
 
         // Enrich applications with user details
