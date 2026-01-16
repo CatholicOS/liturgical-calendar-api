@@ -319,15 +319,8 @@ final class RoleRequestAdminHandler extends AbstractHandler
         $repo = $this->getRepository();
         $db   = Connection::getInstance();
 
-        // First, get the request details before revoking
-        $requests      = $repo->getAllRequests('approved');
-        $targetRequest = null;
-        foreach ($requests as $req) {
-            if (( $req['id'] ?? '' ) === $requestId) {
-                $targetRequest = $req;
-                break;
-            }
-        }
+        // Get the approved request by ID (targeted query instead of full-scan)
+        $targetRequest = $repo->getByIdWithStatus($requestId, 'approved');
 
         if ($targetRequest === null) {
             throw new NotFoundException('Approved request not found');

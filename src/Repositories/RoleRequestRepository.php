@@ -91,6 +91,33 @@ class RoleRequestRepository
     }
 
     /**
+     * Get a role request by ID with optional status filter.
+     *
+     * @param string $id Request UUID
+     * @param string|null $status Optional status filter (pending, approved, rejected, revoked)
+     * @return array<string, mixed>|null The request data or null if not found/status mismatch
+     */
+    public function getByIdWithStatus(string $id, ?string $status = null): ?array
+    {
+        if ($status !== null) {
+            $stmt = $this->db->prepare(
+                'SELECT * FROM role_requests WHERE id = :id AND status = :status'
+            );
+            $stmt->execute(['id' => $id, 'status' => $status]);
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT * FROM role_requests WHERE id = :id'
+            );
+            $stmt->execute(['id' => $id]);
+        }
+
+        /** @var array<string, mixed>|false $result */
+        $result = $stmt->fetch();
+
+        return is_array($result) ? $result : null;
+    }
+
+    /**
      * Get all pending role requests.
      *
      * @return array<int, array<string, mixed>> List of pending requests
