@@ -421,9 +421,9 @@ final class ApplicationsHandler extends AbstractHandler
             ? $body['scope']
             : 'read';
         $envRateLimit     = $_ENV['API_KEY_DEFAULT_RATE_LIMIT'] ?? null;
-        $defaultRateLimit = is_numeric($envRateLimit) ? (int) $envRateLimit : 1000;
+        $defaultRateLimit = is_numeric($envRateLimit) ? max(1, (int) $envRateLimit) : 1000;
         $rateLimit        = isset($body['rate_limit']) && is_numeric($body['rate_limit'])
-            ? (int) $body['rate_limit']
+            ? max(1, (int) $body['rate_limit'])
             : $defaultRateLimit;
         $expiresAt        = null;
         if (isset($body['expires_at']) && is_string($body['expires_at'])) {
