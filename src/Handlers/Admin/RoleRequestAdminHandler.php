@@ -250,21 +250,27 @@ final class RoleRequestAdminHandler extends AbstractHandler
         $zitadelError = null;
 
         // Step 2: Sync to Zitadel outside transaction (DB already committed)
-        if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
-            // Mark sync as pending
-            $repo->updateZitadelSyncStatus($requestId, 'pending');
-
-            try {
-                $zitadel = ZitadelService::fromEnv();
-                $zitadel->assignUserRole($userId, $role);
-                $roleAssigned = true;
-
-                // Mark sync as successful
-                $repo->updateZitadelSyncStatus($requestId, 'synced');
-            } catch (\Exception $e) {
-                // Mark sync as failed (request remains approved for retry)
-                $zitadelError = $e->getMessage();
+        if (ZitadelService::isConfigured()) {
+            if (empty($userId) || empty($role)) {
+                // Missing user/role data is a sync failure, not "not configured"
+                $zitadelError = 'Missing user ID or role in approved request';
                 $repo->updateZitadelSyncStatus($requestId, 'failed', $zitadelError);
+            } else {
+                // Mark sync as pending
+                $repo->updateZitadelSyncStatus($requestId, 'pending');
+
+                try {
+                    $zitadel = ZitadelService::fromEnv();
+                    $zitadel->assignUserRole($userId, $role);
+                    $roleAssigned = true;
+
+                    // Mark sync as successful
+                    $repo->updateZitadelSyncStatus($requestId, 'synced');
+                } catch (\Exception $e) {
+                    // Mark sync as failed (request remains approved for retry)
+                    $zitadelError = $e->getMessage();
+                    $repo->updateZitadelSyncStatus($requestId, 'failed', $zitadelError);
+                }
             }
         }
 
@@ -356,21 +362,27 @@ final class RoleRequestAdminHandler extends AbstractHandler
         $zitadelError = null;
 
         // Step 2: Sync to Zitadel outside transaction (DB already committed)
-        if (ZitadelService::isConfigured() && !empty($userId) && !empty($role)) {
-            // Mark sync as pending
-            $repo->updateZitadelSyncStatus($requestId, 'pending');
-
-            try {
-                $zitadel = ZitadelService::fromEnv();
-                $zitadel->revokeUserRole($userId, $role);
-                $roleRemoved = true;
-
-                // Mark sync as successful
-                $repo->updateZitadelSyncStatus($requestId, 'synced');
-            } catch (\Exception $e) {
-                // Mark sync as failed (request remains revoked for retry)
-                $zitadelError = $e->getMessage();
+        if (ZitadelService::isConfigured()) {
+            if (empty($userId) || empty($role)) {
+                // Missing user/role data is a sync failure, not "not configured"
+                $zitadelError = 'Missing user ID or role in revoked request';
                 $repo->updateZitadelSyncStatus($requestId, 'failed', $zitadelError);
+            } else {
+                // Mark sync as pending
+                $repo->updateZitadelSyncStatus($requestId, 'pending');
+
+                try {
+                    $zitadel = ZitadelService::fromEnv();
+                    $zitadel->revokeUserRole($userId, $role);
+                    $roleRemoved = true;
+
+                    // Mark sync as successful
+                    $repo->updateZitadelSyncStatus($requestId, 'synced');
+                } catch (\Exception $e) {
+                    // Mark sync as failed (request remains revoked for retry)
+                    $zitadelError = $e->getMessage();
+                    $repo->updateZitadelSyncStatus($requestId, 'failed', $zitadelError);
+                }
             }
         }
 
