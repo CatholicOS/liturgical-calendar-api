@@ -10,10 +10,12 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\HttpFactory;
 use LiturgicalCalendar\Api\Http\CookieHelper;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
+use LiturgicalCalendar\Api\Http\Logs\LoggerFactory;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
@@ -31,6 +33,7 @@ class OidcAuthMiddleware implements MiddlewareInterface
     private string $issuer;
     private string $clientId;
     private int $cacheTtl;
+    private LoggerInterface $logger;
 
     /**
      * Cached JWKS key sets, keyed by issuer URL.
@@ -45,15 +48,18 @@ class OidcAuthMiddleware implements MiddlewareInterface
      * @param string $issuer Zitadel issuer URL (e.g., http://localhost:8081)
      * @param string $clientId Zitadel client ID for audience validation
      * @param int $cacheTtl JWKS cache TTL in seconds (default: 3600)
+     * @param LoggerInterface|null $logger PSR-3 logger instance (optional)
      */
     public function __construct(
         string $issuer,
         string $clientId,
-        int $cacheTtl = 3600
+        int $cacheTtl = 3600,
+        ?LoggerInterface $logger = null
     ) {
         $this->issuer   = rtrim($issuer, '/');
         $this->clientId = $clientId;
         $this->cacheTtl = $cacheTtl;
+        $this->logger   = $logger ?? LoggerFactory::create('auth', null, 30, false, true, false);
     }
 
     /**
@@ -123,7 +129,10 @@ class OidcAuthMiddleware implements MiddlewareInterface
             $payload = $this->validateToken($token);
         } catch (\Exception $e) {
             // Log full details for debugging, return generic message to client
-            error_log('OIDC token validation failed: ' . $e->getMessage());
+            $this->logger->warning('OIDC token validation failed', [
+                'error'  => $e->getMessage(),
+                'issuer' => $this->issuer,
+            ]);
             throw new UnauthorizedException('Invalid or expired token');
         }
 
