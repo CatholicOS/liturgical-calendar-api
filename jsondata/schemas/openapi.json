@@ -5981,11 +5981,13 @@
           "reviewed_by": {"type": ["string", "null"]},
           "review_notes": {"type": ["string", "null"]},
           "reviewed_at": {"type": ["string", "null"], "format": "date-time"},
-          "zitadel_sync_status": {"type": ["string", "null"], "enum": ["pending", "synced", "failed"]},
+          "zitadel_sync_status": {"type": ["string", "null"], "enum": ["pending", "synced", "failed", null]},
           "zitadel_sync_error": {"type": ["string", "null"]},
           "created_at": {"type": "string", "format": "date-time"},
           "updated_at": {"type": "string", "format": "date-time"}
-        }
+        },
+        "required": ["id", "zitadel_user_id", "user_email", "user_name", "requested_role", "status", "created_at", "updated_at"],
+        "additionalProperties": false
       },
       "UserRoleRequestsResponse": {
         "type": "object",
@@ -5994,7 +5996,9 @@
             "type": "array",
             "items": {"$ref": "#/components/schemas/RoleRequest"}
           }
-        }
+        },
+        "required": ["requests"],
+        "additionalProperties": false
       },
       "CreateRoleRequestBody": {
         "type": "object",
@@ -6004,7 +6008,8 @@
           "justification": {"type": "string", "description": "Reason for requesting the role"},
           "email": {"type": "string", "format": "email", "description": "User email (optional, falls back to token claim)"},
           "name": {"type": "string", "description": "User display name (optional, falls back to token claim)"}
-        }
+        },
+        "additionalProperties": false
       },
       "CreateRoleRequestResponse": {
         "type": "object",
@@ -6012,7 +6017,9 @@
           "success": {"type": "boolean"},
           "request_id": {"type": "string", "format": "uuid"},
           "message": {"type": "string"}
-        }
+        },
+        "required": ["success", "request_id", "message"],
+        "additionalProperties": false
       },
       "RoleRequestStatusResponse": {
         "type": "object",
@@ -6024,7 +6031,9 @@
           "rejected_requests": {"type": "integer"},
           "needs_role_request": {"type": "boolean"},
           "valid_roles": {"type": "array", "items": {"type": "string"}}
-        }
+        },
+        "required": ["has_roles", "current_roles", "pending_requests", "approved_requests", "rejected_requests", "needs_role_request", "valid_roles"],
+        "additionalProperties": false
       },
       "AdminRoleRequestsResponse": {
         "type": "object",
@@ -6041,15 +6050,20 @@
               "approved": {"type": "integer"},
               "rejected": {"type": "integer"},
               "revoked": {"type": "integer"}
-            }
+            },
+            "required": ["pending", "approved", "rejected", "revoked"],
+            "additionalProperties": false
           }
-        }
+        },
+        "required": ["requests", "pending_requests", "approved", "rejected", "revoked", "counts"],
+        "additionalProperties": false
       },
       "AdminReviewRequestBody": {
         "type": "object",
         "properties": {
           "notes": {"type": "string", "description": "Optional review notes"}
-        }
+        },
+        "additionalProperties": false
       },
       "AdminApproveRoleRequestResponse": {
         "type": "object",
@@ -6059,14 +6073,18 @@
           "role_assigned": {"type": "boolean"},
           "zitadel_error": {"type": ["string", "null"]},
           "message": {"type": "string"}
-        }
+        },
+        "required": ["success", "request", "role_assigned", "message"],
+        "additionalProperties": false
       },
       "AdminRejectResponse": {
         "type": "object",
         "properties": {
           "success": {"type": "boolean"},
           "message": {"type": "string"}
-        }
+        },
+        "required": ["success", "message"],
+        "additionalProperties": false
       },
       "AdminRevokeRoleRequestResponse": {
         "type": "object",
@@ -6075,7 +6093,9 @@
           "role_removed": {"type": "boolean"},
           "zitadel_error": {"type": ["string", "null"]},
           "message": {"type": "string"}
-        }
+        },
+        "required": ["success", "role_removed", "message"],
+        "additionalProperties": false
       },
       "AdminNotificationsResponse": {
         "type": "object",
@@ -6095,10 +6115,14 @@
                 "role": {"type": "string"},
                 "created_at": {"type": "string", "format": "date-time"},
                 "url": {"type": "string"}
-              }
+              },
+              "required": ["type", "id", "created_at"],
+              "additionalProperties": false
             }
           }
-        }
+        },
+        "required": ["pending_role_requests", "pending_permission_requests", "total", "items"],
+        "additionalProperties": false
       },
       "AdminUsersResponse": {
         "type": "object",
@@ -6113,18 +6137,24 @@
                 "email": {"type": "string", "format": "email"},
                 "roles": {"type": "array", "items": {"type": "string"}},
                 "grants": {"type": "array", "items": {"type": "object"}}
-              }
+              },
+              "required": ["userId"],
+              "additionalProperties": false
             }
           },
           "total": {"type": "integer"}
-        }
+        },
+        "required": ["users", "total"],
+        "additionalProperties": false
       },
       "SuccessResponse": {
         "type": "object",
         "properties": {
           "success": {"type": "boolean"},
           "message": {"type": "string"}
-        }
+        },
+        "required": ["success", "message"],
+        "additionalProperties": false
       },
       "Application": {
         "type": "object",
@@ -6144,7 +6174,9 @@
           "updated_at": {"type": "string", "format": "date-time"},
           "user_name": {"type": ["string", "null"], "description": "Owner's display name (admin view only)"},
           "user_email": {"type": ["string", "null"], "description": "Owner's email (admin view only)"}
-        }
+        },
+        "required": ["id", "zitadel_user_id", "name", "status", "is_active", "created_at", "updated_at"],
+        "additionalProperties": false
       },
       "ApplicationWithKeys": {
         "allOf": [
@@ -6170,7 +6202,9 @@
           "expires_at": {"type": ["string", "null"], "format": "date-time"},
           "last_used_at": {"type": ["string", "null"], "format": "date-time"},
           "created_at": {"type": "string", "format": "date-time"}
-        }
+        },
+        "required": ["id", "application_id", "key_prefix", "scope", "rate_limit", "is_active", "created_at"],
+        "additionalProperties": false
       },
       "AdminApplicationsResponse": {
         "type": "object",
@@ -6178,14 +6212,18 @@
           "applications": {"type": "array", "items": {"$ref": "#/components/schemas/Application"}},
           "total": {"type": "integer"},
           "filter": {"type": ["string", "null"]}
-        }
+        },
+        "required": ["applications", "total"],
+        "additionalProperties": false
       },
       "AdminPendingApplicationsResponse": {
         "type": "object",
         "properties": {
           "pending_applications": {"type": "array", "items": {"$ref": "#/components/schemas/Application"}},
           "pending_count": {"type": "integer"}
-        }
+        },
+        "required": ["pending_applications", "pending_count"],
+        "additionalProperties": false
       },
       "AdminApplicationActionResponse": {
         "type": "object",
@@ -6193,7 +6231,9 @@
           "success": {"type": "boolean"},
           "message": {"type": "string"},
           "application": {"$ref": "#/components/schemas/Application"}
-        }
+        },
+        "required": ["success", "message", "application"],
+        "additionalProperties": false
       },
       "ApplicationsListResponse": {
         "type": "object",
@@ -6208,7 +6248,9 @@
             }
           },
           "total": {"type": "integer"}
-        }
+        },
+        "required": ["applications", "total"],
+        "additionalProperties": false
       },
       "CreateApplicationBody": {
         "type": "object",
@@ -6217,7 +6259,8 @@
           "name": {"type": "string", "description": "Application name"},
           "description": {"type": "string", "description": "Application description"},
           "website": {"type": "string", "format": "uri", "description": "Application website URL"}
-        }
+        },
+        "additionalProperties": false
       },
       "CreateApplicationResponse": {
         "type": "object",
@@ -6225,7 +6268,9 @@
           "success": {"type": "boolean"},
           "message": {"type": "string"},
           "application": {"$ref": "#/components/schemas/Application"}
-        }
+        },
+        "required": ["success", "message", "application"],
+        "additionalProperties": false
       },
       "UpdateApplicationBody": {
         "type": "object",
@@ -6233,7 +6278,8 @@
           "name": {"type": "string"},
           "description": {"type": "string"},
           "website": {"type": "string", "format": "uri"}
-        }
+        },
+        "additionalProperties": false
       },
       "UpdateApplicationResponse": {
         "type": "object",
@@ -6241,7 +6287,9 @@
           "success": {"type": "boolean"},
           "message": {"type": "string"},
           "application": {"$ref": "#/components/schemas/Application"}
-        }
+        },
+        "required": ["success", "message", "application"],
+        "additionalProperties": false
       },
       "ResubmitApplicationResponse": {
         "type": "object",
@@ -6249,14 +6297,18 @@
           "success": {"type": "boolean"},
           "message": {"type": "string"},
           "application": {"$ref": "#/components/schemas/Application"}
-        }
+        },
+        "required": ["success", "message", "application"],
+        "additionalProperties": false
       },
       "ApiKeysListResponse": {
         "type": "object",
         "properties": {
           "keys": {"type": "array", "items": {"$ref": "#/components/schemas/ApiKey"}},
           "total": {"type": "integer"}
-        }
+        },
+        "required": ["keys", "total"],
+        "additionalProperties": false
       },
       "GenerateApiKeyBody": {
         "type": "object",
@@ -6265,7 +6317,8 @@
           "scope": {"type": "string", "enum": ["read", "write"], "default": "read"},
           "rate_limit": {"type": "integer", "description": "Rate limit per minute", "default": 1000},
           "expires_at": {"type": "string", "format": "date-time", "description": "Optional expiration date"}
-        }
+        },
+        "additionalProperties": false
       },
       "GenerateApiKeyResponse": {
         "type": "object",
@@ -6274,7 +6327,9 @@
           "message": {"type": "string"},
           "key": {"type": "string", "description": "Plain text API key - only shown once"},
           "record": {"$ref": "#/components/schemas/ApiKey"}
-        }
+        },
+        "required": ["success", "message", "key", "record"],
+        "additionalProperties": false
       },
       "RotateApiKeyResponse": {
         "type": "object",
@@ -6283,7 +6338,9 @@
           "message": {"type": "string"},
           "key": {"type": "string", "description": "New plain text API key - only shown once"},
           "record": {"$ref": "#/components/schemas/ApiKey"}
-        }
+        },
+        "required": ["success", "message", "key", "record"],
+        "additionalProperties": false
       }
     },
     "parameters": {
