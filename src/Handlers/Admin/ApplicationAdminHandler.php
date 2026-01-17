@@ -243,9 +243,11 @@ final class ApplicationAdminHandler extends AbstractHandler
     {
         $repo = $this->getRepository();
 
-        // Validate status if provided
-        if ($status !== null && !in_array($status, ['pending', 'approved', 'rejected', 'revoked'], true)) {
-            throw new ValidationException('Invalid status filter. Use: pending, approved, rejected, or revoked');
+        // Validate status if provided (use repository constant to avoid drift)
+        if ($status !== null && !in_array($status, ApplicationRepository::VALID_STATUSES, true)) {
+            throw new ValidationException(
+                sprintf('Invalid status filter. Valid values are: %s', implode(', ', ApplicationRepository::VALID_STATUSES))
+            );
         }
 
         $applications = $repo->getAllApplications($status);

@@ -17,6 +17,11 @@ class ApplicationRepository
 {
     private PDO $db;
 
+    /**
+     * Valid statuses for applications.
+     */
+    public const VALID_STATUSES = ['pending', 'approved', 'rejected', 'revoked'];
+
     public function __construct(?PDO $db = null)
     {
         $this->db = $db ?? Connection::getInstance();
@@ -293,10 +298,16 @@ class ApplicationRepository
      *
      * @param string|null $status Filter by status (pending, approved, rejected, revoked)
      * @return array<int, array<string, mixed>> List of applications
+     * @throws \InvalidArgumentException If status is not a valid value
      */
     public function getAllApplications(?string $status = null): array
     {
         if ($status !== null) {
+            if (!in_array($status, self::VALID_STATUSES, true)) {
+                throw new \InvalidArgumentException(
+                    sprintf('Invalid status filter: %s. Valid values are: %s', $status, implode(', ', self::VALID_STATUSES))
+                );
+            }
             $stmt = $this->db->prepare(
                 'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website,
                         a.status, a.reviewed_by, a.review_notes, a.reviewed_at,
