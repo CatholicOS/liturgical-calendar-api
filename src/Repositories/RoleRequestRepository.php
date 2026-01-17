@@ -147,12 +147,12 @@ class RoleRequestRepository
     public function getPendingRequests(): array
     {
         $stmt = $this->db->prepare(
-            "SELECT * FROM role_requests
-             WHERE status = 'pending'
-             ORDER BY created_at ASC"
+            'SELECT * FROM role_requests
+             WHERE status = :status
+             ORDER BY created_at ASC'
         );
 
-        $stmt->execute();
+        $stmt->execute(['status' => 'pending']);
 
         /** @var array<int, array<string, mixed>> */
         return $stmt->fetchAll();
