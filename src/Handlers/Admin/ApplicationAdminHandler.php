@@ -195,7 +195,8 @@ final class ApplicationAdminHandler extends AbstractHandler
         try {
             $zitadel = ZitadelService::fromEnv();
             foreach (array_keys($userIds) as $userId) {
-                $user = $zitadel->getUser($userId);
+                // Cast to string: PHP converts numeric string keys to int
+                $user = $zitadel->getUser((string) $userId);
                 if ($user !== null) {
                     // Extract name and email from Zitadel user response
                     $human   = isset($user['human']) && is_array($user['human']) ? $user['human'] : [];
