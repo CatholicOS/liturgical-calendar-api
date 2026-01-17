@@ -28,6 +28,11 @@ class ApplicationRepository
     }
 
     /**
+     * Valid scopes for application access requests.
+     */
+    public const VALID_SCOPES = ['read', 'write'];
+
+    /**
      * Create a new application.
      *
      * Applications are created with 'pending' status and must be approved by an admin.
@@ -36,26 +41,29 @@ class ApplicationRepository
      * @param string $name Application name
      * @param string|null $description Application description
      * @param string|null $website Application website URL
+     * @param string $requestedScope Requested access scope ('read' or 'write')
      * @return array<string, mixed> The created application with UUID
      */
     public function create(
         string $userId,
         string $name,
         ?string $description = null,
-        ?string $website = null
+        ?string $website = null,
+        string $requestedScope = 'read'
     ): array {
         $stmt = $this->db->prepare(
-            'INSERT INTO applications (zitadel_user_id, name, description, website, status)
-             VALUES (:user_id, :name, :description, :website, :status)
-             RETURNING id, name, description, website, status, is_active, created_at, updated_at'
+            'INSERT INTO applications (zitadel_user_id, name, description, website, requested_scope, status)
+             VALUES (:user_id, :name, :description, :website, :requested_scope, :status)
+             RETURNING id, name, description, website, requested_scope, status, is_active, created_at, updated_at'
         );
 
         $stmt->execute([
-            'user_id'     => $userId,
-            'name'        => $name,
-            'description' => $description,
-            'website'     => $website,
-            'status'      => 'pending',
+            'user_id'         => $userId,
+            'name'            => $name,
+            'description'     => $description,
+            'website'         => $website,
+            'requested_scope' => $requestedScope,
+            'status'          => 'pending',
         ]);
 
         /** @var array<string, mixed>|false $result */
@@ -75,7 +83,7 @@ class ApplicationRepository
     public function getByUuid(string $uuid): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT id, zitadel_user_id, name, description, website, status,
+            'SELECT id, zitadel_user_id, name, description, website, requested_scope, status,
                     reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at
              FROM applications
              WHERE id = :uuid'
@@ -110,7 +118,7 @@ class ApplicationRepository
     public function getByUser(string $userId): array
     {
         $stmt = $this->db->prepare(
-            'SELECT id, name, description, website, status,
+            'SELECT id, name, description, website, requested_scope, status,
                     reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at
              FROM applications
              WHERE zitadel_user_id = :user_id
@@ -156,7 +164,7 @@ class ApplicationRepository
 
         $sql = sprintf(
             'UPDATE applications SET %s WHERE id = :id AND zitadel_user_id = :user_id
-             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at',
+             RETURNING id, name, description, website, requested_scope, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at',
             implode(', ', $updates)
         );
 
@@ -280,7 +288,7 @@ class ApplicationRepository
     public function getPendingApplications(): array
     {
         $stmt = $this->db->prepare(
-            'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website,
+            'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website, a.requested_scope,
                     a.status, a.is_active, a.created_at, a.updated_at
              FROM applications a
              WHERE a.status = :status
@@ -309,7 +317,7 @@ class ApplicationRepository
                 );
             }
             $stmt = $this->db->prepare(
-                'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website,
+                'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website, a.requested_scope,
                         a.status, a.reviewed_by, a.review_notes, a.reviewed_at,
                         a.is_active, a.created_at, a.updated_at
                  FROM applications a
@@ -319,7 +327,7 @@ class ApplicationRepository
             $stmt->execute(['status' => $status]);
         } else {
             $stmt = $this->db->prepare(
-                'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website,
+                'SELECT a.id, a.zitadel_user_id, a.name, a.description, a.website, a.requested_scope,
                         a.status, a.reviewed_by, a.review_notes, a.reviewed_at,
                         a.is_active, a.created_at, a.updated_at
                  FROM applications a
@@ -366,7 +374,7 @@ class ApplicationRepository
                  reviewed_at = CURRENT_TIMESTAMP,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :uuid AND (status = :pending OR status = :rejected)
-             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
+             RETURNING id, name, description, website, requested_scope, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
         );
 
         $stmt->execute([
@@ -402,7 +410,7 @@ class ApplicationRepository
                  reviewed_at = CURRENT_TIMESTAMP,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :uuid AND status = :pending
-             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
+             RETURNING id, name, description, website, requested_scope, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
         );
 
         $stmt->execute([
@@ -437,7 +445,7 @@ class ApplicationRepository
                  reviewed_at = CURRENT_TIMESTAMP,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :uuid AND status = :approved
-             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
+             RETURNING id, name, description, website, requested_scope, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
         );
 
         $stmt->execute([
@@ -473,7 +481,7 @@ class ApplicationRepository
                  reviewed_at = NULL,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :uuid AND zitadel_user_id = :user_id AND status = :rejected
-             RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
+             RETURNING id, name, description, website, requested_scope, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
         );
 
         $stmt->execute([

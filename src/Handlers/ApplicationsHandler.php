@@ -242,7 +242,18 @@ final class ApplicationsHandler extends AbstractHandler
             throw new ValidationException('Invalid website URL');
         }
 
-        $application = $this->appRepo->create($userId, $name, $description, $website);
+        // Validate requested_scope parameter
+        $requestedScope = 'read'; // Default to read-only for safety
+        if (isset($body['requested_scope']) && is_string($body['requested_scope'])) {
+            if (!in_array($body['requested_scope'], ApplicationRepository::VALID_SCOPES, true)) {
+                throw new ValidationException(
+                    sprintf('Invalid requested_scope. Valid values are: %s', implode(', ', ApplicationRepository::VALID_SCOPES))
+                );
+            }
+            $requestedScope = $body['requested_scope'];
+        }
+
+        $application = $this->appRepo->create($userId, $name, $description, $website, $requestedScope);
 
         // Add uuid alias for frontend compatibility
         if (isset($application['id']) && is_string($application['id'])) {
@@ -387,6 +398,9 @@ final class ApplicationsHandler extends AbstractHandler
      * Generate a new API key for an application.
      *
      * Only approved applications can generate API keys.
+     * The key scope is restricted by the application's requested_scope:
+     * - If requested_scope is 'read', only 'read' keys can be generated
+     * - If requested_scope is 'write', both 'read' and 'write' keys can be generated
      */
     private function generateApiKey(
         ServerRequestInterface $request,
@@ -414,12 +428,22 @@ final class ApplicationsHandler extends AbstractHandler
 
         $body = $this->parseBodyParams($request, false) ?? [];
 
-        $name             = isset($body['name']) && is_string($body['name'])
+        $name  = isset($body['name']) && is_string($body['name'])
             ? trim($body['name'])
             : null;
-        $scope            = isset($body['scope']) && is_string($body['scope']) && in_array($body['scope'], ['read', 'write'], true)
+        $scope = isset($body['scope']) && is_string($body['scope']) && in_array($body['scope'], ['read', 'write'], true)
             ? $body['scope']
             : 'read';
+
+        // Enforce scope restrictions based on application's requested_scope
+        $requestedScope = isset($application['requested_scope']) && is_string($application['requested_scope'])
+            ? $application['requested_scope']
+            : 'read';
+
+        if ($requestedScope === 'read' && $scope === 'write') {
+            throw new ForbiddenException('This application only has read-only access. Cannot generate write-scope API keys.');
+        }
+
         $envRateLimit     = $_ENV['API_KEY_DEFAULT_RATE_LIMIT'] ?? null;
         $defaultRateLimit = is_numeric($envRateLimit) ? max(1, (int) $envRateLimit) : 1000;
         $rateLimit        = isset($body['rate_limit']) && is_numeric($body['rate_limit'])
