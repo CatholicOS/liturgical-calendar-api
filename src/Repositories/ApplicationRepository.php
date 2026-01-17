@@ -365,7 +365,7 @@ class ApplicationRepository
                  review_notes = :notes,
                  reviewed_at = CURRENT_TIMESTAMP,
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = :uuid AND status IN (:pending, :rejected)
+             WHERE id = :uuid AND (status = :pending OR status = :rejected)
              RETURNING id, name, description, website, status, reviewed_by, review_notes, reviewed_at, is_active, created_at, updated_at'
         );
 
