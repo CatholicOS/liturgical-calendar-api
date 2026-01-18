@@ -376,17 +376,12 @@ final class ApplicationsHandler extends AbstractHandler
         string $uuid,
         string $userId
     ): ResponseInterface {
-        // Verify ownership
+        // Verify ownership (also confirms application exists)
         if (!$this->appRepo->isOwner($uuid, $userId)) {
             throw new ForbiddenException('Access denied');
         }
 
-        $application = $this->appRepo->getByUuid($uuid);
-        if ($application === null || !isset($application['id']) || !is_string($application['id'])) {
-            throw new NotFoundException('Application not found');
-        }
-
-        $keys = $this->keyRepo->getByApplication($application['id']);
+        $keys = $this->keyRepo->getByApplication($uuid);
 
         return $this->encodeResponseBody($response, [
             'keys'  => $keys,
