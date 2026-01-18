@@ -12,6 +12,7 @@ use LiturgicalCalendar\Api\Http\Enum\RequestMethod;
 use LiturgicalCalendar\Api\Http\Exception\ForbiddenException;
 use LiturgicalCalendar\Api\Http\Exception\UnauthorizedException;
 use LiturgicalCalendar\Api\Http\Middleware\OidcAuthMiddleware;
+use LiturgicalCalendar\Api\Repositories\ApplicationRepository;
 use LiturgicalCalendar\Api\Repositories\RoleRequestRepository;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -27,6 +28,7 @@ use Psr\Http\Message\ServerRequestInterface;
 final class NotificationsHandler extends AbstractHandler
 {
     private ?RoleRequestRepository $roleRequestRepo = null;
+    private ?ApplicationRepository $applicationRepo = null;
 
     public function __construct()
     {
@@ -43,6 +45,14 @@ final class NotificationsHandler extends AbstractHandler
             $this->roleRequestRepo = new RoleRequestRepository();
         }
         return $this->roleRequestRepo;
+    }
+
+    private function getApplicationRepository(): ApplicationRepository
+    {
+        if ($this->applicationRepo === null) {
+            $this->applicationRepo = new ApplicationRepository();
+        }
+        return $this->applicationRepo;
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
@@ -75,10 +85,10 @@ final class NotificationsHandler extends AbstractHandler
 
         // Get notification counts
         $notifications = [
-            'pending_role_requests'       => 0,
-            'pending_permission_requests' => 0,
-            'total'                       => 0,
-            'items'                       => [],
+            'pending_role_requests' => 0,
+            'pending_applications'  => 0,
+            'total'                 => 0,
+            'items'                 => [],
         ];
 
         if (Connection::isConfigured()) {
@@ -102,12 +112,26 @@ final class NotificationsHandler extends AbstractHandler
                 ];
             }
 
-            // TODO: Add permission_requests count when that feature is implemented
-            // $permissionRequestRepo = new PermissionRequestRepository();
-            // $notifications['pending_permission_requests'] = $permissionRequestRepo->getPendingCount();
+            // Get pending applications count
+            $applicationRepo                       = $this->getApplicationRepository();
+            $notifications['pending_applications'] = $applicationRepo->countPendingApplications();
+
+            // Get recent pending applications for the dropdown
+            $pendingApps = $applicationRepo->getPendingApplications();
+            foreach (array_slice($pendingApps, 0, 5) as $app) {
+                $notifications['items'][] = [
+                    'type'            => 'application',
+                    'id'              => $app['id'] ?? '',
+                    'app_name'        => $app['name'] ?? 'Unknown',
+                    'zitadel_user_id' => $app['zitadel_user_id'] ?? '',
+                    'requested_scope' => $app['requested_scope'] ?? 'read',
+                    'created_at'      => $app['created_at'] ?? '',
+                    'url'             => 'admin-applications.php',
+                ];
+            }
 
             $notifications['total'] = $notifications['pending_role_requests']
-                                    + $notifications['pending_permission_requests'];
+                                    + $notifications['pending_applications'];
         }
 
         // Add Cache-Control header to prevent caching
