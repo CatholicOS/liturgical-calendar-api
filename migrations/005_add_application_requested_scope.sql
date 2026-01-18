@@ -22,11 +22,13 @@ BEGIN
     END IF;
 END $$;
 
--- Add check constraint separately (idempotent)
+-- Add check constraint separately (idempotent, scoped to applications table)
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'chk_application_requested_scope'
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'chk_application_requested_scope'
+          AND conrelid = 'applications'::regclass
     ) THEN
         ALTER TABLE applications ADD CONSTRAINT chk_application_requested_scope
             CHECK (requested_scope IN ('read', 'write'));
