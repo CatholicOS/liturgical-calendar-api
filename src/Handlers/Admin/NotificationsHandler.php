@@ -130,6 +130,14 @@ final class NotificationsHandler extends AbstractHandler
                 ];
             }
 
+            // Sort items by created_at descending and limit to 5 most recent
+            usort($notifications['items'], function ($a, $b) {
+                $aDate = is_string($a['created_at']) ? $a['created_at'] : '';
+                $bDate = is_string($b['created_at']) ? $b['created_at'] : '';
+                return strcmp($bDate, $aDate);
+            });
+            $notifications['items'] = array_slice($notifications['items'], 0, 5);
+
             $notifications['total'] = $notifications['pending_role_requests']
                                     + $notifications['pending_applications'];
         }
