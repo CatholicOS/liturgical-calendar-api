@@ -225,19 +225,21 @@ class ApiKeyRepository
      *
      * @param string $keyId Key UUID
      * @param string $userId Owner's Zitadel user ID (for authorization)
+     * @param string $appId Application UUID (to prevent cross-application deletion)
      * @return bool True if deleted, false if not found/unauthorized
      */
-    public function delete(string $keyId, string $userId): bool
+    public function delete(string $keyId, string $userId, string $appId): bool
     {
         $stmt = $this->db->prepare(
             'DELETE FROM api_keys k
              USING applications a
              WHERE k.id = :key_id
                AND k.application_id = a.id
+               AND a.id = :app_id
                AND a.zitadel_user_id = :user_id'
         );
 
-        $stmt->execute(['key_id' => $keyId, 'user_id' => $userId]);
+        $stmt->execute(['key_id' => $keyId, 'user_id' => $userId, 'app_id' => $appId]);
 
         return $stmt->rowCount() > 0;
     }

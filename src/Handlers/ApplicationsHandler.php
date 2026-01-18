@@ -485,7 +485,7 @@ final class ApplicationsHandler extends AbstractHandler
             throw new ForbiddenException('Access denied');
         }
 
-        $deleted = $this->keyRepo->delete($keyId, $userId);
+        $deleted = $this->keyRepo->delete($keyId, $userId, $uuid);
 
         if (!$deleted) {
             throw new NotFoundException('API key not found or access denied');
