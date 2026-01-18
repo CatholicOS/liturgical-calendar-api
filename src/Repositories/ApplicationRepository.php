@@ -64,6 +64,12 @@ class ApplicationRepository
         ?string $website = null,
         string $requestedScope = 'read'
     ): array {
+        if (!in_array($requestedScope, self::VALID_SCOPES, true)) {
+            throw new \InvalidArgumentException(
+                sprintf('Invalid requested_scope: %s. Valid values are: %s', $requestedScope, implode(', ', self::VALID_SCOPES))
+            );
+        }
+
         $stmt = $this->db->prepare(
             'INSERT INTO applications (zitadel_user_id, name, description, website, requested_scope, status)
              VALUES (:user_id, :name, :description, :website, :requested_scope, :status)
