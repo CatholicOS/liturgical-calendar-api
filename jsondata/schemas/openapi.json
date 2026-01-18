@@ -6176,7 +6176,7 @@
           "user_email": {"type": ["string", "null"], "description": "Owner's email (admin view only)"}
         },
         "required": ["id", "zitadel_user_id", "name", "status", "is_active", "created_at", "updated_at"],
-        "additionalProperties": false
+        "unevaluatedProperties": false
       },
       "ApplicationWithKeys": {
         "allOf": [
@@ -6187,7 +6187,8 @@
               "keys": {"type": "array", "items": {"$ref": "#/components/schemas/ApiKey"}}
             }
           }
-        ]
+        ],
+        "unevaluatedProperties": false
       },
       "ApiKey": {
         "type": "object",
@@ -6244,7 +6245,8 @@
               "allOf": [
                 {"$ref": "#/components/schemas/Application"},
                 {"type": "object", "properties": {"key_count": {"type": "integer"}}}
-              ]
+              ],
+              "unevaluatedProperties": false
             }
           },
           "total": {"type": "integer"}
