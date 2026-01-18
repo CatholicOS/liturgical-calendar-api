@@ -18,9 +18,22 @@ class ApplicationRepository
     private PDO $db;
 
     /**
+     * Status constants for applications.
+     */
+    public const STATUS_PENDING  = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+    public const STATUS_REVOKED  = 'revoked';
+
+    /**
      * Valid statuses for applications.
      */
-    public const VALID_STATUSES = ['pending', 'approved', 'rejected', 'revoked'];
+    public const VALID_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_APPROVED,
+        self::STATUS_REJECTED,
+        self::STATUS_REVOKED,
+    ];
 
     public function __construct(?PDO $db = null)
     {
@@ -63,7 +76,7 @@ class ApplicationRepository
             'description'     => $description,
             'website'         => $website,
             'requested_scope' => $requestedScope,
-            'status'          => 'pending',
+            'status'          => self::STATUS_PENDING,
         ]);
 
         /** @var array<string, mixed>|false $result */
@@ -295,7 +308,7 @@ class ApplicationRepository
              ORDER BY a.created_at ASC'
         );
 
-        $stmt->execute(['status' => 'pending']);
+        $stmt->execute(['status' => self::STATUS_PENDING]);
 
         /** @var array<int, array<string, mixed>> */
         return $stmt->fetchAll();
@@ -351,7 +364,7 @@ class ApplicationRepository
             'SELECT COUNT(*) FROM applications WHERE status = :status'
         );
 
-        $stmt->execute(['status' => 'pending']);
+        $stmt->execute(['status' => self::STATUS_PENDING]);
 
         return (int) $stmt->fetchColumn();
     }
@@ -379,11 +392,11 @@ class ApplicationRepository
 
         $stmt->execute([
             'uuid'     => $uuid,
-            'status'   => 'approved',
+            'status'   => self::STATUS_APPROVED,
             'admin_id' => $adminId,
             'notes'    => $notes,
-            'pending'  => 'pending',
-            'rejected' => 'rejected',
+            'pending'  => self::STATUS_PENDING,
+            'rejected' => self::STATUS_REJECTED,
         ]);
 
         /** @var array<string, mixed>|false $result */
@@ -415,10 +428,10 @@ class ApplicationRepository
 
         $stmt->execute([
             'uuid'     => $uuid,
-            'status'   => 'rejected',
+            'status'   => self::STATUS_REJECTED,
             'admin_id' => $adminId,
             'notes'    => $notes,
-            'pending'  => 'pending',
+            'pending'  => self::STATUS_PENDING,
         ]);
 
         /** @var array<string, mixed>|false $result */
@@ -450,10 +463,10 @@ class ApplicationRepository
 
         $stmt->execute([
             'uuid'     => $uuid,
-            'status'   => 'revoked',
+            'status'   => self::STATUS_REVOKED,
             'admin_id' => $adminId,
             'notes'    => $notes,
-            'approved' => 'approved',
+            'approved' => self::STATUS_APPROVED,
         ]);
 
         /** @var array<string, mixed>|false $result */
@@ -487,8 +500,8 @@ class ApplicationRepository
         $stmt->execute([
             'uuid'       => $uuid,
             'user_id'    => $userId,
-            'new_status' => 'pending',
-            'rejected'   => 'rejected',
+            'new_status' => self::STATUS_PENDING,
+            'rejected'   => self::STATUS_REJECTED,
         ]);
 
         /** @var array<string, mixed>|false $result */
@@ -510,7 +523,7 @@ class ApplicationRepository
              WHERE id = :uuid AND status = :status AND is_active = TRUE'
         );
 
-        $stmt->execute(['uuid' => $uuid, 'status' => 'approved']);
+        $stmt->execute(['uuid' => $uuid, 'status' => self::STATUS_APPROVED]);
 
         return $stmt->fetchColumn() !== false;
     }
